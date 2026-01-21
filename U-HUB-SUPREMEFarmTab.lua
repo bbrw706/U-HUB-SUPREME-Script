@@ -1,61 +1,36 @@
--- [[ U-HUB SUPREME : THE MASTER SCRIPT ]]
--- พัฒนาโดย: บอสหนึ่ง (Nong Nueng)
--- รุ่น: 2026 Ultra Edition
+-- [[ CORE FUNCTIONS : สะพานเชื่อมระบบ U-HUB ]]
+_G.SmartTween = function(TargetCFrame)
+    local Character = game.Players.LocalPlayer.Character
+    if Character and Character:FindFirstChild("HumanoidRootPart") then
+        -- ระบบบินนิ่ง (Anti-Gravity)
+        if not Character.HumanoidRootPart:FindFirstChild("BodyVelocity") then
+            local bv = Instance.new("BodyVelocity")
+            bv.Velocity = Vector3.new(0,0,0)
+            bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bv.Parent = Character.HumanoidRootPart
+        end
+        -- สั่งบินไปที่พิกัด
+        game:GetService("TweenService"):Create(
+            Character.HumanoidRootPart,
+            TweenInfo.new((TargetCFrame.Position - Character.HumanoidRootPart.Position).Magnitude / 300, Enum.EasingStyle.Linear),
+            {CFrame = TargetCFrame}
+        ):Play()
+    end
+end
 
--- 1. เรียกใช้งาน UI Library (Fluent)
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
-
--- 2. สร้างหน้าต่างเมนูหลัก
-local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME | World 1",
-    SubTitle = "by Nong Nueng",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
-    Theme = "Dark"
-})
-
--- 3. ฟังก์ชันส่วนกลาง (Global Functions)
--- ส่วนนี้สำคัญมาก เพราะทุกเกาะจะมาเรียกใช้ฟังก์ชันบิน (SmartTween) อันเดียวกันตรงนี้
-
-_G.SmartTween = function(Target)
-    if not game.Players.LocalPlayer.Character or not game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    local Root = game.Players.LocalPlayer.Character.HumanoidRootPart
-    local Dist = (Target.Position - Root.Position).Magnitude
-    
-    if Dist > 10 then
-        local Info = TweenInfo.new(Dist/300, Enum.EasingStyle.Linear)
-        local Tween = game:GetService("TweenService"):Create(Root, Info, {CFrame = Target})
-        Tween:Play()
-        return Tween
+_G.EquipWeapon = function()
+    local p = game.Players.LocalPlayer
+    for _, v in pairs(p.Backpack:GetChildren()) do
+        if v:IsA("Tool") and (v.ToolTip == "Sword" or v.ToolTip == "Melee") then
+            p.Character.Humanoid:EquipTool(v)
+        end
     end
 end
 
 _G.IsQuestActive = function(Name)
-    local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    if PlayerGui.Main:FindFirstChild("Quest") and PlayerGui.Main.Quest.Visible == true then
-        local Text = PlayerGui.Main.Quest.Container.QuestTitle.Title.Text
-        if string.find(Text, Name) then
-            return true
-        end
-    end
-    return false
+    local QuestText = game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text
+    return QuestText:find(Name)
 end
-
-_G.EquipWeapon = function()
-    local Player = game.Players.LocalPlayer
-    local Character = Player.Character
-    if Character and not Character:FindFirstChildOfClass("Tool") then
-        local Tool = Player.Backpack:FindFirstChild("Combat") or Player.Backpack:FindFirstChildOfClass("Tool")
-        if Tool then
-            Character.Humanoid:EquipTool(Tool)
-        end
-    end
-end
-
--- [[ เริ่มต้นใส่ Tabs และโค้ดแต่ละเกาะต่อจากตรงนี้ ]]
 
 
 -- [[ U-HUB SUPREME : STARTER ISLAND FULL MODULE ]]
