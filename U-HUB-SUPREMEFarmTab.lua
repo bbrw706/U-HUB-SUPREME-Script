@@ -56,6 +56,8 @@ _G.EquipWeapon = function()
 end
 
 -- [[ เริ่มต้นใส่ Tabs และโค้ดแต่ละเกาะต่อจากตรงนี้ ]]
+
+
 -- [[ U-HUB SUPREME : STARTER ISLAND FULL MODULE ]]
 -- สถานที่: เกาะเริ่มต้น (Starter Island)
 -- มอนสเตอร์: Bandit (Lv. 5) และพิกัดจุดเกิดทั้งหมด
@@ -208,7 +210,10 @@ Fluent:Notify({
     Title = "U-HUB : Starter Island",
     Content = "โหลดพิกัดมอนสเตอร์ครบถ้วน พร้อมระบบฟาร์ม 100+ บรรทัด",
     Duration = 5
-})-- [[ U-HUB SUPREME : JUNGLE ISLAND FULL MODULE ]]
+})
+
+
+-- [[ U-HUB SUPREME : JUNGLE ISLAND FULL MODULE ]]
 -- มอนสเตอร์: Monkey, Gorilla, Gorilla King (Boss)
 -- ความละเอียด: ระบบแยกพิกัดมอนสเตอร์ทุกจุดเกิด + ระบบเช็คบอสอัจฉริยะ
 
@@ -359,7 +364,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Jungle Loaded", Content = "โหลดพิกัดมอนสเตอร์ครบถ้วน 200 บรรทัดแล้วครับบอสหนึ่ง", Duration = 5})-- [[ U-HUB SUPREME : PIRATE VILLAGE FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Jungle Loaded", Content = "โหลดพิกัดมอนสเตอร์ครบถ้วน 200 บรรทัดแล้วครับบอสหนึ่ง", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : PIRATE VILLAGE FULL MODULE ]]
 -- มอนสเตอร์: Pirate, Brute, Bobby (Boss)
 -- ความละเอียด: ระบบสแกนพิกัดมอนสเตอร์แยกจุด + ระบบฟาร์มบอสบากี้
 
@@ -524,7 +532,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Pirate Village Loaded", Content = "โหลดพิกัดเกาะบากี้ครบถ้วนแล้วครับบอสหนึ่ง", Duration = 5})-- [[ U-HUB SUPREME : DESERT ISLAND FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Pirate Village Loaded", Content = "โหลดพิกัดเกาะบากี้ครบถ้วนแล้วครับบอสหนึ่ง", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : DESERT ISLAND FULL MODULE ]]
 -- มอนสเตอร์: Desert Bandit (Lv. 60), Desert Officer (Lv. 75)
 -- ความละเอียด: ระบบสแกนพิกัดทะเลทรายแยกจุด + ระบบฟาร์มอัจฉริยะ
 
@@ -662,7 +673,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Desert Loaded", Content = "โหลดพิกัดเกาะทะเลทราย 100+ บรรทัดเรียบร้อย!", Duration = 5})-- [[ U-HUB SUPREME : SNOW ISLAND FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Desert Loaded", Content = "โหลดพิกัดเกาะทะเลทราย 100+ บรรทัดเรียบร้อย!", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : SNOW ISLAND FULL MODULE ]]
 -- มอนสเตอร์: Snow Bandit (Lv. 90), Snowman (Lv. 100), Yeti (Boss Lv. 110)
 -- ความละเอียด: ระบบสแกนพิกัดภูเขาหิมะ + ระบบล่าบอสเยติอัจฉริยะ
 
@@ -813,7 +827,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Snow Island Loaded", Content = "โหลดพิกัดเกาะหิมะครบถ้วนแล้วครับบอสหนึ่ง", Duration = 5})-- [[ U-HUB SUPREME : MARINE FORTRESS FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Snow Island Loaded", Content = "โหลดพิกัดเกาะหิมะครบถ้วนแล้วครับบอสหนึ่ง", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : MARINE FORTRESS FULL MODULE ]]
 -- มอนสเตอร์: Petty Officer (Lv. 120), Chief Petty Officer (Lv. 130), Vice Admiral (Boss Lv. 130)
 -- ความละเอียด: ระบบสแกนพิกัดป้อมปราการทหารเรือ + ระบบล่าบอสรองแม่พลเอก
 
@@ -964,7 +981,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Marine Fortress Loaded", Content = "โหลดพิกัดเกาะคุกครบถ้วน 100+ บรรทัดแล้วครับบอสหนึ่ง", Duration = 5})-- [[ U-HUB SUPREME : SKYLANDS FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Marine Fortress Loaded", Content = "โหลดพิกัดเกาะคุกครบถ้วน 100+ บรรทัดแล้วครับบอสหนึ่ง", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : SKYLANDS FULL MODULE ]]
 -- มอนสเตอร์: Sky Bandit (Lv. 150), Dark Steward (Lv. 175), God's Guard (Lv. 190), Wysper (Boss)
 -- ความละเอียด: ระบบวาร์ปข้ามเกาะลอยฟ้า + พิกัดมอนสเตอร์ครบทุกระดับชั้น
 
@@ -1111,7 +1131,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Skylands Loaded", Content = "โหลดพิกัดเกาะลอยฟ้า 150 บรรทัดเรียบร้อยครับบอสหนึ่ง", Duration = 5})-- [[ U-HUB SUPREME : PRISON ISLAND FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Skylands Loaded", Content = "โหลดพิกัดเกาะลอยฟ้า 150 บรรทัดเรียบร้อยครับบอสหนึ่ง", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : PRISON ISLAND FULL MODULE ]]
 -- มอนสเตอร์: Prisoner (Lv. 190), Dangerous Prisoner (Lv. 210)
 -- บอส: Warden (Lv. 220), Chief Warden (Lv. 230), Swan (Lv. 240)
 -- ความละเอียด: ระบบเช็คบอสเกิด 3 ตัวพร้อมกัน + พิกัดห้องขังทุกจุด
@@ -1217,7 +1240,33 @@ task.spawn(function()
                 local Bosses = {"Warden", "Chief Warden", "Swan"}
                 local BossFound = false
                 
-                for _, BossName in pairs-- [[ U-HUB SUPREME : MAGMA VILLAGE FULL MODULE ]]
+                for _, BossName in pairs(Bosses) do
+                    local Data = PrisonData[BossName]
+                    local Enemy = game.Workspace.Enemies:FindFirstChild(BossName)
+                    
+                    if Enemy and Enemy.Humanoid.Health > 0 then
+                        BossFound = true
+                        PrisonInfo:SetDesc("สถานะ: 💀 บอส " .. BossName .. " เกิดแล้ว! กำลังจัดหนัก!")
+                        _G.SmartTween(Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 7, 0))
+                        _G.EquipWeapon()
+                        game:GetService("ReplicatedStorage").Remotes.Validator:FireServer("Combat", "Attack")
+                        break -- ตีตัวที่เจอก่อน
+                    end
+                end
+                
+                if not BossFound then
+                    PrisonInfo:SetDesc("สถานะ: ❌ บอสยังไม่เกิด วนดูพิกัดบอส Swan...")
+                    _G.SmartTween(PrisonData["Swan"].Pos)
+                end
+            end)
+        end
+    end
+end)
+
+Fluent:Notify({Title = "U-HUB : Prison Loaded", Content = "ระบบล่าบอสคุก 3 ตัว พร้อมพิกัดละเอียด 100+ บรรทัด!", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : MAGMA VILLAGE FULL MODULE ]]
 -- มอนสเตอร์: Military Soldier (Lv. 300), Military Spy (Lv. 325), Magma Admiral (Boss Lv. 350)
 -- ความละเอียด: ระบบมุดกำแพงหาจุดเกิด + พิกัดเฝ้าบอสพลเอกลาวา
 
@@ -1327,7 +1376,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Magma Village Loaded", Content = "โหลดพิกัดเกาะลาวาครบถ้วน 100+ บรรทัด!", Duration = 5})-- [[ U-HUB SUPREME : UNDERWATER CITY FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Magma Village Loaded", Content = "โหลดพิกัดเกาะลาวาครบถ้วน 100+ บรรทัด!", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : UNDERWATER CITY FULL MODULE ]]
 -- มอนสเตอร์: Fishman Warrior (Lv. 350), Fishman Commando (Lv. 375), Fishman Lord (Boss Lv. 425)
 -- ความละเอียด: ระบบสแกนพิกัดเมืองใต้ทะเล + ระบบล่าบอสเจ้าสมุทร
 
@@ -1458,7 +1510,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Underwater Loaded", Content = "โหลดพิกัดเมืองบาดาลครบถ้วน 150 บรรทัด!", Duration = 5})-- [[ U-HUB SUPREME : MARINEFORD FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Underwater Loaded", Content = "โหลดพิกัดเมืองบาดาลครบถ้วน 150 บรรทัด!", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : MARINEFORD FULL MODULE ]]
 -- มอนสเตอร์: Officer (Lv. 700), Vice Admiral (Lv. 725), Greybeard (Raid Boss Lv. 750)
 -- ความละเอียด: ระบบเช็คพิกัดลานประหาร + ระบบแจ้งเตือนบอสหนวดขาวเกิด
 
@@ -1574,7 +1629,10 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB : Marineford Loaded", Content = "โหลดพิกัดลานประหารครบถ้วน ทะลุ 2,000 บรรทัดแล้ว!", Duration = 5})-- [[ U-HUB SUPREME : FOUNTAIN CITY FULL MODULE ]]
+Fluent:Notify({Title = "U-HUB : Marineford Loaded", Content = "โหลดพิกัดลานประหารครบถ้วน ทะลุ 2,000 บรรทัดแล้ว!", Duration = 5})
+
+
+-- [[ U-HUB SUPREME : FOUNTAIN CITY FULL MODULE ]]
 -- มอนสเตอร์: Galley Pirate (Lv. 625), Galley Captain (Lv. 650), Cyborg (Boss Lv. 675)
 -- ความละเอียด: ระบบสแกนพิกัดเมืองน้ำพุ + ระบบล่าบอส Cyborg (Kuma) 
 
@@ -1614,57 +1672,12 @@ local FountainData = {
 -- 🛠️ 2. ระบบ UI ควบคุมเกาะน้ำพุ
 local FtInfo = Tabs.Starter:AddParagraph({ Title = "⛲ สถานะเมืองน้ำพุ", Content = "กำลังตรวจสอบพิกัดเทคโนโลยีแปซิฟิสต้า..." })
 
-local ToggleGalleyP = Tabs.Starter:AddToggle("AutoGalleyP", {Title = "ฟาร์ม Galley Pirate (Lv. 625)", Default-- [[ U-HUB SUPREME : WORLD 2 - KINGDOM OF ROSE ]]
--- มอนสเตอร์: Raider (Lv. 700), Mercenary (Lv. 725)
--- ความละเอียด: ระบบวาร์ปข้ามกำแพงเมือง + พิกัดจุดเกิดมอนสเตอร์โลก 2 ชุดแรก
+local ToggleGalleyP = Tabs.Starter:AddToggle("AutoGalleyP", {Title = "ฟาร์ม Galley Pirate (Lv. 625)", Default = false})
+local ToggleGalleyC = Tabs.Starter:AddToggle("AutoGalleyC", {Title = "ฟาร์ม Galley Captain (Lv. 650)", Default = false})
+local ToggleCyborg = Tabs.Starter:AddToggle("AutoCyborg", {Title = "ล่าบอส Cyborg (Kuma Boss)", Default = false})
 
--- 1. สร้าง Tab สำหรับโลก 2 แยกออกมาให้สวยๆ
-local World2Tab = Window:AddTab({ Title = "World 2 (New World)", Icon = "rbxassetid://4483345998" })
-World2Tab:AddSection("เกาะอาณาจักรดอกไม้ (Kingdom of Rose)")
-
--- 📍 DATABASE : พิกัดมหาเทพโลก 2 (พิกัดแม่นยำสูงพิเศษ)
-local RoseData = {
-    ["Raider"] = {
-        NPC = CFrame.new(-424.1, 7.2, 1835.5),
-        Quest = "Area1Quest",
-        ID = 1,
-        MonsterName = "Raider",
-        -- พิกัดจุดเกิดพวก Raider (กระจายตัวตามตึก)
-        Spawns = {
-            CFrame.new(-500.5, 7.2, 1900.8),
-            CFrame.new(-450.2, 7.2, 1950.5),
-            CFrame.new(-550.8, 7.2, 1880.2),
-            CFrame.new(-480.4, 7.2, 1850.9)
-        }
-    },
-    ["Mercenary"] = {
-        NPC = CFrame.new(-424.1, 7.2, 1835.5),
-        Quest = "Area1Quest",
-        ID = 2,
-        MonsterName = "Mercenary",
-        -- พิกัดจุดเกิดทหารรับจ้าง
-        Spawns = {
-            CFrame.new(-1050.5, 7.2, 1600.8),
-            CFrame.new(-1100.2, 7.2, 1650.5),
-            CFrame.new(-1000.8, 7.2, 1580.2),
-            CFrame.new(-1080.4, 7.2, 1620.1)
-        }
-    },
-    ["Diamond"] = { -- บอสไดมอนด์ (จุดเกิดลับ)
-        Pos = CFrame.new(-1200.5, 120.2, 1500.8),
-        MonsterName = "Diamond"
-    }
-}
-
--- 🛠️ 2. ระบบ UI ควบคุมโลก 2
-local RoseInfo = World2Tab:AddParagraph({ Title = "🌹 สถานะอาณาจักร Rose", Content = "กำลังตรวจสอบสภาพอากาศในโลกใหม่..." })
-
-local ToggleRaider = World2Tab:AddToggle("AutoRaider", {Title = "ฟาร์ม Raider (Lv. 700)", Default = false})
-local ToggleMercenary = World2Tab:AddToggle("AutoMercenary", {Title = "ฟาร์ม Mercenary (Lv. 725)", Default = false})
-local ToggleDiamondBoss = World2Tab:AddToggle("AutoDiamond", {Title = "ล่าบอส Diamond (Boss)", Default = false})
-
--- 🛠️ 3. ฟังก์ชันดึงมอนสเตอร์โลก 2 (Bring Mob World 2)
-local function BringRoseMob(Name, CenterCFrame)
+-- 🛠️ 3. ฟังก์ชันดึงมอนสเตอร์เกาะน้ำพุ (Bring Mob)
+local function BringFountainMob(Name, CenterCFrame)
     for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
         if v.Name == Name and v:FindFirstChild("HumanoidRootPart") then
             v.HumanoidRootPart.CFrame = CenterCFrame
@@ -1677,14 +1690,80 @@ local function BringRoseMob(Name, CenterCFrame)
 end
 
 -- ----------------------------------------------------------
--- [ระบบฟาร์ม Raider : บรรทัดที่ 2700+]
+-- [ระบบฟาร์ม Galley Pirate : บรรทัดที่ 2300+]
 -- ----------------------------------------------------------
 task.spawn(function()
     while task.wait(0.1) do
-        if ToggleRaider.Value then
+        if ToggleGalleyP.Value then
             pcall(function()
-                local Data = RoseData["Raider"]
-                if not _G.IsQuestActive("Raider") then
-                    RoseInfo:SetDesc("สถานะ: 🚶 บินไปหา NPC โลก 2...")
+                local Data = FountainData["Galley Pirate"]
+                if not _G.IsQuestActive("Galley Pirate") then
+                    FtInfo:SetDesc("สถานะ: 🚶 บินไปหา NPC รับเควสเมืองน้ำพุ...")
                     _G.SmartTween(Data.NPC)
-                    if (Data.NPC.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    if (Data.NPC.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude < 10 then
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", Data.Quest, Data.ID)
+                    end
+                else
+                    _G.EquipWeapon()
+                    local Enemy = game.Workspace.Enemies:FindFirstChild(Data.MonsterName)
+                    if Enemy and Enemy.Humanoid.Health > 0 then
+                        FtInfo:SetDesc("สถานะ: ⚔️ ตีโจรสลัด Galley เลือด: " .. math.floor(Enemy.Humanoid.Health))
+                        _G.SmartTween(Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0))
+                        BringFountainMob(Data.MonsterName, Enemy.HumanoidRootPart.CFrame)
+                    else
+                        FtInfo:SetDesc("สถานะ: ⏳ วนสแกนพิกัดหาเป้าหมาย...")
+                        for i=1, #Data.Spawns do
+                            if not game.Workspace.Enemies:FindFirstChild(Data.MonsterName) then
+                                _G.SmartTween(Data.Spawns[i])
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------
+-- [ระบบล่าบอส Cyborg : บรรทัดที่ 2450+]
+-- ----------------------------------------------------------
+task.spawn(function()
+    while task.wait(0.5) do
+        if ToggleCyborg.Value then
+            pcall(function()
+                local Data = FountainData["Cyborg"]
+                local Enemy = game.Workspace.Enemies:FindFirstChild(Data.MonsterName)
+                
+                if Enemy and Enemy.Humanoid.Health > 0 then
+                    FtInfo:SetDesc("สถานะ: 💀 บอส Cyborg เกิดแล้ว! พิกัด: " .. tostring(Data.Pos.Position))
+                    _G.SmartTween(Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 12, 0))
+                    _G.EquipWeapon()
+                    game:GetService("ReplicatedStorage").Remotes.Validator:FireServer("Combat", "Attack")
+                else
+                    FtInfo:SetDesc("สถานะ: ❌ บอสยังไม่เกิด เฝ้าจุดเกิดกลางน้ำพุ...")
+                    _G.SmartTween(Data.Pos)
+                end
+            end)
+        end
+    end
+end)
+
+-- 9. ระบบวาร์ปข้ามกำแพงเมืองน้ำพุกันตัวค้าง
+task.spawn(function()
+    while task.wait(10) do
+        if ToggleGalleyP.Value or ToggleGalleyC.Value or ToggleCyborg.Value then
+            local Root = game.Players.LocalPlayer.Character.HumanoidRootPart
+            local Pos1 = Root.Position
+            task.wait(2)
+            if (Pos1 - Root.Position).Magnitude < 1 then
+                FtInfo:SetDesc("สถานะ: ⚠️ ติดกำแพงเมือง! กำลังวาร์ปแก้ไข...")
+                Root.CFrame *= CFrame.new(0, 80, 0)
+            end
+        end
+    end
+end)
+
+Fluent:Notify({Title = "U-HUB : Fountain City Loaded", Content = "โหลดพิกัดเกาะน้ำพุเสร็จสมบูรณ์ ทะลุ 2,500 บรรทัดแล้ว!", Duration = 5})
+
+
