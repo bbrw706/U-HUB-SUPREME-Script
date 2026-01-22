@@ -175,64 +175,58 @@ Tabs.Misc:AddButton({
 })
 
 Fluent:Notify({Title = "U-HUB SUPREME", Content = "โหลดระบบฟาร์มและแก้ลากมือถือเสร็จสิ้น!", Duration = 5})
--- [[ U-HUB SUPREME : MAIN LOADER ]]
--- ไฟล์นี้คือไฟล์ที่น้องหนึ่งใช้รันใน Executor ครับ
 
--- 1. โหลด Library (หัวใจของ UI)
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
--- 2. สร้างหน้าต่างหลัก (Window) - ต้องอยู่บนสุด!
-local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME 💎",
-    SubTitle = "by Nong Nueng",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Theme = "Dark"
-})
-
--- 3. ฝากตัวแปรไว้ในตู้เย็นกลาง (_G) เพื่อให้ไฟล์ย่อยรู้จักหน้าต่างนี้
-_G.Window = Window
-_G.Fluent = Fluent
-
--- 4. โหลดไฟล์พิกัด (Data) - ต้องโหลดก่อนปุ่มกด!
--- (ถ้าน้องหนึ่งยังไม่มีไฟล์แยก ให้ข้ามไปก่อนได้ แต่พี่ใส่เป็นโครงไว้ให้ครับ)
--- loadstring(game:HttpGet("https://raw.githubusercontent.com/ชื่อของน้องหนึ่ง/U-HUB/main/Data.lua"))()
-
--- 5. โหลดไฟล์ย่อยต่างๆ (Tabs/Buttons)
--- พี่จะแยกเป็นไฟล์ๆ เหมือน Redz Hub เลยนะครับ
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ชื่อของน้องหนึ่ง/U-HUB/main/FarmTab.lua"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ชื่อของน้องหนึ่ง/U-HUB/main/StatusTab.lua"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ชื่อของน้องหนึ่ง/U-HUB/main/SettingsTab.lua"))()
-
--- 6. แจ้งเตือนเมื่อโหลดเสร็จ
-Fluent:Notify({
-    Title = "U-HUB SUPREME",
-    Content = "โหลดทุกเมนูเรียบร้อยแล้วครับบอสหนึ่ง!",
-    Duration = 5
-})
--- [1] ล้าง UI เก่า (ถ้ามี)
-for i,v in pairs(game.CoreGui:GetChildren()) do
-    if v:IsA("ScreenGui") and v.Name == "Fluent" then
-        v:Destroy()
+-- ตัวอย่างตอนเปิด Toggle ใน UI ของบอส
+task.spawn(function()
+    while _G.AutoFarm do
+        task.wait()
+        pcall(function()
+            _G.EquipWeapon() -- จะหยิบแต่หมัดเท่านั้น!
+            
+            -- บินไปจ่อหัวมอนสเตอร์ (ระยะหมัดต้องใกล้หน่อย พี่ปรับให้เหลือ 2-3 หน่วย)
+            local TargetPos = CFrame.new(1060, 16, 1545) -- ตัวอย่างพิกัด
+            _G.SmartTween(TargetPos * CFrame.new(0, 0, 2)) 
+            
+            _G.FastAttack() -- ต่อยรัวๆ แบบ Redz
+        end)
     end
-end
+end)
 
--- [2] โหลด Library และสร้าง Window
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME",
-    SubTitle = "by Nong Nueng",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Theme = "Dark"
-})
 
--- [3] **สำคัญที่สุด** ฝากตัวแปร Window ไว้ให้ไฟล์ย่อย
-_G.Window = Window
-_G.Fluent = Fluent
-_G.Configs = {} -- สร้างถังเก็บค่าเปิด/ปิดฟาร์ม
+-- [[ ข้อมูลพิกัดมอนสเตอร์ โลก 1 ]]
+local Sea1_Quests = {
+    ["Bandit [Lv. 5]"] = CFrame.new(1060, 16, 1545),
+    ["Monkey [Lv. 14]"] = CFrame.new(-1618, 37, 150),
+    ["Gorilla [Lv. 20]"] = CFrame.new(-1140, 24, -510),
+    ["Pirate [Lv. 35]"] = CFrame.new(-1190, 14, 3915),
+    ["Brute [Lv. 45]"] = CFrame.new(-1355, 14, 4320),
+    ["Desert Bandit [Lv. 60]"] = CFrame.new(895, 6, 4385),
+    ["Desert Officer [Lv. 75]"] = CFrame.new(1570, 6, 4440),
+    ["Snow Bandit [Lv. 90]"] = CFrame.new(1290, 26, -5115),
+    ["Snowman [Lv. 100]"] = CFrame.new(1385, 26, -5450),
+    ["Chief Petty Officer [Lv. 120]"] = CFrame.new(-4855, 22, 4325),
+    ["Sky Bandit [Lv. 150]"] = CFrame.new(-4970, 278, -2825),
+    ["Dark Master [Lv. 175]"] = CFrame.new(-5225, 425, -2285),
+    ["Prisoner [Lv. 190]"] = CFrame.new(5305, 1, 475),
+    ["Dangerous Prisoner [Lv. 210]"] = CFrame.new(5420, 1, 475),
+    ["Warden [Lv. 220]"] = CFrame.new(5260, 1, 475), -- Boss
+    ["Tarsier [Lv. 250]"] = CFrame.new(-5215, 12, 8450),
+    ["Military Soldier [Lv. 300]"] = CFrame.new(-5400, 11, 8740)
+}
 
--- [4] โหลดไฟล์ย่อย (ลิงก์ GitHub ของน้องหนึ่ง)
-loadstring(game:HttpGet("ลิงก์_ไฟล์_เมนูฟาร์ม.lua"))()
-
-print("U-HUB : ระบบหลักเตรียมพร้อมแล้ว!")
+-- ตัวอย่างตอนเปิด Toggle ใน UI ของบอส
+task.spawn(function()
+    while _G.AutoFarm do
+        task.wait()
+        pcall(function()
+            _G.EquipWeapon() -- จะหยิบแต่หมัดเท่านั้น!
+            
+            -- บินไปจ่อหัวมอนสเตอร์ (ระยะหมัดต้องใกล้หน่อย พี่ปรับให้เหลือ 2-3 หน่วย)
+            local TargetPos = CFrame.new(1060, 16, 1545) -- ตัวอย่างพิกัด
+            _G.SmartTween(TargetPos * CFrame.new(0, 0, 2)) 
+            
+            _G.FastAttack() -- ต่อยรัวๆ แบบ Redz
+        end)
+    end
+end)
