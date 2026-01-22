@@ -177,56 +177,31 @@ Tabs.Misc:AddButton({
 Fluent:Notify({Title = "U-HUB SUPREME", Content = "โหลดระบบฟาร์มและแก้ลากมือถือเสร็จสิ้น!", Duration = 5})
 
 
--- ตัวอย่างตอนเปิด Toggle ใน UI ของบอส
-task.spawn(function()
-    while _G.AutoFarm do
-        task.wait()
-        pcall(function()
-            _G.EquipWeapon() -- จะหยิบแต่หมัดเท่านั้น!
-            
-            -- บินไปจ่อหัวมอนสเตอร์ (ระยะหมัดต้องใกล้หน่อย พี่ปรับให้เหลือ 2-3 หน่วย)
-            local TargetPos = CFrame.new(1060, 16, 1545) -- ตัวอย่างพิกัด
-            _G.SmartTween(TargetPos * CFrame.new(0, 0, 2)) 
-            
-            _G.FastAttack() -- ต่อยรัวๆ แบบ Redz
-        end)
-    end
-end)
+-- [[ U-HUB OPTIMIZER : SAFE MODE ]]
 
+-- 1. ระบบปลด FPS แบบเช็คเครื่อง (กัน Error nil value)
+if setfpscap ~= nil then
+    pcall(function() setfpscap(999) end)
+else
+    print("เครื่องบอสไม่รองรับการปลด FPS แต่รันต่อได้ครับ")
+end
 
--- [[ ข้อมูลพิกัดมอนสเตอร์ โลก 1 ]]
-local Sea1_Quests = {
-    ["Bandit [Lv. 5]"] = CFrame.new(1060, 16, 1545),
-    ["Monkey [Lv. 14]"] = CFrame.new(-1618, 37, 150),
-    ["Gorilla [Lv. 20]"] = CFrame.new(-1140, 24, -510),
-    ["Pirate [Lv. 35]"] = CFrame.new(-1190, 14, 3915),
-    ["Brute [Lv. 45]"] = CFrame.new(-1355, 14, 4320),
-    ["Desert Bandit [Lv. 60]"] = CFrame.new(895, 6, 4385),
-    ["Desert Officer [Lv. 75]"] = CFrame.new(1570, 6, 4440),
-    ["Snow Bandit [Lv. 90]"] = CFrame.new(1290, 26, -5115),
-    ["Snowman [Lv. 100]"] = CFrame.new(1385, 26, -5450),
-    ["Chief Petty Officer [Lv. 120]"] = CFrame.new(-4855, 22, 4325),
-    ["Sky Bandit [Lv. 150]"] = CFrame.new(-4970, 278, -2825),
-    ["Dark Master [Lv. 175]"] = CFrame.new(-5225, 425, -2285),
-    ["Prisoner [Lv. 190]"] = CFrame.new(5305, 1, 475),
-    ["Dangerous Prisoner [Lv. 210]"] = CFrame.new(5420, 1, 475),
-    ["Warden [Lv. 220]"] = CFrame.new(5260, 1, 475), -- Boss
-    ["Tarsier [Lv. 250]"] = CFrame.new(-5215, 12, 8450),
-    ["Military Soldier [Lv. 300]"] = CFrame.new(-5400, 11, 8740)
-}
+-- 2. ระบบภาพกาก (ใช้คำสั่งพื้นฐาน รันได้ทุกเครื่องแน่นอน)
+local function SimpleBoost()
+    pcall(function()
+        settings().Rendering.QualityLevel = 1
+        for _, v in pairs(game:GetDescendants()) do
+            if v:IsA("DataModelMesh") or v:IsA("FaceInstance") or v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                v:Destroy() -- ลบทิ้งเลยลื่นแน่นอน
+            elseif v:IsA("BasePart") then
+                v.Material = Enum.Material.Plastic
+                v.Reflectance = 0
+            end
+        end
+    end)
+end
 
--- ตัวอย่างตอนเปิด Toggle ใน UI ของบอส
-task.spawn(function()
-    while _G.AutoFarm do
-        task.wait()
-        pcall(function()
-            _G.EquipWeapon() -- จะหยิบแต่หมัดเท่านั้น!
-            
-            -- บินไปจ่อหัวมอนสเตอร์ (ระยะหมัดต้องใกล้หน่อย พี่ปรับให้เหลือ 2-3 หน่วย)
-            local TargetPos = CFrame.new(1060, 16, 1545) -- ตัวอย่างพิกัด
-            _G.SmartTween(TargetPos * CFrame.new(0, 0, 2)) 
-            
-            _G.FastAttack() -- ต่อยรัวๆ แบบ Redz
-        end)
-    end
-end)
+task.spawn(SimpleBoost)
+
+-- 3. กันแบนแบบพื้นฐาน (ไม่ใช้ hookmetamethod ที่อาจจะ Error)
+print("U-HUB Safe Mode: พร้อมลุยครับบอสหนึ่ง!")
