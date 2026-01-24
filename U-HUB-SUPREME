@@ -7,34 +7,37 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 math.randomseed(tick())
 
+-- [[ 1. SETTINGS CORE ]]
 _G.U_HUB_CORE = {
-    AimbotEnabled = false,
+    AutoLockNoClick = false, 
     AimPart = "Head",
     Sensitivity = 0.1,
     FovEnabled = true,
     FovRadius = 150,
+    LockMode = "Normal (ระยะสายตา)", 
     UnlockMouse = true
 }
 
--- [[ 1. สร้างหน้าต่าง ]]
+-- [[ 2. สร้างหน้าต่างหลัก ]]
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME",
     SubTitle = "BY Neung",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
+    Acrylic = false, 
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ 2. ระบบปลดเมาส์ ]]
-RunService.PostSimulation:Connect(function()
-    if not Window.Minimized and _G.U_HUB_CORE.UnlockMouse then
+-- [[ 3. ระบบปลดล็อคเมาส์ ]]
+RunService.RenderStepped:Connect(function()
+    if _G.U_HUB_CORE.UnlockMouse and not Window.Minimized then
         UserInputService.MouseIconEnabled = true
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
     end
 end)
 
--- [[ 3. ระบบปุ่มลอยวิบวับ (ห้ามหาย!) ]]
+-- [[ 4. ระบบปุ่มลอยวิบวับ (ห้ามลบ!) ]]
 local function SetupLogoV50(MainBtn)
     local Container = Instance.new("Frame", MainBtn)
     Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
@@ -71,23 +74,36 @@ MainBtn.InputBegan:Connect(function(input)
 end)
 UserInputService.InputChanged:Connect(function(input) if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then local delta = input.Position - dragStart; MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y) end end)
 
--- [[ 4. TABS ]]
+-- [[ 5. TABS ]]
 local Tabs = { Combat = Window:AddTab({ Title = "Combat", Icon = "target" }), Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }) }
-Tabs.Combat:AddToggle("MouseLock", {Title = "Unlock Mouse", Default = true}):OnChanged(function(v) _G.U_HUB_CORE.UnlockMouse = v end)
-Tabs.Combat:AddToggle("AimToggle", {Title = "Auto Lock", Default = false}):OnChanged(function(v) _G.U_HUB_CORE.AimbotEnabled = v end)
-Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.1, Min = 0.01, Max = 1, Rounding = 2, Callback = function(v) _G.U_HUB_CORE.Sensitivity = v end })
-Tabs.Visuals:AddToggle("ShowFOV", {Title = "Show FOV", Default = true}):OnChanged(function(v) _G.U_HUB_CORE.FovEnabled = v end)
-Tabs.Visuals:AddSlider("FOVSize", { Title = "FOV Radius", Default = 150, Min = 50, Max = 800, Rounding = 0, Callback = function(v) _G.U_HUB_CORE.FovRadius = v end })
 
--- [[ 5. LOGIC ENGINE ]]
+Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) 
+    _G.U_HUB_CORE.AutoLockNoClick = Value 
+end)
+
+Tabs.Combat:AddDropdown("LockType", {
+    Title = "โหมดความโหด",
+    Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"},
+    Default = "Normal (ระยะสายตา)",
+    Callback = function(Value)
+        _G.U_HUB_CORE.LockMode = Value
+    end
+})
+
+Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.1, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
+Tabs.Visuals:AddSlider("FOVSize", { Title = "POV Radius", Default = 150, Min = 50, Max = 800, Rounding = 0, Callback = function(Value) _G.U_HUB_CORE.FovRadius = Value end})
+
+-- [[ 6. LOGIC ENGINE ]]
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1; FOVCircle.NumSides = 100; FOVCircle.Filled = false; FOVCircle.Transparency = 0.8; FOVCircle.Color = Color3.fromRGB(0, 255, 100)
+FOVCircle.Thickness = 1; FOVCircle.NumSides = 100; FOVCircle.Color = Color3.fromRGB(255, 255, 255)
 
-local function IsVisible(Part)
-    local CastPoints = {Camera.CFrame.Position, Part.Position}
-    local Params = RaycastParams.new(); Params.FilterType = Enum.RaycastFilterType.Exclude; Params.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
-    local Result = workspace:Raycast(CastPoints[1], CastPoints[2] - CastPoints[1], Params)
-    return Result == nil or Result.Instance:IsDescendantOf(Part.Parent)
+local function IsVisible(TargetPart)
+    if _G.U_HUB_CORE.LockMode == "Hardcore (ล็อคโหด)" then return true end
+    local RayParams = RaycastParams.new()
+    RayParams.FilterType = Enum.RaycastFilterType.Exclude
+    RayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    local Result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position), RayParams)
+    return (Result == nil or Result.Instance:IsDescendantOf(TargetPart.Parent))
 end
 
 local function GetClosestPlayer()
@@ -97,9 +113,9 @@ local function GetClosestPlayer()
         if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) and v.Character.Humanoid.Health > 0 then
             local Part = v.Character[_G.U_HUB_CORE.AimPart]
             local ScreenPos, OnScreen = Camera:WorldToViewportPoint(Part.Position)
-            if OnScreen and IsVisible(Part) then
+            if OnScreen then
                 local MouseDist = (Center - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
-                if MouseDist < Distance then Distance = MouseDist; Target = v end
+                if MouseDist < Distance and IsVisible(Part) then Distance = MouseDist; Target = v end
             end
         end
     end
@@ -107,10 +123,12 @@ local function GetClosestPlayer()
 end
 
 RunService.RenderStepped:Connect(function()
-    FOVCircle.Visible = _G.U_HUB_CORE.FovEnabled and _G.U_HUB_CORE.AimbotEnabled
+    -- POV จะขึ้นเฉพาะตอนเปิด Auto Lock เท่านั้น!
+    FOVCircle.Visible = _G.U_HUB_CORE.AutoLockNoClick
     FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
     FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    if _G.U_HUB_CORE.AimbotEnabled then
+    
+    if _G.U_HUB_CORE.AutoLockNoClick then
         local Target = GetClosestPlayer()
         if Target then
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, Target.Character[_G.U_HUB_CORE.AimPart].Position), _G.U_HUB_CORE.Sensitivity)
@@ -119,42 +137,20 @@ RunService.RenderStepped:Connect(function()
 end)
 
 Window:SelectTab(1)
-Fluent:Notify({Title = "U-HUB", Content = "ปุ่มลอย + ล็อคเฉพาะที่เห็น มาแล้วครับ!", Duration = 5})
+Fluent:Notify({Title = "U-HUB", Content = "POV จะโชว์เฉพาะตอนเปิดล็อคแล้วนะน้องหนึ่ง!", Duration = 5})
 
 
--- [[ ระบบปลดเมาส์แบบบังคับ ]]
-RunService.RenderStepped:Connect(function()
-    if not Window.Minimized and _G.U_HUB_CORE.UnlockMouse then
-        UserInputService.MouseIconEnabled = true
-        -- บังคับโหมดเมาส์ให้เป็นอิสระ (ไม่โดนเกมดึงไปกลางจอ)
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-    elseif Window.Minimized then
-        -- ถ้าปิดเมนู ให้เมาส์กลับไปเป็นตามที่เกมกำหนด
-        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-    end
+Tabs.Visuals:AddColorpicker("POVColor", {
+    Title = "POV Color (สีวงกลม)",
+    Default = Color3.fromRGB(255, 255, 255) -- เริ่มต้นเป็นสีขาว
+}):OnChanged(function(Value)
+    FOVCircle.Color = Value
 end)
 
 
--- [ ปุ่มซ่อน/โชว์ FOV ]
-Tabs.Visuals:AddToggle("ShowFOV", {Title = "Show FOV Circle", Default = true}):OnChanged(function(v) 
-    _G.U_HUB_CORE.FovEnabled = v 
-end)
-
--- [ ปุ่มปลดเมาส์ ]
-Tabs.Combat:AddToggle("MouseLock", {Title = "Unlock Mouse", Default = true}):OnChanged(function(v) 
-    _G.U_HUB_CORE.UnlockMouse = v 
-end)
+Tabs.Visuals:AddToggle("EspBox", {Title = "มองทะลุ (กรอบ)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.EspBox = Value end)
+Tabs.Visuals:AddToggle("EspName", {Title = "มองทะลุ (ชื่อ)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.EspName = Value end)
 
 
-RunService.RenderStepped:Connect(function()
-    -- ถ้าปิด Toggle หรือไม่ได้เปิด Aimbot วงกลมจะหายไปทันที
-    if _G.U_HUB_CORE.FovEnabled and _G.U_HUB_CORE.AimbotEnabled then
-        FOVCircle.Visible = true
-        FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
-        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    else
-        FOVCircle.Visible = false
-    end
-end)
-
-
+_G.U_HUB_CORE.EspBox = false
+_G.U_HUB_CORE.EspName = false
