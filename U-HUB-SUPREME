@@ -233,44 +233,42 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- [[ 1. สร้างแท็บ ESP ]]
-local ESPTab = Window:AddTab({ Title = "ESP", Icon = "user" })
-
--- [[ 2. ปุ่มเปิด-ปิด ESP แต่ละแบบ ]]
-ESPTab:AddToggle("EspHigh", {Title = "เปิดเรืองแสง (Highlight)", Default = false}):OnChanged(function(Value)
-    _G.U_HUB_CORE.EspHighlight = Value
+-- [[ 1. ปุ่มเปิด-ปิด ESP แบบเรืองแสง ]]
+Tabs.ESP:AddToggle("EspHigh", {Title = "เปิดมองทะลุ (Highlight)", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspEnabled = Value
 end)
 
-ESPTab:AddToggle("EspBox", {Title = "เปิดกล่อง (Box ESP)", Default = false}):OnChanged(function(Value)
-    _G.U_HUB_CORE.EspBox = Value
+-- [[ 2. ปุ่มเปิด-ปิด ESP แบบกล่อง (Box) ]]
+Tabs.ESP:AddToggle("EspBox", {Title = "เปิดมองทะลุ (กล่องปกติ)", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspBoxEnabled = Value
 end)
 
--- [[ 3. ตัวเลือกสีและความใส (ใช้ร่วมกัน) ]]
-ESPTab:AddColorpicker("EspColor", {
-    Title = "เลือกสี ESP",
+-- [[ 3. ตัวตั้งค่าสีและใส (ใช้ร่วมกันทั้ง 2 แบบ) ]]
+Tabs.ESP:AddColorpicker("EspColor", {
+    Title = "เลือกสีตัวละคร",
     Default = Color3.fromRGB(255, 0, 0)
 }):OnChanged(function(Value)
     _G.U_HUB_CORE.EspColor = Value
 end)
 
-ESPTab:AddSlider("EspTrans", {
-    Title = "ความชัด/ใส",
+Tabs.ESP:AddSlider("EspTrans", {
+    Title = "ความใสของสี",
     Default = 0.5, Min = 0, Max = 1, Rounding = 1,
     Callback = function(Value) _G.U_HUB_CORE.EspTrans = Value end
 })
 
--- [[ 4. ระบบทำงาน (วางล่างสุดของโค้ดทั้งหมด) ]]
+-- [[ 4. ระบบทำงานของทั้ง 2 แบบ (วางล่างสุดของสคริปต์) ]]
 RunService.RenderStepped:Connect(function()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local char = player.Character
             
-            -- -- [ ระบบเรืองแสง (Highlight) ] -- --
-            local highlight = char:FindFirstChild("U_Highlight")
-            if _G.U_HUB_CORE.EspHighlight then
+            -- คุมแบบเรืองแสง (Highlight)
+            local highlight = char:FindFirstChild("U_ESP_Highlight")
+            if _G.U_HUB_CORE.EspEnabled then
                 if not highlight then
                     highlight = Instance.new("Highlight", char)
-                    highlight.Name = "U_Highlight"
+                    highlight.Name = "U_ESP_Highlight"
                 end
                 highlight.Enabled = true
                 highlight.FillColor = _G.U_HUB_CORE.EspColor
@@ -279,14 +277,14 @@ RunService.RenderStepped:Connect(function()
                 highlight.Enabled = false
             end
 
-            -- -- [ ระบบกล่อง (Box) ] -- --
-            -- (ตัวอย่างใช้ SelectionBox แบบง่ายที่สุด)
-            local box = char:FindFirstChild("U_Box")
-            if _G.U_HUB_CORE.EspBox then
+            -- คุมแบบกล่อง (Box)
+            local box = char:FindFirstChild("U_ESP_Box")
+            if _G.U_HUB_CORE.EspBoxEnabled then
                 if not box then
                     box = Instance.new("SelectionBox", char)
-                    box.Name = "U_Box"
+                    box.Name = "U_ESP_Box"
                     box.Adornee = char
+                    box.LineThickness = 0.05
                 end
                 box.Visible = true
                 box.Color3 = _G.U_HUB_CORE.EspColor
