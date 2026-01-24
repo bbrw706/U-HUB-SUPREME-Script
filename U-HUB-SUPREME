@@ -205,34 +205,6 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- 1. เพิ่มปุ่มใหม่ในหน้า Visuals
-local POV_Toggle = Tabs.Visuals:AddToggle("ShowPOV_New", {
-    Title = "แสดงวงกลม POV", 
-    Default = true
-})
-
-_G.POV_Visible_Status = true
-
-POV_Toggle:OnChanged(function(Value)
-    _G.POV_Visible_Status = Value
-end)
-
--- 2. ระบบสั่งปิดแบบ "บังคับ" (วางต่อกันเลย)
-RunService.RenderStepped:Connect(function()
-    if FOVCircle then
-        -- ถ้ากด "ปิด" ปุ่ม หรือ ไม่ได้เปิด AutoLock
-        -- จะสั่งให้วงกลม "หายตัว" ทันทีแบบรัวๆ เพื่อชนะโค้ดเก่า
-        if _G.POV_Visible_Status == false or _G.U_HUB_CORE.AutoLockNoClick == false then
-            FOVCircle.Visible = false
-            FOVCircle.Transparency = 0 -- ล่องหนแบบ 100%
-        else
-            FOVCircle.Visible = true
-            FOVCircle.Transparency = 1 -- กลับมาโชว์ปกติ
-        end
-    end
-end)
-
-
 -- [[ สร้าง Dropdown แบบในรูป ]]
 Tabs.Visuals:AddDropdown("ESPType", {
     Title = "เลือกรูปแบบการมอง",
@@ -252,3 +224,33 @@ Tabs.Visuals:AddDropdown("ESPType", {
         end
     end
 })
+
+
+-- ระบบวาด ESP (วางล่างสุดของไฟล์)
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= game.Players.LocalPlayer and player.Character then
+                    local char = player.Character
+                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
+                    highlight.Name = "U_ESP_Master"
+                    
+                    if _G.ESP_Selected == "ตัวละครเรืองแสง" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 0.5 -- ความใสตัวละคร
+                        highlight.OutlineTransparency = 1 -- ปิดเส้นขอบ
+                        highlight.FillColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255,0,0)
+                    elseif _G.ESP_Selected == "เส้นรอบขอบตัว" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 1 -- ปิดสีตัวละคร
+                        highlight.OutlineTransparency = 0 -- เปิดเส้นขอบ
+                        highlight.OutlineColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255,0,0)
+                    else
+                        highlight.Enabled = false -- ถ้าเลือก "ปิด"
+                    end
+                end
+            end
+        end)
+    end
+end)
