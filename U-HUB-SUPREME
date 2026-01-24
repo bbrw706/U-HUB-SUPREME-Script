@@ -267,3 +267,54 @@ task.spawn(function()
         end)
     end
 end)
+
+
+-- [[ ระบบป้องกันการตรวจจับเบื้องต้น ]]
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+local function AntiBan()
+    local g = getgenv()
+    -- ซ่อนสคริปต์จากการตรวจจับ
+    if g.hookmetamethod then
+        local old; old = hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            if not checkcaller() and (method == "Kick" or method == "kick") then
+                return nil -- บล็อกการสั่งเตะออกจากเกม
+            end
+            return old(self, ...)
+        end)
+    end
+end
+pcall(AntiBan)
+
+
+-- [[ 1. ปุ่มเลือกรูปแบบ ESP ]]
+Tabs.ESP:AddDropdown("ESP_Mode", {
+    Title = "เลือกรูปแบบการมอง",
+    Values = {"ปิด", "เรืองแสง (Chams)", "เส้นรอบตัว (Outline)"},
+    Default = "ปิด",
+    Callback = function(Value)
+        _G.ESP_Selected = Value
+    end
+})
+
+-- [[ 2. ตัวเลือกสี ]]
+Tabs.ESP:AddColorpicker("EspColor", {
+    Title = "สีของ ESP",
+    Default = Color3.fromRGB(255, 0, 0)
+}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspColor = Value
+end)
+
+-- [[ 3. แสดงวงกลม FOV (พี่ใส่กลับมาให้ครบแล้วนะ) ]]
+Tabs.ESP:AddToggle("ShowFOV", {Title = "แสดงวงกลม FOV", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.ShowFOV = Value
+end)
+
+-- [[ 4. ปุ่มเปิดระบบกันแบน (เพิ่มความมั่นใจ) ]]
+Tabs.ESP:AddToggle("AntiBanActive", {
+    Title = "ระบบกันแบน (Safe Mode)", 
+    Default = true
+}):OnChanged(function(Value)
+    _G.AntiBanEnabled = Value
+end)
