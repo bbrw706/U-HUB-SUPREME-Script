@@ -205,17 +205,17 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- [[ 1. ปุ่มเลือกรูปแบบ ESP (วางไว้ในหน้า ESP) ]]
+-- [[ 1. เลือกโหมด ESP ]]
 Tabs.ESP:AddDropdown("ESP_Mode", {
     Title = "เลือกรูปแบบการมอง",
-    Values = {"ปิด", "ตัวละครเรืองแสง (Chams)", "เส้นรอบขอบตัว (Outline)"},
+    Values = {"ปิด", "เรืองแสง (Chams)", "เส้นรอบตัว (Outline)"},
     Default = "ปิด",
     Callback = function(Value)
         _G.ESP_Selected = Value
     end
 })
 
--- [[ 2. ตัวปรับสี (ถ้ามีอยู่แล้วไม่ต้องก๊อปไปซ้ำนะ) ]]
+-- [[ 2. ตัวเลือกสี ]]
 Tabs.ESP:AddColorpicker("EspColor", {
     Title = "สีของ ESP",
     Default = Color3.fromRGB(255, 0, 0)
@@ -223,32 +223,47 @@ Tabs.ESP:AddColorpicker("EspColor", {
     _G.U_HUB_CORE.EspColor = Value
 end)
 
+-- [[ 3. ส่วนของ FOV (ที่หายไป พี่เอาคืนมาให้แล้ว!) ]]
+Tabs.ESP:AddToggle("ShowFOV", {Title = "แสดงวงกลม FOV", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.ShowFOV = Value
+end)
 
-task.spawn(function()
-    while task.wait() do
-        pcall(function()
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= game.Players.LocalPlayer and player.Character then
-                    local char = player.Character
-                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
-                    highlight.Name = "U_ESP_Master"
-                    
-                    -- เช็คค่าจาก Dropdown
-                    if _G.ESP_Selected == "ตัวละครเรืองแสง (Chams)" then
-                        highlight.Enabled = true
-                        highlight.FillTransparency = 0.5 
-                        highlight.OutlineTransparency = 1 
-                        highlight.FillColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255,0,0)
-                    elseif _G.ESP_Selected == "เส้นรอบขอบตัว (Outline)" then
-                        highlight.Enabled = true
-                        highlight.FillTransparency = 1 
-                        highlight.OutlineTransparency = 0 
-                        highlight.OutlineColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255,0,0)
-                    else
-                        highlight.Enabled = false -- ถ้าเลือก "ปิด"
-                    end
-                end
+Tabs.ESP:AddSlider("FOVSize", {
+    Title = "ขนาดวงกลม FOV",
+    Default = 100, Min = 10, Max = 500, Rounding = 0,
+    Callback = function(Value) _G.U_HUB_CORE.FOVSize = Value end
+})
+
+
+-- ระบบทำงาน (วางท้ายไฟล์)
+local RunService = game:GetService("RunService")
+RunService.RenderStepped:Connect(function()
+    -- [ ควบคุม ESP ]
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character then
+            local char = player.Character
+            local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
+            highlight.Name = "U_ESP_Master"
+            
+            if _G.ESP_Selected == "เรืองแสง (Chams)" then
+                highlight.Enabled = true
+                highlight.FillTransparency = 0.5
+                highlight.OutlineTransparency = 1
+                highlight.FillColor = _G.U_HUB_CORE.EspColor
+            elseif _G.ESP_Selected == "เส้นรอบตัว (Outline)" then
+                highlight.Enabled = true
+                highlight.FillTransparency = 1
+                highlight.OutlineTransparency = 0
+                highlight.OutlineColor = _G.U_HUB_CORE.EspColor
+            else
+                highlight.Enabled = false
             end
-        end)
+        end
+    end
+
+    -- [ ควบคุม FOV (วงกลม) ]
+    if _G.U_HUB_CORE.ShowFOV then
+        -- ตรงนี้ใส่โค้ด Drawing ของ FOV ที่น้องหนึ่งเคยมีได้เลยครับ
+        -- ถ้าไม่มี บอกพี่นะ เดี๋ยวพี่เขียนตัววาดวงกลมให้ใหม่ด้วย!
     end
 end)
