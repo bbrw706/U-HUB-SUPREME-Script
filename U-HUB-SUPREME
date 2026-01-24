@@ -302,3 +302,36 @@ Tabs.Visuals:AddSlider("OutlineThickness", {
         _G.OutlineThickness = Value
     end
 })
+
+
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= game.Players.LocalPlayer and player.Character then
+                    local char = player.Character
+                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
+                    highlight.Name = "U_ESP_Master"
+                    
+                    local useColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255, 0, 0)
+                    local thickness = _G.OutlineThickness or 2 -- ถ้าไม่ได้ปรับ ให้หนา 2 เป็นค่าเริ่มต้น
+                    
+                    if _G.ESP_Selected == "ตัวเรืองแสง (Chams)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 0.5
+                        highlight.OutlineTransparency = 1
+                        highlight.FillColor = useColor
+                    elseif _G.ESP_Selected == "เส้นขอบ (Outline)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 1
+                        highlight.OutlineTransparency = 0
+                        highlight.OutlineColor = useColor
+                        highlight.OutlineThickness = thickness -- << เพิ่มบรรทัดนี้เพื่อปรับความหนาครับ!
+                    else
+                        highlight.Enabled = false
+                    end
+                end
+            end
+        end)
+    end
+end)
