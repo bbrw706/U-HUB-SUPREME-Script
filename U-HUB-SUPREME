@@ -233,38 +233,45 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- 1. เพิ่มปุ่มเลือกในหน้า ESP (ต่อจากปุ่มเดิมของน้อง)
-Tabs.ESP:AddToggle("EspOutlineNoGlow", {
-    Title = "แบบที่ 2: เส้นขอบ (ไม่เรืองแสง)", 
-    Default = false
-}):OnChanged(function(Value)
-    _G.U_HUB_CORE.EspNoGlow = Value
-end)
+-- 1. สร้าง Dropdown ในหน้า ESP (เลือกโหมดเดียวจบ)
+Tabs.ESP:AddDropdown("ESP_Modes", {
+    Title = "เลือกโหมดมองทะลุ",
+    Values = {"ปิด", "แบบเรืองแสง (Highlight)", "แบบเส้นขอบ (ไม่เรืองแสง)"},
+    Default = "ปิด",
+    Callback = function(Value)
+        _G.U_HUB_CORE.CurrentEspMode = Value
+    end
+})
 
--- 2. ระบบทำงาน (วางล่างสุดของโค้ด)
+-- 2. ระบบทำงานตามโหมดที่เลือก (วางต่อกันเลย)
 RunService.RenderStepped:Connect(function()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local char = player.Character
-            local hl = char:FindFirstChild("U_ESP_NoGlow")
+            local hl = char:FindFirstChild("U_ESP_Universal")
             
-            if _G.U_HUB_CORE.EspNoGlow then
+            -- ถ้าเลือก "ปิด" ให้ลบออก
+            if _G.U_HUB_CORE.CurrentEspMode == "ปิด" or not _G.U_HUB_CORE.CurrentEspMode then
+                if hl then hl:Destroy() end
+            else
+                -- ถ้ายังไม่มี Highlight ให้สร้างใหม่
                 if not hl then
                     hl = Instance.new("Highlight")
-                    hl.Name = "U_ESP_NoGlow"
+                    hl.Name = "U_ESP_Universal"
                     hl.Parent = char
                 end
-                
-                hl.Enabled = true
-                hl.FillTransparency = 1 -- ข้างในใส
-                hl.OutlineColor = _G.U_HUB_CORE.EspColor -- สีตามที่น้องเลือก
-                hl.OutlineTransparency = 0 -- เส้นชัดแต่ไม่ฟุ้ง
-                
-                -- ทริคทำให้ไม่เรืองแสง: พี่จะสั่งให้มันทำงานแค่ตอนมองเห็นในระยะ
-                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop 
-            else
-                if hl then
-                    hl.Enabled = false
+
+                -- ตั้งค่าตามโหมดที่เลือก
+                if _G.U_HUB_CORE.CurrentEspMode == "แบบเรืองแสง (Highlight)" then
+                    hl.Enabled = true
+                    hl.FillColor = _G.U_HUB_CORE.EspColor
+                    hl.FillTransparency = _G.U_HUB_CORE.EspTrans
+                    hl.OutlineTransparency = 0 -- มีแสงฟุ้งรอบๆ
+                elseif _G.U_HUB_CORE.CurrentEspMode == "แบบเส้นขอบ (ไม่เรืองแสง)" then
+                    hl.Enabled = true
+                    hl.FillTransparency = 1 -- ข้างในใสแจ๋ว
+                    hl.OutlineColor = _G.U_HUB_CORE.EspColor
+                    hl.OutlineTransparency = 0 -- เส้นขอบคมๆ
                 end
             end
         end
