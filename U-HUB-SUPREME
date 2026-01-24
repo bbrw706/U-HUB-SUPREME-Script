@@ -215,7 +215,7 @@ Tabs.ESP:AddDropdown("ESP_Mode", {
     end
 })
 
--- [[ 2. ตัวเลือกสี ]]
+-- [[ 2. ตัวเลือกสี (เพิ่มเช็คสีกันค้าง) ]]
 Tabs.ESP:AddColorpicker("EspColor", {
     Title = "สีของ ESP",
     Default = Color3.fromRGB(255, 0, 0)
@@ -223,47 +223,47 @@ Tabs.ESP:AddColorpicker("EspColor", {
     _G.U_HUB_CORE.EspColor = Value
 end)
 
--- [[ 3. ส่วนของ FOV (ที่หายไป พี่เอาคืนมาให้แล้ว!) ]]
+-- [[ 3. FOV (เอาไว้ที่เดิม) ]]
 Tabs.ESP:AddToggle("ShowFOV", {Title = "แสดงวงกลม FOV", Default = false}):OnChanged(function(Value)
     _G.U_HUB_CORE.ShowFOV = Value
 end)
 
-Tabs.ESP:AddSlider("FOVSize", {
-    Title = "ขนาดวงกลม FOV",
-    Default = 100, Min = 10, Max = 500, Rounding = 0,
-    Callback = function(Value) _G.U_HUB_CORE.FOVSize = Value end
-})
 
-
--- ระบบทำงาน (วางท้ายไฟล์)
-local RunService = game:GetService("RunService")
-RunService.RenderStepped:Connect(function()
-    -- [ ควบคุม ESP ]
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer and player.Character then
-            local char = player.Character
-            local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
-            highlight.Name = "U_ESP_Master"
-            
-            if _G.ESP_Selected == "เรืองแสง (Chams)" then
-                highlight.Enabled = true
-                highlight.FillTransparency = 0.5
-                highlight.OutlineTransparency = 1
-                highlight.FillColor = _G.U_HUB_CORE.EspColor
-            elseif _G.ESP_Selected == "เส้นรอบตัว (Outline)" then
-                highlight.Enabled = true
-                highlight.FillTransparency = 1
-                highlight.OutlineTransparency = 0
-                highlight.OutlineColor = _G.U_HUB_CORE.EspColor
-            else
-                highlight.Enabled = false
+-- ระบบทำงาน (วางล่างสุดของไฟล์)
+task.spawn(function()
+    while true do
+        task.wait(0.1) -- ช่วยลดอาการแล็ก
+        pcall(function()
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= game.Players.LocalPlayer and player.Character then
+                    local char = player.Character
+                    local highlight = char:FindFirstChild("U_ESP_Master")
+                    
+                    -- ถ้ายังไม่มี Highlight ให้สร้างใหม่
+                    if not highlight then
+                        highlight = Instance.new("Highlight")
+                        highlight.Name = "U_ESP_Master"
+                        highlight.Parent = char
+                    end
+                    
+                    -- ดึงสีที่เลือกมาใช้ (ถ้าไม่มีให้ใช้สีแดง)
+                    local useColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255, 0, 0)
+                    
+                    if _G.ESP_Selected == "เรืองแสง (Chams)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 0.5
+                        highlight.OutlineTransparency = 1
+                        highlight.FillColor = useColor
+                    elseif _G.ESP_Selected == "เส้นรอบตัว (Outline)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 1
+                        highlight.OutlineTransparency = 0
+                        highlight.OutlineColor = useColor
+                    else
+                        highlight.Enabled = false -- ปิดเมื่อเลือก "ปิด"
+                    end
+                end
             end
-        end
-    end
-
-    -- [ ควบคุม FOV (วงกลม) ]
-    if _G.U_HUB_CORE.ShowFOV then
-        -- ตรงนี้ใส่โค้ด Drawing ของ FOV ที่น้องหนึ่งเคยมีได้เลยครับ
-        -- ถ้าไม่มี บอกพี่นะ เดี๋ยวพี่เขียนตัววาดวงกลมให้ใหม่ด้วย!
+        end)
     end
 end)
