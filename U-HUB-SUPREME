@@ -335,3 +335,62 @@ task.spawn(function()
         end)
     end
 end)
+
+
+
+-- [[ 1. เลือกรูปแบบ (เรืองแสง หรือ เส้นขอบ) ]]
+Tabs.Visuals:AddDropdown("ESP_Style", {
+    Title = "เลือกรูปแบบ ESP",
+    Values = {"ปิด", "ตัวเรืองแสง (Chams)", "เส้นขอบ (Outline)"},
+    Default = "ปิด",
+    Callback = function(Value) _G.ESP_Selected = Value end
+})
+
+-- [[ 2. ตัวเปลี่ยนสีอันเดียวจบ (คุมทุกอย่าง) ]]
+Tabs.Visuals:AddColorpicker("MainEspColor", {
+    Title = "เปลี่ยนสีตัวละคร",
+    Default = Color3.fromRGB(255, 0, 0)
+}):OnChanged(function(Value)
+    _G.MainColor = Value -- ใช้ตัวแปรเดียวคุมสีทั้งสคริปต์
+end)
+
+-- [[ 3. ปรับความกว้างเส้นขอบ ]]
+Tabs.Visuals:AddSlider("OutlineThickness", {
+    Title = "ความหนาของเส้น",
+    Default = 2, Min = 1, Max = 10, Rounding = 1,
+    Callback = function(Value) _G.Thickness = Value end
+})
+
+
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= game.Players.LocalPlayer and player.Character then
+                    local char = player.Character
+                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
+                    highlight.Name = "U_ESP_Master"
+                    
+                    -- ดึงสีจากอันเดียวที่เลือก
+                    local color = _G.MainColor or Color3.fromRGB(255, 0, 0)
+                    local thick = _G.Thickness or 2
+                    
+                    if _G.ESP_Selected == "ตัวเรืองแสง (Chams)" then
+                        highlight.Enabled = true
+                        highlight.FillColor = color
+                        highlight.FillTransparency = 0.5
+                        highlight.OutlineTransparency = 1 -- ปิดขอบตอนเรืองแสง
+                    elseif _G.ESP_Selected == "เส้นขอบ (Outline)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 1    -- ปิดสีตัว (เอาแต่ขอบ)
+                        highlight.OutlineColor = color
+                        highlight.OutlineTransparency = 0
+                        highlight.OutlineThickness = thick
+                    else
+                        highlight.Enabled = false
+                    end
+                end
+            end
+        end)
+    end
+end)
