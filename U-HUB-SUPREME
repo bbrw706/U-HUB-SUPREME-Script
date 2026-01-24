@@ -233,46 +233,66 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- 1. สร้าง Dropdown ในหน้า ESP (เลือกโหมดเดียวจบ)
-Tabs.ESP:AddDropdown("ESP_Modes", {
-    Title = "เลือกโหมดมองทะลุ",
-    Values = {"ปิด", "แบบเรืองแสง (Highlight)", "แบบเส้นขอบ (ไม่เรืองแสง)"},
-    Default = "ปิด",
-    Callback = function(Value)
-        _G.U_HUB_CORE.CurrentEspMode = Value
-    end
+-- [[ 1. สร้างแท็บ ESP ]]
+local ESPTab = Window:AddTab({ Title = "ESP", Icon = "user" })
+
+-- [[ 2. ปุ่มเปิด-ปิด ESP แต่ละแบบ ]]
+ESPTab:AddToggle("EspHigh", {Title = "เปิดเรืองแสง (Highlight)", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspHighlight = Value
+end)
+
+ESPTab:AddToggle("EspBox", {Title = "เปิดกล่อง (Box ESP)", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspBox = Value
+end)
+
+-- [[ 3. ตัวเลือกสีและความใส (ใช้ร่วมกัน) ]]
+ESPTab:AddColorpicker("EspColor", {
+    Title = "เลือกสี ESP",
+    Default = Color3.fromRGB(255, 0, 0)
+}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspColor = Value
+end)
+
+ESPTab:AddSlider("EspTrans", {
+    Title = "ความชัด/ใส",
+    Default = 0.5, Min = 0, Max = 1, Rounding = 1,
+    Callback = function(Value) _G.U_HUB_CORE.EspTrans = Value end
 })
 
--- 2. ระบบทำงานตามโหมดที่เลือก (วางต่อกันเลย)
+-- [[ 4. ระบบทำงาน (วางล่างสุดของโค้ดทั้งหมด) ]]
 RunService.RenderStepped:Connect(function()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local char = player.Character
-            local hl = char:FindFirstChild("U_ESP_Universal")
             
-            -- ถ้าเลือก "ปิด" ให้ลบออก
-            if _G.U_HUB_CORE.CurrentEspMode == "ปิด" or not _G.U_HUB_CORE.CurrentEspMode then
-                if hl then hl:Destroy() end
-            else
-                -- ถ้ายังไม่มี Highlight ให้สร้างใหม่
-                if not hl then
-                    hl = Instance.new("Highlight")
-                    hl.Name = "U_ESP_Universal"
-                    hl.Parent = char
+            -- -- [ ระบบเรืองแสง (Highlight) ] -- --
+            local highlight = char:FindFirstChild("U_Highlight")
+            if _G.U_HUB_CORE.EspHighlight then
+                if not highlight then
+                    highlight = Instance.new("Highlight", char)
+                    highlight.Name = "U_Highlight"
                 end
+                highlight.Enabled = true
+                highlight.FillColor = _G.U_HUB_CORE.EspColor
+                highlight.FillTransparency = _G.U_HUB_CORE.EspTrans
+            elseif highlight then
+                highlight.Enabled = false
+            end
 
-                -- ตั้งค่าตามโหมดที่เลือก
-                if _G.U_HUB_CORE.CurrentEspMode == "แบบเรืองแสง (Highlight)" then
-                    hl.Enabled = true
-                    hl.FillColor = _G.U_HUB_CORE.EspColor
-                    hl.FillTransparency = _G.U_HUB_CORE.EspTrans
-                    hl.OutlineTransparency = 0 -- มีแสงฟุ้งรอบๆ
-                elseif _G.U_HUB_CORE.CurrentEspMode == "แบบเส้นขอบ (ไม่เรืองแสง)" then
-                    hl.Enabled = true
-                    hl.FillTransparency = 1 -- ข้างในใสแจ๋ว
-                    hl.OutlineColor = _G.U_HUB_CORE.EspColor
-                    hl.OutlineTransparency = 0 -- เส้นขอบคมๆ
+            -- -- [ ระบบกล่อง (Box) ] -- --
+            -- (ตัวอย่างใช้ SelectionBox แบบง่ายที่สุด)
+            local box = char:FindFirstChild("U_Box")
+            if _G.U_HUB_CORE.EspBox then
+                if not box then
+                    box = Instance.new("SelectionBox", char)
+                    box.Name = "U_Box"
+                    box.Adornee = char
                 end
+                box.Visible = true
+                box.Color3 = _G.U_HUB_CORE.EspColor
+                box.Transparency = _G.U_HUB_CORE.EspTrans
+            elseif box then
+                box.Visible = false
             end
         end
     end
