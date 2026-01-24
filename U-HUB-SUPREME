@@ -259,39 +259,6 @@ EspColor:OnChanged(function(Value)
 end)
 
 
--- [[ ย้ายมาหน้า Visuals ตามสั่งครับน้องหนึ่ง ]]
-
--- 1. เลือกรูปแบบ ESP (เรืองแสง หรือ เส้นขอบ)
-local ESP_Style = Tabs.Visuals:AddDropdown("ESP_Style", {
-    Title = "เลือกรูปแบบการมอง",
-    Values = {"ปิด", "ตัวเรืองแสง (Chams)", "เส้นขอบ (Outline)"},
-    Multi = false,
-    Default = "ปิด",
-})
-
-ESP_Style:OnChanged(function(Value)
-    _G.ESP_Selected = Value
-end)
-
--- 2. ตัวเปลี่ยนสีอันเดียว คุมทุกอย่าง
-local EspColor = Tabs.Visuals:AddColorpicker("EspColor", {
-    Title = "สีของ ESP",
-    Default = Color3.fromRGB(255, 0, 0)
-})
-
-EspColor:OnChanged(function(Value)
-    _G.U_HUB_CORE.EspColor = Value
-end)
-
--- 3. ปุ่มซ่อน/เปิด FOV
-Tabs.Visuals:AddToggle("ShowFOV", {
-    Title = "แสดงวงกลม FOV", 
-    Default = false 
-}):OnChanged(function(Value)
-    _G.U_HUB_CORE.ShowFOV = Value
-end)
-
-
 task.spawn(function()
     while task.wait(0.1) do
         pcall(function()
@@ -321,3 +288,17 @@ task.spawn(function()
         end)
     end
 end)
+
+
+-- ปุ่มปรับความหนาของเส้นขอบ ESP
+Tabs.Visuals:AddSlider("OutlineThickness", {
+    Title = "ความหนาของเส้นขอบ",
+    Description = "ใช้ปรับความหนาเวลาเลือกโหมด Outline",
+    Default = 2,
+    Min = 1,
+    Max = 10,
+    Rounding = 1,
+    Callback = function(Value)
+        _G.OutlineThickness = Value
+    end
+})
