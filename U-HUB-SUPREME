@@ -147,10 +147,87 @@ Tabs.Visuals:AddColorpicker("POVColor", {
     FOVCircle.Color = Value
 end)
 
+-- [ สร้างแท็บใหม่ชื่อ ESP        มองทะลุ        ]
+Tabs.ESP = Window:AddTab({ Title = "ESP", Icon = "eye" })
 
-Tabs.Visuals:AddToggle("EspBox", {Title = "มองทะลุ (กรอบ)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.EspBox = Value end)
-Tabs.Visuals:AddToggle("EspName", {Title = "มองทะลุ (ชื่อ)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.EspName = Value end)
+-- [ เพิ่มปุ่มควบคุมในแท็บ ESP ]
+Tabs.ESP:AddToggle("EspHigh", {Title = "เปิดมองทะลุ (Highlight)", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspEnabled = Value
+end)
+
+Tabs.ESP:AddColorpicker("EspColor", {
+    Title = "เลือกสีตัวละคร",
+    Default = Color3.fromRGB(255, 0, 0)
+}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspColor = Value
+end)
+
+Tabs.ESP:AddSlider("EspTrans", {
+    Title = "ความใสของสี",
+    Default = 0.5,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+    Callback = function(Value)
+        _G.U_HUB_CORE.EspTrans = Value
+    end
+})
 
 
-_G.U_HUB_CORE.EspBox = false
-_G.U_HUB_CORE.EspName = false
+_G.U_HUB_CORE.EspEnabled = false
+_G.U_HUB_CORE.EspColor = Color3.fromRGB(255, 0, 0)
+_G.U_HUB_CORE.EspTrans = 0.5
+
+
+-- [[ ระบบ ESP Highlight ทำงานแยกส่วน ]]
+RunService.RenderStepped:Connect(function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local highlight = player.Character:FindFirstChild("U_ESP_Highlight")
+            
+            if _G.U_HUB_CORE.EspEnabled then
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "U_ESP_Highlight"
+                    highlight.Parent = player.Character
+                end
+                highlight.Enabled = true
+                highlight.FillColor = _G.U_HUB_CORE.EspColor
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- ขอบขาวเสมอให้เห็นชัด
+                highlight.FillTransparency = _G.U_HUB_CORE.EspTrans
+            else
+                if highlight then
+                    highlight.Enabled = false
+                end
+            end
+        end
+    end
+end)
+
+
+-- 1. เพิ่มปุ่มใหม่ในหน้า Visuals
+local POV_Toggle = Tabs.Visuals:AddToggle("ShowPOV_New", {
+    Title = "แสดงวงกลม POV", 
+    Default = true
+})
+
+_G.POV_Visible_Status = true
+
+POV_Toggle:OnChanged(function(Value)
+    _G.POV_Visible_Status = Value
+end)
+
+-- 2. ระบบสั่งปิดแบบ "บังคับ" (วางต่อกันเลย)
+RunService.RenderStepped:Connect(function()
+    if FOVCircle then
+        -- ถ้ากด "ปิด" ปุ่ม หรือ ไม่ได้เปิด AutoLock
+        -- จะสั่งให้วงกลม "หายตัว" ทันทีแบบรัวๆ เพื่อชนะโค้ดเก่า
+        if _G.POV_Visible_Status == false or _G.U_HUB_CORE.AutoLockNoClick == false then
+            FOVCircle.Visible = false
+            FOVCircle.Transparency = 0 -- ล่องหนแบบ 100%
+        else
+            FOVCircle.Visible = true
+            FOVCircle.Transparency = 1 -- กลับมาโชว์ปกติ
+        end
+    end
+end)
