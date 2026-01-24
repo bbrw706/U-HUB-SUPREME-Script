@@ -236,29 +236,88 @@ end
 pcall(SecureScript)
 
 
--- [[ สร้างตัวเลือกรูปแบบ ESP ในแท็บ ESP ]]
-Tabs.ESP:AddDropdown("ESP_Style_Selection", {
-    Title = "รูปแบบการมองทะลุ",
-    Values = {"ปิดการใช้งาน", "เรืองแสง (Chams)", "เส้นรอบตัว (Outline)"},
-    Default = "ปิดการใช้งาน",
-    Callback = function(Value)
-        if Value == "ปิดการใช้งาน" then
-            _G.U_HUB_CORE.EspChams = false
-            _G.U_HUB_CORE.EspOutline = false
-        elseif Value == "เรืองแสง (Chams)" then
-            _G.U_HUB_CORE.EspChams = true
-            _G.U_HUB_CORE.EspOutline = false
-        elseif Value == "เส้นรอบตัว (Outline)" then
-            _G.U_HUB_CORE.EspChams = false
-            _G.U_HUB_CORE.EspOutline = true
-        end
-    end
+-- [[ 1. เลือกรูปแบบ ESP (เอาแค่ 2 แบบตามสั่งเลย) ]]
+local ESP_Style = Tabs.ESP:AddDropdown("ESP_Style", {
+    Title = "เลือกรูปแบบการมอง",
+    Values = {"ปิด", "ตัวเรืองแสง (Chams)", "เส้นขอบ (Outline)"},
+    Multi = false,
+    Default = "ปิด",
 })
 
--- [[ ตัวปรับสี (เอาไว้ใต้ Dropdown จะได้สวยๆ) ]]
-Tabs.ESP:AddColorpicker("EspColor", {
+ESP_Style:OnChanged(function(Value)
+    _G.ESP_Selected = Value
+end)
+
+-- [[ 2. ตัวเปลี่ยนสีอันเดียว (คุมทุกแบบ) ]]
+local EspColor = Tabs.ESP:AddColorpicker("EspColor", {
     Title = "สีของ ESP",
     Default = Color3.fromRGB(255, 0, 0)
-}):OnChanged(function(Value)
+})
+
+EspColor:OnChanged(function(Value)
     _G.U_HUB_CORE.EspColor = Value
+end)
+
+
+-- [[ ย้ายมาหน้า Visuals ตามสั่งครับน้องหนึ่ง ]]
+
+-- 1. เลือกรูปแบบ ESP (เรืองแสง หรือ เส้นขอบ)
+local ESP_Style = Tabs.Visuals:AddDropdown("ESP_Style", {
+    Title = "เลือกรูปแบบการมอง",
+    Values = {"ปิด", "ตัวเรืองแสง (Chams)", "เส้นขอบ (Outline)"},
+    Multi = false,
+    Default = "ปิด",
+})
+
+ESP_Style:OnChanged(function(Value)
+    _G.ESP_Selected = Value
+end)
+
+-- 2. ตัวเปลี่ยนสีอันเดียว คุมทุกอย่าง
+local EspColor = Tabs.Visuals:AddColorpicker("EspColor", {
+    Title = "สีของ ESP",
+    Default = Color3.fromRGB(255, 0, 0)
+})
+
+EspColor:OnChanged(function(Value)
+    _G.U_HUB_CORE.EspColor = Value
+end)
+
+-- 3. ปุ่มซ่อน/เปิด FOV
+Tabs.Visuals:AddToggle("ShowFOV", {
+    Title = "แสดงวงกลม FOV", 
+    Default = false 
+}):OnChanged(function(Value)
+    _G.U_HUB_CORE.ShowFOV = Value
+end)
+
+
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= game.Players.LocalPlayer and player.Character then
+                    local char = player.Character
+                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
+                    highlight.Name = "U_ESP_Master"
+                    
+                    local useColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255, 0, 0)
+                    
+                    if _G.ESP_Selected == "ตัวเรืองแสง (Chams)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 0.5
+                        highlight.OutlineTransparency = 1
+                        highlight.FillColor = useColor
+                    elseif _G.ESP_Selected == "เส้นขอบ (Outline)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 1
+                        highlight.OutlineTransparency = 0
+                        highlight.OutlineColor = useColor
+                    else
+                        highlight.Enabled = false
+                    end
+                end
+            end
+        end)
+    end
 end)
