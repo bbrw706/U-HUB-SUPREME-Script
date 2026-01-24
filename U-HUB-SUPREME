@@ -233,56 +233,22 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- [[ 1. ปุ่มเปิด-ปิด ESP แบบ Chams (เปลี่ยนสีตัวละคร) ]]
-Tabs.ESP:AddToggle("EspChams", {Title = "เปิดมองทะลุ (Chams)", Default = false}):OnChanged(function(Value)
-    _G.U_HUB_CORE.EspChams = Value
-end)
-
--- [[ 2. ปุ่มเปิด-ปิด เส้นรอบตัวละคร (Outline) ]]
-Tabs.ESP:AddToggle("EspOutline", {Title = "เปิดเส้นรอบตัว", Default = false}):OnChanged(function(Value)
-    _G.U_HUB_CORE.EspOutline = Value
-end)
-
--- [[ 3. ตัวปรับสีและความใส ]]
-Tabs.ESP:AddColorpicker("EspColor", {
-    Title = "เลือกสี ESP",
-    Default = Color3.fromRGB(255, 0, 0)
-}):OnChanged(function(Value)
-    _G.U_HUB_CORE.EspColor = Value
-end)
-
-Tabs.ESP:AddSlider("EspTrans", {
-    Title = "ความชัดของสี",
-    Default = 0.5, Min = 0, Max = 1, Rounding = 1,
-    Callback = function(Value) _G.U_HUB_CORE.EspTrans = Value end
-})
-
--- [[ 4. ระบบทำงาน (วางล่างสุดของสคริปต์) ]]
-RunService.RenderStepped:Connect(function()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local char = player.Character
-            local highlight = char:FindFirstChild("U_ESP_Highlight")
-
-            -- ถ้าเปิดอันใดอันหนึ่ง ให้สร้าง Highlight
-            if _G.U_HUB_CORE.EspChams or _G.U_HUB_CORE.EspOutline then
-                if not highlight then
-                    highlight = Instance.new("Highlight", char)
-                    highlight.Name = "U_ESP_Highlight"
-                end
-                
-                -- คุมส่วน Chams (สีข้างในตัว)
-                highlight.FillColor = _G.U_HUB_CORE.EspColor
-                highlight.FillTransparency = _G.U_HUB_CORE.EspChams and _G.U_HUB_CORE.EspTrans or 1
-                
-                -- คุมส่วน Outline (เส้นรอบตัว)
-                highlight.OutlineColor = _G.U_HUB_CORE.EspColor
-                highlight.OutlineTransparency = _G.U_HUB_CORE.EspOutline and 0 or 1
-                
-                highlight.Enabled = true
-            else
-                if highlight then highlight.Enabled = false end
-            end
+-- [[ สร้าง Dropdown แบบในรูป ]]
+Tabs.Visuals:AddDropdown("ESPType", {
+    Title = "เลือกรูปแบบการมอง",
+    Values = {"เรืองแสง (Chams)", "เส้นรอบตัว (Outline)"},
+    Default = "เรืองแสง (Chams)",
+    Callback = function(Value)
+        -- เก็บค่าที่เลือกไว้ในตัวแปร
+        _G.SelectedESP = Value
+        
+        -- สั่งเปิด/ปิด ตามที่เลือก
+        if Value == "เรืองแสง (Chams)" then
+            _G.U_HUB_CORE.EspChams = true
+            _G.U_HUB_CORE.EspOutline = false
+        elseif Value == "เส้นรอบตัว (Outline)" then
+            _G.U_HUB_CORE.EspChams = false
+            _G.U_HUB_CORE.EspOutline = true
         end
     end
-end)
+})
