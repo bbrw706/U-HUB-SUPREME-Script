@@ -1,10 +1,28 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 math.randomseed(tick())
 
+-- [[ 1. SETTINGS CORE (ค่าตัวแปรเลโก้) ]]
+_G.U_HUB_CORE = {
+    AimbotEnabled = false,
+    TeamCheck = false,
+    AimPart = "Head",
+    Sensitivity = 0.2,
+    FovEnabled = true,
+    FovRadius = 150,
+    EspEnabled = false,
+    BoxEnabled = false,
+    NameEnabled = false
+}
+
+-- [[ 2. สร้างหน้าต่างหลัก ]]
 local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME 💎",
+    Title = "U-HUB SUPREME ",
     SubTitle = "BY Neung",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
@@ -13,7 +31,7 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ 🚀 ระบบลากหน้าต่าง Fluent สำหรับมือถือ ]]
+-- [[ ระบบลากหน้าต่าง Fluent สำหรับมือถือ ]]
 task.spawn(function()
     local Gui = game.CoreGui:WaitForChild("Fluent")
     local MainFrame = Gui:FindFirstChild("Main", true)
@@ -36,14 +54,241 @@ task.spawn(function()
     end
 end)
 
--- [[ 🎨 ฟังก์ชันจัดการโลโก้สลับตำแหน่ง (U/N Hybrid Drag) ]]
+-- [[ ปุ่มลอยจัดการโลโก้สลับตำแหน่ง U/N พร้อมดาวกะพริบ ]]
+local function SetupLogoV50(MainBtn)
+    local Container = Instance.new("Frame", MainBtn)
+    Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
+    
+    -- ใส่ดาวกะพริบกลับมา
+    for i = 1, 15 do
+        local d = Instance.new("Frame", Container)
+        d.Size = UDim2.new(0, 1, 0, 1); d.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        d.Position = UDim2.new(math.random(), 0, math.random(), 0); d.BackgroundTransparency = 0.5
+        task.spawn(function()
+            while task.wait(math.random(2, 4)) do
+                TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
+                task.wait(1.2)
+                TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 0.4}):Play()
+            end
+        end)
+    end
+
+    local function CreateChar(txt, color)
+        local h = Instance.new("Frame", Container); h.Size = UDim2.new(1, 0, 1, 0); h.BackgroundTransparency = 1
+        local l = Instance.new("TextLabel", h); l.Text = txt; l.TextColor3 = color; l.Font = Enum.Font.GothamBold; l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1
+        task.spawn(function() while true do
+            TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,2)}):Play()
+            task.wait(1.5)
+            TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,-2)}):Play()
+            task.wait(1.5)
+        end end)
+        return h, l
+    end
+    
+    local holderU, textU = CreateChar("U", Color3.fromRGB(0, 255, 100))
+    local holderN, textN = CreateChar("N", Color3.fromRGB(0, 170, 255))
+    holderU.Position = UDim2.new(0,0,0,0); textU.TextSize = 35
+    holderN.Position = UDim2.new(-0.25,0,-0.25,0); textN.TextSize = 14
+    
+    return function(isMinimized)
+        if isMinimized then
+            TweenService:Create(holderU, TweenInfo.new(0.4), {Position = UDim2.new(0,0,0,0)}):Play(); textU.TextSize = 35
+            TweenService:Create(holderN, TweenInfo.new(0.4), {Position = UDim2.new(-0.25,0,-0.25,0)}):Play(); textN.TextSize = 14
+        else
+            TweenService:Create(holderN, TweenInfo.new(0.4), {Position = UDim2.new(0,0,0,0)}):Play(); textN.TextSize = 35
+            TweenService:Create(holderU, TweenInfo.new(0.4), {Position = UDim2.new(-0.25,0,-0.25,0)}):Play(); textU.TextSize = 14
+        end
+    end
+end
+
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainBtn = Instance.new("Frame", ScreenGui)
+MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0)
+MainBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0); MainBtn.Active = true
+Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 12)
+local UpdateLogo = SetupLogoV50(MainBtn)
+
+local dragging, dragStart, startPos, startTime
+MainBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true; startTime = tick(); dragStart = input.Position; startPos = MainBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                if tick() - startTime < 0.25 then
+                    Window:Minimize()
+                    task.wait(0.05)
+                    UpdateLogo(Window.Minimized)
+                end
+            end
+        end)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-------------------------------------------------------------------------
+-- [[  3. ระบบเมนู (ประกอบเลโก้)  ]]
+-------------------------------------------------------------------------
+
+local Tabs = {
+    Combat = Window:AddTab({ Title = "Combat", Icon = "target" }),
+    Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" })
+}
+
+Tabs.Combat:AddToggle("AimToggle", {Title = "Enable Aimbot", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.AimbotEnabled = Value
+end)
+
+Tabs.Combat:AddToggle("TeamCheck", {Title = "Team Check", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.TeamCheck = Value
+end)
+
+Tabs.Combat:AddDropdown("AimPart", {
+    Title = "Aim Part",
+    Values = {"Head", "HumanoidRootPart"},
+    Default = "Head",
+    Callback = function(Value) _G.U_HUB_CORE.AimPart = Value end
+})
+
+Tabs.Combat:AddSlider("Smooth", {
+    Title = "Smoothness",
+    Default = 0.2, Min = 0.1, Max = 1, Rounding = 2,
+    Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end
+})
+
+Tabs.Visuals:AddToggle("EspMaster", {Title = "Enable ESP", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspEnabled = Value
+end)
+
+Tabs.Visuals:AddToggle("BoxEsp", {Title = "Show Box", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.BoxEnabled = Value
+end)
+
+Tabs.Visuals:AddToggle("NameEsp", {Title = "Show Name", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.NameEnabled = Value
+end)
+
+Tabs.Visuals:AddToggle("ShowFOV", {Title = "Show FOV Circle", Default = true}):OnChanged(function(Value)
+    _G.U_HUB_CORE.FovEnabled = Value
+end)
+
+Tabs.Visuals:AddSlider("FOVSize", {
+    Title = "FOV Radius",
+    Default = 150, Min = 50, Max = 800, Rounding = 0,
+    Callback = function(Value) _G.U_HUB_CORE.FovRadius = Value end
+})
+
+-------------------------------------------------------------------------
+-- [[  4. LOGIC ENGINE (เบื้องหลัง)  ]]
+-------------------------------------------------------------------------
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1; FOVCircle.NumSides = 100; FOVCircle.Filled = false; FOVCircle.Transparency = 0.8; FOVCircle.Color = Color3.fromRGB(0, 255, 100)
+
+local function GetClosestPlayer()
+    local Target = nil
+    local Distance = _G.U_HUB_CORE.FovRadius
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) and v.Character.Humanoid.Health > 0 then
+            if _G.U_HUB_CORE.TeamCheck and v.Team == LocalPlayer.Team then continue end
+            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(v.Character[_G.U_HUB_CORE.AimPart].Position)
+            if OnScreen then
+                local MouseDist = (Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
+                if MouseDist < Distance then Distance = MouseDist; Target = v end
+            end
+        end
+    end
+    return Target
+end
+
+local function CreateESP(Player)
+    local Box = Drawing.new("Square"); local Name = Drawing.new("Text")
+    Box.Thickness = 1; Box.Filled = false; Name.Size = 16; Name.Center = true; Name.Outline = true
+    RunService.RenderStepped:Connect(function()
+        if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") and Player ~= LocalPlayer and _G.U_HUB_CORE.EspEnabled then
+            local Pos, OnScreen = Camera:WorldToViewportPoint(Player.Character.HumanoidRootPart.Position)
+            if OnScreen then
+                if _G.U_HUB_CORE.BoxEnabled then
+                    Box.Size = Vector2.new(1000/Pos.Z, 1500/Pos.Z); Box.Position = Vector2.new(Pos.X - Box.Size.X/2, Pos.Y - Box.Size.Y/2); Box.Visible = true
+                else Box.Visible = false end
+                if _G.U_HUB_CORE.NameEnabled then
+                    Name.Text = Player.Name; Name.Position = Vector2.new(Pos.X, Pos.Y - 20); Name.Visible = true
+                else Name.Visible = false end
+            else Box.Visible = false; Name.Visible = false end
+        else Box.Visible = false; Name.Visible = false end
+    end)
+end
+
+for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
+Players.PlayerAdded:Connect(CreateESP)
+
+RunService.RenderStepped:Connect(function()
+    FOVCircle.Visible = _G.U_HUB_CORE.FovEnabled
+    FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
+    FOVCircle.Position = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+    if _G.U_HUB_CORE.AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local Target = GetClosestPlayer()
+        if Target then
+            local TargetPos = Camera:WorldToViewportPoint(Target.Character[_G.U_HUB_CORE.AimPart].Position)
+            local MousePos = UserInputService:GetMouseLocation()
+            mousemoverel((TargetPos.X - MousePos.X) * _G.U_HUB_CORE.Sensitivity, (TargetPos.Y - MousePos.Y) * _G.U_HUB_CORE.Sensitivity)
+        end
+    end
+end)
+
+Window:SelectTab(1)
+Fluent:Notify({Title = "U-HUB SUPREME", Content = "ประกอบเสร็จแล้ว! ดาวกลับมาแล้วครับหนึ่ง", Duration = 5})
+
+
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+math.randomseed(tick())
+
+-- [[ 1. SETTINGS CORE (ตัวแปรสำหรับน้องหนึ่งเอาไปต่อ) ]]
+_G.U_HUB_CORE = {
+    AimbotEnabled = false,
+    TeamCheck = false,
+    AimPart = "Head",
+    Sensitivity = 0.2,
+    -- ระบบ FOV ใหม่
+    FovEnabled = true,
+    FovRadius = 150,
+    FovFollowMouse = false, -- ถ้า false จะอยู่กลางจอ, ถ้า true จะตามเมาส์
+    -- ESP
+    EspEnabled = false,
+    BoxEnabled = false,
+    NameEnabled = false
+}
+
+-- [[ 2. สร้างหน้าต่างหลัก และระบบปุ่มลอย (ดาววิบวับ) ]]
+local Window = Fluent:CreateWindow({
+    Title = "U-HUB SUPREME ",
+    SubTitle = "BY Neung",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false, 
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.U 
+})
+
+-- (ระบบลากมือถือและปุ่มลอยสลับ U/N พร้อมดาว พี่ใส่ไว้ให้ครบเหมือนเดิมครับ)
 local function SetupLogoV50(MainBtn)
     local Container = Instance.new("Frame", MainBtn)
     Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
     for i = 1, 15 do
         local d = Instance.new("Frame", Container)
         d.Size = UDim2.new(0, 1, 0, 1); d.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        d.Position = UDim2.new(math.random(), 0, math.random(), 0); d.BackgroundTransparency = 0.5
+        d.Position = UDim2.new(math.random(), 0, math.random(), 0)
         task.spawn(function()
             while task.wait(math.random(2, 4)) do
                 TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
@@ -78,28 +323,16 @@ local function SetupLogoV50(MainBtn)
     end
 end
 
--- [[ ปุ่มลอยจัดการ Input ]]
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local MainBtn = Instance.new("Frame", ScreenGui)
-MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0)
-MainBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0); MainBtn.ClipsDescendants = true; MainBtn.Active = true
-Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 12)
-local UpdateLogo = SetupLogoV50(MainBtn)
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui); local MainBtn = Instance.new("Frame", ScreenGui)
+MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0); MainBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0); MainBtn.Active = true
+Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 12); local UpdateLogo = SetupLogoV50(MainBtn)
 
 local dragging, dragStart, startPos, startTime
 MainBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true; startTime = tick(); dragStart = input.Position; startPos = MainBtn.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-                if tick() - startTime < 0.25 then
-                    Window:Minimize()
-                    task.wait(0.05)
-                    UpdateLogo(Window.Minimized)
-                end
-            end
-        end)
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false
+        if tick() - startTime < 0.25 then Window:Minimize(); task.wait(0.05); UpdateLogo(Window.Minimized) end end end)
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
@@ -110,123 +343,44 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 -------------------------------------------------------------------------
--- [[ 🌾 ระบบฟาร์มและฟังก์ชันหลัก ]]
+-- [[  3. ระบบเมนู  ]]
+-------------------------------------------------------------------------
+local Tabs = {
+    Combat = Window:AddTab({ Title = "Combat", Icon = "target" }),
+    Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" })
+}
+
+-- [ แถบ Combat ]
+Tabs.Combat:AddToggle("AimToggle", {Title = "Enable Aimbot", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AimbotEnabled = Value end)
+Tabs.Combat:AddDropdown("AimPart", { Title = "Aim Part", Values = {"Head", "HumanoidRootPart"}, Default = "Head", Callback = function(Value) _G.U_HUB_CORE.AimPart = Value end })
+Tabs.Combat:AddSlider("Smooth", { Title = "Smoothness", Default = 0.2, Min = 0.1, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end })
+
+-- [ แถบ Visuals ]
+Tabs.Visuals:AddToggle("EspMaster", {Title = "Enable ESP", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.EspEnabled = Value end)
+Tabs.Visuals:AddToggle("ShowFOV", {Title = "Show FOV Circle", Default = true}):OnChanged(function(Value) _G.U_HUB_CORE.FovEnabled = Value end)
+Tabs.Visuals:AddToggle("FollowMouse", {Title = "FOV Follow Mouse", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.FovFollowMouse = Value end)
+Tabs.Visuals:AddSlider("FOVSize", { Title = "FOV Radius", Default = 150, Min = 50, Max = 800, Rounding = 0, Callback = function(Value) _G.U_HUB_CORE.FovRadius = Value end })
+
+-------------------------------------------------------------------------
+-- [[  4. LOGIC ENGINE (หัวใจหลักที่หนึ่งเอาไปต่อ)  ]]
 -------------------------------------------------------------------------
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Auto Farm", Icon = "rbxassetid://4483345998" }),
-    Misc = Window:AddTab({ Title = "Misc", Icon = "settings" })
-}
-
-local Options = Fluent.Options
-
--- [[ 1. Auto Farm Tab ]]
-Tabs.Main:AddParagraph({Title = "U-HUB FARMING", Content = "เลือกมอนสเตอร์และเปิดฟาร์มที่นี่"})
-
-local SelectedMob = ""
-local MobDropdown = Tabs.Main:AddDropdown("MobDropdown", {
-    Title = "Select Monster",
-    Values = {"Monster 1", "Monster 2", "Monster 3"}, -- เปลี่ยนเป็นชื่อมอนในเกมนั้นๆ
-    Multi = false,
-    Default = 1,
-})
-
-MobDropdown:OnChanged(function(Value)
-    SelectedMob = Value
-end)
-
-local AutoFarmToggle = Tabs.Main:AddToggle("AutoFarmToggle", {Title = "Auto Farm Level", Default = false})
-
--- ลอจิกการฟาร์ม (ตัวอย่าง)
-task.spawn(function()
-    while task.wait() do
-        if Options.AutoFarmToggle.Value then
-            -- ใส่โค้ดวาร์ปไปตีมอนสเตอร์ตรงนี้
-            -- print("กำลังฟาร์ม: " .. SelectedMob)
-        end
-    end
-end)
-
--- [[ 2. Misc Tab ]]
-Tabs.Misc:AddButton({
-    Title = "Infinite Yield",
-    Description = "รันสคริปต์แอดมิน IY",
-    Callback = function()
-        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
-    end
-})
-
-local WalkSpeedSlider = Tabs.Misc:AddSlider("WalkSpeed", {
-    Title = "WalkSpeed",
-    Description = "ปรับความเร็วการเดิน",
-    Default = 16, Min = 16, Max = 500, Rounding = 0,
-    Callback = function(Value)
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-    end
-})
-
-Tabs.Misc:AddButton({
-    Title = "Destroy UI",
-    Description = "ลบเมนูทิ้ง",
-    Callback = function()
-        Window:Destroy()
-        ScreenGui:Destroy()
-    end
-})
-
-Fluent:Notify({Title = "U-HUB SUPREME", Content = "โหลดระบบฟาร์มและแก้ลากมือถือเสร็จสิ้น!", Duration = 5})
-
-
--- [[ U-HUB CORE ENGINE : NO UI VERSION ]]
--- สำหรับน้องหนึ่งเอาไปประกอบใส่ UI ตัวเองครับ
-
--- [[ 1. CONFIGURATION TABLE ]]
--- หนึ่งสั่งเปิด-ปิดผ่านปุ่มใน UI โดยแก้ค่าในตารางนี้ได้เลย
-_G.U_HUB_CORE = {
-    -- Aimbot
-    AimbotEnabled = false,
-    TeamCheck = false,
-    AimPart = "Head",
-    Sensitivity = 0.2, -- 0.1 ถึง 1
-    
-    -- FOV
-    FovEnabled = true,
-    FovRadius = 150,
-    FovColor = Color3.fromRGB(0, 255, 255),
-    
-    -- ESP
-    EspEnabled = false,
-    BoxEnabled = false,
-    NameEnabled = false,
-    EspColor = Color3.fromRGB(255, 0, 0)
-}
-
--- [[ 2. VARIABLES & SERVICES ]]
-local Camera = workspace.CurrentCamera
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-
--- สร้างวงกลม FOV
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1
-FOVCircle.NumSides = 100
-FOVCircle.Filled = false
-FOVCircle.Transparency = 0.8
+FOVCircle.Thickness = 1; FOVCircle.NumSides = 100; FOVCircle.Filled = false; FOVCircle.Transparency = 0.8; FOVCircle.Color = Color3.fromRGB(0, 255, 100)
 
--- [[ 3. AIMBOT LOGIC ]]
 local function GetClosestPlayer()
     local Target = nil
     local Distance = _G.U_HUB_CORE.FovRadius
+    
+    -- หาตำแหน่งอ้างอิงของวงกลม (กลางจอ หรือ เมาส์)
+    local CenterPosition = _G.U_HUB_CORE.FovFollowMouse and UserInputService:GetMouseLocation() or Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
     for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) and v.Character.Humanoid.Health > 0 then
             if _G.U_HUB_CORE.TeamCheck and v.Team == LocalPlayer.Team then continue end
-            
             local ScreenPos, OnScreen = Camera:WorldToViewportPoint(v.Character[_G.U_HUB_CORE.AimPart].Position)
             if OnScreen then
-                local MouseLoc = UserInputService:GetMouseLocation()
-                local MouseDist = (Vector2.new(MouseLoc.X, MouseLoc.Y) - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
+                local MouseDist = (CenterPosition - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
                 if MouseDist < Distance then
                     Distance = MouseDist
                     Target = v
@@ -237,81 +391,44 @@ local function GetClosestPlayer()
     return Target
 end
 
--- [[ 4. ESP SYSTEM (BOX & NAME) ]]
+-- (ระบบ ESP พี่รวมไว้ในก้อนเดียวกันให้แล้วครับ)
 local function CreateESP(Player)
-    local Box = Drawing.new("Square")
-    local Name = Drawing.new("Text")
-    
-    Box.Thickness = 1
-    Box.Filled = false
-    Name.Size = 16
-    Name.Center = true
-    Name.Outline = true
-
-    local Connection
-    Connection = RunService.RenderStepped:Connect(function()
-        if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") and Player.Character.Humanoid.Health > 0 and Player ~= LocalPlayer then
-            local RootPart = Player.Character.HumanoidRootPart
-            local Pos, OnScreen = Camera:WorldToViewportPoint(RootPart.Position)
-            
-            if OnScreen and _G.U_HUB_CORE.EspEnabled then
-                -- BOX ESP
-                if _G.U_HUB_CORE.BoxEnabled then
-                    local SizeX = 1000 / Pos.Z
-                    local SizeY = 1500 / Pos.Z
-                    Box.Size = Vector2.new(SizeX, SizeY)
-                    Box.Position = Vector2.new(Pos.X - SizeX / 2, Pos.Y - SizeY / 2)
-                    Box.Color = _G.U_HUB_CORE.EspColor
-                    Box.Visible = true
-                else Box.Visible = false end
-
-                -- NAME ESP
-                if _G.U_HUB_CORE.NameEnabled then
-                    Name.Text = Player.Name
-                    Name.Position = Vector2.new(Pos.X, Pos.Y - (1600 / Pos.Z) / 2 - 20)
-                    Name.Color = Color3.fromRGB(255, 255, 255)
-                    Name.Visible = true
-                else Name.Visible = false end
-            else
-                Box.Visible = false
-                Name.Visible = false
-            end
-        else
-            if not Player.Parent then -- ถ้าผู้เล่นออกเกม ให้ลบเส้นทิ้ง
-                Box:Remove()
-                Name:Remove()
-                Connection:Disconnect()
-            end
-            Box.Visible = false
-            Name.Visible = false
-        end
+    local Box = Drawing.new("Square"); local Name = Drawing.new("Text")
+    Box.Thickness = 1; Box.Filled = false; Name.Size = 16; Name.Center = true; Name.Outline = true
+    RunService.RenderStepped:Connect(function()
+        if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") and Player ~= LocalPlayer and _G.U_HUB_CORE.EspEnabled then
+            local Pos, OnScreen = Camera:WorldToViewportPoint(Player.Character.HumanoidRootPart.Position)
+            if OnScreen then
+                Box.Size = Vector2.new(1000/Pos.Z, 1500/Pos.Z); Box.Position = Vector2.new(Pos.X - Box.Size.X/2, Pos.Y - Box.Size.Y/2); Box.Visible = true
+                Name.Text = Player.Name; Name.Position = Vector2.new(Pos.X, Pos.Y - 20); Name.Visible = true
+            else Box.Visible = false; Name.Visible = false end
+        else Box.Visible = false; Name.Visible = false end
     end)
 end
-
--- รัน ESP สำหรับทุกคน
 for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 
--- [[ 5. MAIN ENGINE LOOP ]]
+-- [[ LOOP หลัก : ควบคุมวงกลมและการล็อค ]]
 RunService.RenderStepped:Connect(function()
-    -- อัปเดตวงกลม FOV
     FOVCircle.Visible = _G.U_HUB_CORE.FovEnabled
     FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
-    FOVCircle.Color = _G.U_HUB_CORE.FovColor
-    FOVCircle.Position = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+    
+    -- ปรับตำแหน่งวงกลมตามที่หนึ่งต้องการ
+    if _G.U_HUB_CORE.FovFollowMouse then
+        FOVCircle.Position = UserInputService:GetMouseLocation()
+    else
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    end
 
-    -- ระบบ Aimbot (ล็อคเมื่อคลิกขวาค้าง)
     if _G.U_HUB_CORE.AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
         local Target = GetClosestPlayer()
         if Target then
             local TargetPos = Camera:WorldToViewportPoint(Target.Character[_G.U_HUB_CORE.AimPart].Position)
             local MousePos = UserInputService:GetMouseLocation()
-            mousemoverel(
-                (TargetPos.X - MousePos.X) * _G.U_HUB_CORE.Sensitivity,
-                (TargetPos.Y - MousePos.Y) * _G.U_HUB_CORE.Sensitivity
-            )
+            mousemoverel((TargetPos.X - MousePos.X) * _G.U_HUB_CORE.Sensitivity, (TargetPos.Y - MousePos.Y) * _G.U_HUB_CORE.Sensitivity)
         end
     end
 end)
 
-print("U-HUB Core Loaded! เชื่อมต่อกับ UI ของหนึ่งได้เลยครับ")
+Window:SelectTab(1)
+Fluent:Notify({Title = "U-HUB SUPREME", Content = "อัปเกรดระบบ FOV กลางจอ/ตามเมาส์ เรียบร้อยครับหนึ่ง!", Duration = 5})
