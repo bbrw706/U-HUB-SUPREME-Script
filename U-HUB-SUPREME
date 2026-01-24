@@ -318,3 +318,74 @@ Tabs.ESP:AddToggle("AntiBanActive", {
 }):OnChanged(function(Value)
     _G.AntiBanEnabled = Value
 end)
+
+
+-- [[ 1. เลือกรูปแบบ ESP (Dropdown อันเดียวจบ) ]]
+Tabs.ESP:AddDropdown("ESP_Mode", {
+    Title = "เลือกรูปแบบการมอง",
+    Values = {"ปิด", "เรืองแสง (Chams)", "เส้นรอบตัว (Outline)"},
+    Default = "ปิด",
+    Callback = function(Value)
+        _G.ESP_Selected = Value
+    end
+})
+
+-- [[ 2. ตัวเลือกสี ESP ]]
+Tabs.ESP:AddColorpicker("EspColor", {
+    Title = "สีของ ESP",
+    Default = Color3.fromRGB(255, 0, 0)
+}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspColor = Value
+end)
+
+-- --- เว้นวรรคด้วย Line (ถ้ามี) หรือใส่ Toggle ต่อเลย ---
+
+-- [[ 3. ส่วนของ FOV ]]
+Tabs.ESP:AddToggle("ShowFOV", {Title = "แสดงวงกลม FOV", Default = false}):OnChanged(function(Value)
+    _G.U_HUB_CORE.ShowFOV = Value
+end)
+
+Tabs.ESP:AddSlider("FOVSize", {
+    Title = "ขนาดวงกลม FOV",
+    Default = 100, Min = 10, Max = 500, Rounding = 0,
+    Callback = function(Value) _G.U_HUB_CORE.FOVSize = Value end
+})
+
+-- [[ 4. ระบบกันแบน ]]
+Tabs.ESP:AddToggle("AntiBanActive", {
+    Title = "ระบบกันแบน (Safe Mode)", 
+    Default = true
+}):OnChanged(function(Value)
+    _G.AntiBanEnabled = Value
+end)
+
+
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= game.Players.LocalPlayer and player.Character then
+                    local char = player.Character
+                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
+                    highlight.Name = "U_ESP_Master"
+                    
+                    local useColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255, 0, 0)
+                    
+                    if _G.ESP_Selected == "เรืองแสง (Chams)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 0.5
+                        highlight.OutlineTransparency = 1
+                        highlight.FillColor = useColor
+                    elseif _G.ESP_Selected == "เส้นรอบตัว (Outline)" then
+                        highlight.Enabled = true
+                        highlight.FillTransparency = 1
+                        highlight.OutlineTransparency = 0
+                        highlight.OutlineColor = useColor
+                    else
+                        highlight.Enabled = false
+                    end
+                end
+            end
+        end)
+    end
+end)
