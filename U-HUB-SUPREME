@@ -205,28 +205,25 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- [[ สร้าง Dropdown แบบในรูป ]]
-Tabs.Visuals:AddDropdown("ESPType", {
+-- [[ 1. ปุ่มเลือกรูปแบบ ESP (วางไว้ในหน้า ESP) ]]
+Tabs.ESP:AddDropdown("ESP_Mode", {
     Title = "เลือกรูปแบบการมอง",
-    Values = {"เรืองแสง (Chams)", "เส้นรอบตัว (Outline)"},
-    Default = "เรืองแสง (Chams)",
+    Values = {"ปิด", "ตัวละครเรืองแสง (Chams)", "เส้นรอบขอบตัว (Outline)"},
+    Default = "ปิด",
     Callback = function(Value)
-        -- เก็บค่าที่เลือกไว้ในตัวแปร
-        _G.SelectedESP = Value
-        
-        -- สั่งเปิด/ปิด ตามที่เลือก
-        if Value == "เรืองแสง (Chams)" then
-            _G.U_HUB_CORE.EspChams = true
-            _G.U_HUB_CORE.EspOutline = false
-        elseif Value == "เส้นรอบตัว (Outline)" then
-            _G.U_HUB_CORE.EspChams = false
-            _G.U_HUB_CORE.EspOutline = true
-        end
+        _G.ESP_Selected = Value
     end
 })
 
+-- [[ 2. ตัวปรับสี (ถ้ามีอยู่แล้วไม่ต้องก๊อปไปซ้ำนะ) ]]
+Tabs.ESP:AddColorpicker("EspColor", {
+    Title = "สีของ ESP",
+    Default = Color3.fromRGB(255, 0, 0)
+}):OnChanged(function(Value)
+    _G.U_HUB_CORE.EspColor = Value
+end)
 
--- ระบบวาด ESP (วางล่างสุดของไฟล์)
+
 task.spawn(function()
     while task.wait() do
         pcall(function()
@@ -236,15 +233,16 @@ task.spawn(function()
                     local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
                     highlight.Name = "U_ESP_Master"
                     
-                    if _G.ESP_Selected == "ตัวละครเรืองแสง" then
+                    -- เช็คค่าจาก Dropdown
+                    if _G.ESP_Selected == "ตัวละครเรืองแสง (Chams)" then
                         highlight.Enabled = true
-                        highlight.FillTransparency = 0.5 -- ความใสตัวละคร
-                        highlight.OutlineTransparency = 1 -- ปิดเส้นขอบ
+                        highlight.FillTransparency = 0.5 
+                        highlight.OutlineTransparency = 1 
                         highlight.FillColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255,0,0)
-                    elseif _G.ESP_Selected == "เส้นรอบขอบตัว" then
+                    elseif _G.ESP_Selected == "เส้นรอบขอบตัว (Outline)" then
                         highlight.Enabled = true
-                        highlight.FillTransparency = 1 -- ปิดสีตัวละคร
-                        highlight.OutlineTransparency = 0 -- เปิดเส้นขอบ
+                        highlight.FillTransparency = 1 
+                        highlight.OutlineTransparency = 0 
                         highlight.OutlineColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255,0,0)
                     else
                         highlight.Enabled = false -- ถ้าเลือก "ปิด"
