@@ -236,9 +236,9 @@ end
 pcall(SecureScript)
 
 
--- [[ ระบบรัน ESP & FOV เบื้องหลัง ]]
+-- [[ ระบบรัน ESP สำหรับ Fluent                                                  espนะ]]
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.2) do
         pcall(function()
             for _, player in pairs(game.Players:GetPlayers()) do
                 if player ~= game.Players.LocalPlayer and player.Character then
@@ -248,25 +248,24 @@ task.spawn(function()
                     if _G.ESP_Selected == "ปิด" or _G.ESP_Selected == nil then
                         if highlight then highlight:Destroy() end
                     else
-                        -- ถ้ายังไม่มีให้สร้าง
                         if not highlight then
                             highlight = Instance.new("Highlight", char)
                             highlight.Name = "U_ESP_Master"
                         end
                         
-                        -- ดึงสีจากเมนู
-                        local currentBoxColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255, 0, 0)
+                        -- ดึงสีจากตัวแปรที่ Fluent ส่งมา
+                        local useColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255, 0, 0)
                         
                         if _G.ESP_Selected == "เรืองแสง (Chams)" then
                             highlight.Enabled = true
-                            highlight.FillTransparency = 0.5 -- ความใส
-                            highlight.OutlineTransparency = 1 -- ปิดเส้นขอบ
-                            highlight.FillColor = currentBoxColor
+                            highlight.FillTransparency = 0.5
+                            highlight.OutlineTransparency = 1
+                            highlight.FillColor = useColor
                         elseif _G.ESP_Selected == "เส้นรอบตัว (Outline)" then
                             highlight.Enabled = true
-                            highlight.FillTransparency = 1 -- ปิดสีตัว
-                            highlight.OutlineTransparency = 0 -- เปิดเส้นขอบ
-                            highlight.OutlineColor = currentBoxColor
+                            highlight.FillTransparency = 1
+                            highlight.OutlineTransparency = 0
+                            highlight.OutlineColor = useColor
                         end
                     end
                 end
