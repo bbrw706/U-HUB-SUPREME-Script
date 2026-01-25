@@ -179,7 +179,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
-abs.ESP:AddDropdown("ESP_Style", {
+Tabs.ESP:AddDropdown("ESP_Style", {
     Title = "เลือกรูปแบบ ESP",
     Values = {"ปิด", "Normal (เส้นขอบ)", "Hardcore (เรืองแสง)"},
     Default = "ปิด",
@@ -281,4 +281,26 @@ RunService.RenderStepped:Connect(function()
             UserInputService.OverrideMouseIconBehavior = Enum.OverrideMouseIconBehavior.None
         end
     end
+end)
+
+
+_G.U_HUB_CORE = {
+    -- ... (ของเดิม) ...
+    ShowFovCircle = true -- เพิ่มอันนี้เพื่อเช็คการเปิด/ปิดวงกลม
+}
+
+
+Tabs.Visuals:AddToggle("ShowPOV", {Title = "แสดงวงกลม POV", Default = true}):OnChanged(function(Value)
+    _G.U_HUB_CORE.ShowFovCircle = Value
+end)
+
+
+RunService.RenderStepped:Connect(function()
+    -- POV จะขึ้นเฉพาะตอนเปิด Auto Lock และ ต้องกด "แสดงวงกลม POV" ด้วย
+    FOVCircle.Visible = (_G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.ShowFovCircle)
+    
+    FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    -- ... (Logic ล็อกเป้าด้านล่างคงเดิม) ...
 end)
