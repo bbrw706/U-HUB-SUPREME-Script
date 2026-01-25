@@ -274,35 +274,37 @@ task.spawn(function()
     end
 end)
 
-
--- [[ ย้ายมาหน้า Visuals ตามสั่งครับน้องหนึ่ง ]]
-
--- 1. เลือกรูปแบบ ESP (เรืองแสง หรือ เส้นขอบ)
-local ESP_Style = Tabs.Visuals:AddDropdown("ESP_Style", {
-    Title = "เลือกรูปแบบการมอง",
-    Values = {"ปิด", "ตัวเรืองแสง (Chams)", "เส้นขอบ (Outline)"},
-    Multi = false,
-    Default = "ปิด",
-})
-
-ESP_Style:OnChanged(function(Value)
-    _G.ESP_Selected = Value
-end)
-
--- 2. ตัวเปลี่ยนสีอันเดียว คุมทุกอย่าง
-local EspColor = Tabs.Visuals:AddColorpicker("EspColor", {
-    Title = "สีของ ESP",
-    Default = Color3.fromRGB(255, 0, 0)
-})
-
-EspColor:OnChanged(function(Value)
-    _G.U_HUB_CORE.EspColor = Value
-end)
-
--- 3. ปุ่มซ่อน/เปิด FOV
-Tabs.Visuals:AddToggle("ShowFOV", {
+-- [[ 1. ปุ่มเปิด/ปิด ในหน้าเมนู ]]
+Tabs.Combat:AddToggle("ShowFOV", {
     Title = "แสดงวงกลม FOV", 
     Default = false 
 }):OnChanged(function(Value)
     _G.U_HUB_CORE.ShowFOV = Value
+    if _G.FOV_Circle then
+        _G.FOV_Circle.Visible = Value
+    end
+end)
+
+-- [[ 2. สร้างตัววงกลม ]]
+if not _G.FOV_Circle then
+    _G.FOV_Circle = Drawing.new("Circle")
+    _G.FOV_Circle.Thickness = 1
+    _G.FOV_Circle.NumSides = 100 -- เพิ่มความเนียนให้วงกลม
+    _G.FOV_Circle.Filled = false
+    _G.FOV_Circle.Color = Color3.fromRGB(255, 255, 255)
+end
+
+-- [[ 3. ระบบอัปเดตตำแหน่ง (ตามเมาส์) ]]
+RunService.RenderStepped:Connect(function()
+    if _G.FOV_Circle then
+        local mouse = LocalPlayer:GetMouse()
+        -- อัปเดตตำแหน่งให้ตรงเมาส์เป๊ะๆ
+        _G.FOV_Circle.Position = Vector2.new(mouse.X, mouse.Y + 36)
+        
+        -- แก้ชื่อตัวแปรให้ตรงกับ Slider ที่น้องใช้ (FovRadius)
+        _G.FOV_Circle.Radius = _G.U_HUB_CORE.FovRadius or 150
+        
+        -- เช็คเปิด/ปิด
+        _G.FOV_Circle.Visible = _G.U_HUB_CORE.ShowFOV or false
+    end
 end)
