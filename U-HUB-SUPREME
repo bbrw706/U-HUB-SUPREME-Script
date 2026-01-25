@@ -275,3 +275,34 @@ task.spawn(function()
 end)
 
 
+-- [[ ย้ายมาหน้า Visuals ตามสั่งครับน้องหนึ่ง ]]
+
+-- 1. เลือกรูปแบบ ESP (เรืองแสง หรือ เส้นขอบ)
+local ESP_Style = Tabs.Visuals:AddDropdown("ESP_Style", {
+    Title = "เลือกรูปแบบการมอง",
+    Values = {"ปิด", "ตัวเรืองแสง (Chams)", "เส้นขอบ (Outline)"},
+    Multi = false,
+    Default = "ปิด",
+})
+
+ESP_Style:OnChanged(function(Value)
+    _G.ESP_Selected = Value
+end)
+
+-- 2. ตัวเปลี่ยนสีอันเดียว คุมทุกอย่าง
+local EspColor = Tabs.Visuals:AddColorpicker("EspColor", {
+    Title = "สีของ ESP",
+    Default = Color3.fromRGB(255, 0, 0)
+})
+
+EspColor:OnChanged(function(Value)
+    _G.U_HUB_CORE.EspColor = Value
+end)
+
+-- 3. ปุ่มซ่อน/เปิด FOV
+Tabs.Visuals:AddToggle("ShowFOV", {
+    Title = "แสดงวงกลม FOV", 
+    Default = false 
+}):OnChanged(function(Value)
+    _G.U_HUB_CORE.ShowFOV = Value
+end)
