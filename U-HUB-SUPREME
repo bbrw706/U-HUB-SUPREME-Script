@@ -150,28 +150,12 @@ end)
 -- [ สร้างแท็บใหม่ชื่อ ESP        มองทะลุ        ]
 Tabs.ESP = Window:AddTab({ Title = "ESP", Icon = "eye" })
 
--- [ เพิ่มปุ่มควบคุมในแท็บ ESP ]
-Tabs.ESP:AddToggle("EspHigh", {Title = "เปิดมองทะลุ (Highlight)", Default = false}):OnChanged(function(Value)
-    _G.U_HUB_CORE.EspEnabled = Value
-end)
 
-Tabs.ESP:AddColorpicker("EspColor", {
-    Title = "เลือกสีตัวละคร",
-    Default = Color3.fromRGB(255, 0, 0)
-}):OnChanged(function(Value)
-    _G.U_HUB_CORE.EspColor = Value
-end)
 
-Tabs.ESP:AddSlider("EspTrans", {
-    Title = "ความใสของสี",
-    Default = 0.5,
-    Min = 0,
-    Max = 1,
-    Rounding = 1,
-    Callback = function(Value)
-        _G.U_HUB_CORE.EspTrans = Value
-    end
-})
+
+
+
+
 
 
 _G.U_HUB_CORE.EspEnabled = false
@@ -235,162 +219,69 @@ end
 
 pcall(SecureScript)
 
-
--- [[ 1. เลือกรูปแบบ ESP (เอาแค่ 2 แบบตามสั่งเลย) ]]
-local ESP_Style = Tabs.ESP:AddDropdown("ESP_Style", {
-    Title = "เลือกรูปแบบการมอง",
-    Values = {"ปิด", "ตัวเรืองแสง (Chams)", "เส้นขอบ (Outline)"},
-    Multi = false,
-    Default = "ปิด",
-})
-
-ESP_Style:OnChanged(function(Value)
-    _G.ESP_Selected = Value
-end)
-
--- [[ 2. ตัวเปลี่ยนสีอันเดียว (คุมทุกแบบ) ]]
-local EspColor = Tabs.ESP:AddColorpicker("EspColor", {
-    Title = "สีของ ESP",
-    Default = Color3.fromRGB(255, 0, 0)
-})
-
-EspColor:OnChanged(function(Value)
-    _G.U_HUB_CORE.EspColor = Value
-end)
-
-
-task.spawn(function()
-    while task.wait(0.1) do
-        pcall(function()
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= game.Players.LocalPlayer and player.Character then
-                    local char = player.Character
-                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
-                    highlight.Name = "U_ESP_Master"
-                    
-                    local useColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255, 0, 0)
-                    
-                    if _G.ESP_Selected == "ตัวเรืองแสง (Chams)" then
-                        highlight.Enabled = true
-                        highlight.FillTransparency = 0.5
-                        highlight.OutlineTransparency = 1
-                        highlight.FillColor = useColor
-                    elseif _G.ESP_Selected == "เส้นขอบ (Outline)" then
-                        highlight.Enabled = true
-                        highlight.FillTransparency = 1
-                        highlight.OutlineTransparency = 0
-                        highlight.OutlineColor = useColor
-                    else
-                        highlight.Enabled = false
-                    end
-                end
-            end
-        end)
-    end
-end)
-
-
--- ปุ่มปรับความหนาของเส้นขอบ ESP
-Tabs.Visuals:AddSlider("OutlineThickness", {
-    Title = "ความหนาของเส้นขอบ",
-    Description = "ใช้ปรับความหนาเวลาเลือกโหมด Outline",
-    Default = 2,
-    Min = 1,
-    Max = 10,
-    Rounding = 1,
-    Callback = function(Value)
-        _G.OutlineThickness = Value
-    end
-})
-
-
-task.spawn(function()
-    while task.wait(0.1) do
-        pcall(function()
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= game.Players.LocalPlayer and player.Character then
-                    local char = player.Character
-                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
-                    highlight.Name = "U_ESP_Master"
-                    
-                    local useColor = _G.U_HUB_CORE.EspColor or Color3.fromRGB(255, 0, 0)
-                    local thickness = _G.OutlineThickness or 2 -- ถ้าไม่ได้ปรับ ให้หนา 2 เป็นค่าเริ่มต้น
-                    
-                    if _G.ESP_Selected == "ตัวเรืองแสง (Chams)" then
-                        highlight.Enabled = true
-                        highlight.FillTransparency = 0.5
-                        highlight.OutlineTransparency = 1
-                        highlight.FillColor = useColor
-                    elseif _G.ESP_Selected == "เส้นขอบ (Outline)" then
-                        highlight.Enabled = true
-                        highlight.FillTransparency = 1
-                        highlight.OutlineTransparency = 0
-                        highlight.OutlineColor = useColor
-                        highlight.OutlineThickness = thickness -- << เพิ่มบรรทัดนี้เพื่อปรับความหนาครับ!
-                    else
-                        highlight.Enabled = false
-                    end
-                end
-            end
-        end)
-    end
-end)
-
-
-
--- [[ 1. เลือกรูปแบบ (เรืองแสง หรือ เส้นขอบ) ]]
-Tabs.Visuals:AddDropdown("ESP_Style", {
+Tabs.ESP:AddDropdown("ESP_Style", {
     Title = "เลือกรูปแบบ ESP",
-    Values = {"ปิด", "ตัวเรืองแสง (Chams)", "เส้นขอบ (Outline)"},
+    Values = {"ปิด", "Normal (เส้นขอบ)", "Hardcore (เรืองแสง)"},
     Default = "ปิด",
     Callback = function(Value) _G.ESP_Selected = Value end
 })
 
--- [[ 2. ตัวเปลี่ยนสีอันเดียวจบ (คุมทุกอย่าง) ]]
-Tabs.Visuals:AddColorpicker("MainEspColor", {
+Tabs.ESP:AddColorpicker("MainColor", {
     Title = "เปลี่ยนสีตัวละคร",
     Default = Color3.fromRGB(255, 0, 0)
 }):OnChanged(function(Value)
-    _G.MainColor = Value -- ใช้ตัวแปรเดียวคุมสีทั้งสคริปต์
+    _G.SharedColor = Value
 end)
-
--- [[ 3. ปรับความกว้างเส้นขอบ ]]
-Tabs.Visuals:AddSlider("OutlineThickness", {
-    Title = "ความหนาของเส้น",
-    Default = 2, Min = 1, Max = 10, Rounding = 1,
-    Callback = function(Value) _G.Thickness = Value end
-})
 
 
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.5) do
         pcall(function()
             for _, player in pairs(game.Players:GetPlayers()) do
                 if player ~= game.Players.LocalPlayer and player.Character then
                     local char = player.Character
-                    local highlight = char:FindFirstChild("U_ESP_Master") or Instance.new("Highlight", char)
-                    highlight.Name = "U_ESP_Master"
                     
-                    -- ดึงสีจากอันเดียวที่เลือก
-                    local color = _G.MainColor or Color3.fromRGB(255, 0, 0)
-                    local thick = _G.Thickness or 2
-                    
-                    if _G.ESP_Selected == "ตัวเรืองแสง (Chams)" then
-                        highlight.Enabled = true
-                        highlight.FillColor = color
-                        highlight.FillTransparency = 0.5
-                        highlight.OutlineTransparency = 1 -- ปิดขอบตอนเรืองแสง
-                    elseif _G.ESP_Selected == "เส้นขอบ (Outline)" then
-                        highlight.Enabled = true
-                        highlight.FillTransparency = 1    -- ปิดสีตัว (เอาแต่ขอบ)
-                        highlight.OutlineColor = color
-                        highlight.OutlineTransparency = 0
-                        highlight.OutlineThickness = thick
+                    -- ถ้าเลือกปิด ให้ลบ Highlight ทิ้งทันที
+                    if _G.ESP_Selected == "ปิด" or _G.ESP_Selected == nil then
+                        if char:FindFirstChild("U_ESP") then
+                            char:FindFirstChild("U_ESP"):Destroy()
+                        end
                     else
-                        highlight.Enabled = false
+                        -- ถ้ายังไม่มีให้สร้างใหม่
+                        local hl = char:FindFirstChild("U_ESP") or Instance.new("Highlight")
+                        hl.Name = "U_ESP"
+                        hl.Parent = char
+                        hl.Adornee = char
+                        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- บังคับให้เห็นทะลุ
+                        
+                        local color = _G.SharedColor or Color3.fromRGB(255, 0, 0)
+                        
+                        if _G.ESP_Selected == "Normal (เส้นขอบ)" then
+                            hl.Enabled = true
+                            hl.FillTransparency = 1        -- ตัวใส
+                            hl.OutlineColor = color        -- มีแค่เส้นขอบ
+                            hl.OutlineTransparency = 0
+                        elseif _G.ESP_Selected == "Hardcore (เรืองแสง)" then
+                            hl.Enabled = true
+                            hl.FillColor = color           -- เรืองแสงทั้งตัว
+                            hl.FillTransparency = 0.5
+                            hl.OutlineTransparency = 1     -- ปิดเส้นขอบ
+                        end
                     end
                 end
             end
         end)
     end
 end)
+
+
+Tabs.ESP:AddSlider("EspTrans", {
+    Title = "ความใสของสี",
+    Default = 0.5,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+    Callback = function(Value)
+        _G.U_HUB_CORE.EspTrans = Value
+    end
+})
