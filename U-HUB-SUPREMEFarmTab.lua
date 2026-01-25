@@ -11,11 +11,12 @@ math.randomseed(tick())
 _G.U_HUB_CORE = {
     AutoLockNoClick = false, 
     AimPart = "Head",
-    Sensitivity = 0.1,
+    Sensitivity = 0.05,
     FovEnabled = true,
     FovRadius = 150,
-    LockMode = "Normal (ระยะสายตา)", 
-    UnlockMouse = true
+    LockMode = "Normal (ระยะสายตา)",
+    EspStyle = "ปิด", -- ใช้ตัวแปรนี้คุม ESP แทน
+    SharedColor = Color3.fromRGB(255, 0, 0)
 }
 
 -- [[ 2. สร้างหน้าต่างหลัก ]]
@@ -29,15 +30,7 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ 3. ระบบปลดล็อคเมาส์ ]]
-RunService.RenderStepped:Connect(function()
-    if _G.U_HUB_CORE.UnlockMouse and not Window.Minimized then
-        UserInputService.MouseIconEnabled = true
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-    end
-end)
-
--- [[ 4. ระบบปุ่มลอยวิบวับ (ห้ามลบ!) ]]
+-- [[ 4. ระบบปุ่มลอยวิบวับ ]]
 local function SetupLogoV50(MainBtn)
     local Container = Instance.new("Frame", MainBtn)
     Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
@@ -75,25 +68,37 @@ end)
 UserInputService.InputChanged:Connect(function(input) if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then local delta = input.Position - dragStart; MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y) end end)
 
 -- [[ 5. TABS ]]
-local Tabs = { Combat = Window:AddTab({ Title = "Combat", Icon = "target" }), Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }) }
+local Tabs = { 
+    Combat = Window:AddTab({ Title = "Combat", Icon = "target" }), 
+    Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
+    ESP = Window:AddTab({ Title = "ESP", Icon = "ghost" }) 
+}
 
-Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) 
-    _G.U_HUB_CORE.AutoLockNoClick = Value 
-end)
-
-Tabs.Combat:AddDropdown("LockType", {
+-- [[ COMBAT TABS ]]
+Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
+Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
+Tabs.Combat:AddDropdown("MouseSpecial", {
     Title = "โหมดความโหด",
-    Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"},
+    Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)", },
     Default = "Normal (ระยะสายตา)",
-    Callback = function(Value)
-        _G.U_HUB_CORE.LockMode = Value
-    end
+    Callback = function(Value) _G.U_HUB_CORE.LockMode = Value end
 })
 
-Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.1, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
+-- [[ VISUALS TABS ]]
+Tabs.Visuals:AddToggle("ShowFovBtn", {Title = "แสดงวงกลม POV", Default = true}):OnChanged(function(Value) _G.U_HUB_CORE.FovEnabled = Value end)
 Tabs.Visuals:AddSlider("FOVSize", { Title = "POV Radius", Default = 150, Min = 50, Max = 800, Rounding = 0, Callback = function(Value) _G.U_HUB_CORE.FovRadius = Value end})
+Tabs.Visuals:AddColorpicker("POVColor", {Title = "POV Color (สีวงกลม)", Default = Color3.fromRGB(255, 255, 255)}):OnChanged(function(Value) _G.U_HUB_CORE.PovColor = Value end)
 
--- [[ 6. LOGIC ENGINE ]]
+-- [[ ESP TABS ]]
+Tabs.ESP:AddDropdown("ESP_Style", {
+    Title = "เลือกรูปแบบ ESP",
+    Values = {"ปิด", "Normal (เส้นขอบ)", "Hardcore (เรืองแสง)"},
+    Default = "ปิด",
+    Callback = function(Value) _G.U_HUB_CORE.EspStyle = Value end
+})
+Tabs.ESP:AddColorpicker("MainColor", {Title = "เปลี่ยนสี ESP", Default = Color3.fromRGB(255, 0, 0)}):OnChanged(function(Value) _G.U_HUB_CORE.SharedColor = Value end)
+
+-- [[ 6. LOGIC ENGINE (POV & LOCK) ]]
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1; FOVCircle.NumSides = 100; FOVCircle.Color = Color3.fromRGB(255, 255, 255)
 
@@ -110,7 +115,7 @@ local function GetClosestPlayer()
     local Target, Distance = nil, _G.U_HUB_CORE.FovRadius
     local Center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) and v.Character.Humanoid.Health > 0 then
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
             local Part = v.Character[_G.U_HUB_CORE.AimPart]
             local ScreenPos, OnScreen = Camera:WorldToViewportPoint(Part.Position)
             if OnScreen then
@@ -122,156 +127,87 @@ local function GetClosestPlayer()
     return Target
 end
 
+-- [[ MAIN LOOP: CONTROL EVERYTHING ]]
 RunService.RenderStepped:Connect(function()
-    -- POV จะขึ้นเฉพาะตอนเปิด Auto Lock เท่านั้น!
-    FOVCircle.Visible = _G.U_HUB_CORE.AutoLockNoClick
-    FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
-    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    -- 1. POV Control
+    if _G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.FovEnabled then
+        FOVCircle.Visible = true
+        FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        FOVCircle.Color = _G.U_HUB_CORE.PovColor or Color3.fromRGB(255, 255, 255)
+        FOVCircle.Transparency = 1
+    else
+        FOVCircle.Visible = false
+        FOVCircle.Position = Vector2.new(-9999, -9999)
+    end
     
+    -- 2. AimLock Logic
     if _G.U_HUB_CORE.AutoLockNoClick then
         local Target = GetClosestPlayer()
         if Target then
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, Target.Character[_G.U_HUB_CORE.AimPart].Position), _G.U_HUB_CORE.Sensitivity)
         end
     end
+
+    -- 3. Mouse Behavior
+    if _G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.LockMode == "ปลดล็อคเมาส์" then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        UserInputService.MouseIconEnabled = true
+        UserInputService.OverrideMouseIconBehavior = Enum.OverrideMouseIconBehavior.ForceShow
+    else
+        UserInputService.OverrideMouseIconBehavior = Enum.OverrideMouseIconBehavior.None
+    end
+
+    -- 4. ESP System (Integrated)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local char = player.Character
+            local hl = char:FindFirstChild("U_ESP")
+            
+            if _G.U_HUB_CORE.EspStyle ~= "ปิด" then
+                if not hl then
+                    hl = Instance.new("Highlight")
+                    hl.Name = "U_ESP"
+                    hl.Parent = char
+                end
+                hl.Enabled = true
+                hl.Adornee = char
+                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                
+                if _G.U_HUB_CORE.EspStyle == "Normal (เส้นขอบ)" then
+                    hl.FillTransparency = 1
+                    hl.OutlineColor = _G.U_HUB_CORE.SharedColor
+                    hl.OutlineTransparency = 0
+                elseif _G.U_HUB_CORE.EspStyle == "Hardcore (เรืองแสง)" then
+                    hl.FillColor = _G.U_HUB_CORE.SharedColor
+                    hl.FillTransparency = 0.5
+                    hl.OutlineTransparency = 1
+                end
+            else
+                if hl then hl:Destroy() end
+            end
+        end
+    end
 end)
 
 Window:SelectTab(1)
-Fluent:Notify({Title = "U-HUB", Content = "POV จะโชว์เฉพาะตอนเปิดล็อคแล้วนะน้องหนึ่ง!", Duration = 5})
+Fluent:Notify({Title = "U-HUB", Content = "พร้อมใช้งานแล้วนะน้องหนึ่ง! แก้ระบบ ESP & POV ให้ใหม่แล้วครับ", Duration = 5})
 
 
-Tabs.Visuals:AddColorpicker("POVColor", {
-    Title = "POV Color (สีวงกลม)",
-    Default = Color3.fromRGB(255, 255, 255) -- เริ่มต้นเป็นสีขาว
-}):OnChanged(function(Value)
-    FOVCircle.Color = Value
-end)
-
--- [ สร้างแท็บใหม่ชื่อ ESP        มองทะลุ        ]
-Tabs.ESP = Window:AddTab({ Title = "ESP", Icon = "eye" })
-
-
-
-
-
-
-
-
-
-_G.U_HUB_CORE.EspEnabled = false
-_G.U_HUB_CORE.EspColor = Color3.fromRGB(255, 0, 0)
-_G.U_HUB_CORE.EspTrans = 0.5
-
-
--- [[ ระบบ ESP Highlight ทำงานแยกส่วน ]]
+-- [[ จุดที่แก้: รวมเงื่อนไข POV ให้จบในที่เดียว ]]
 RunService.RenderStepped:Connect(function()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local highlight = player.Character:FindFirstChild("U_ESP_Highlight")
-            
-            if _G.U_HUB_CORE.EspEnabled then
-                if not highlight then
-                    highlight = Instance.new("Highlight")
-                    highlight.Name = "U_ESP_Highlight"
-                    highlight.Parent = player.Character
-                end
-                highlight.Enabled = true
-                highlight.FillColor = _G.U_HUB_CORE.EspColor
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- ขอบขาวเสมอให้เห็นชัด
-                highlight.FillTransparency = _G.U_HUB_CORE.EspTrans
-            else
-                if highlight then
-                    highlight.Enabled = false
-                end
-            end
-        end
-    end
-end)
+    -- เช็คเงื่อนไข: ต้องเปิด AutoLock "และ" ต้องเปิด ShowFovBtn เท่านั้น
+    local IsVisible = _G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.FovEnabled
 
-
--- [[ 1. ระบบ Anti-Detection & Anti-Kick (วางบนสุด) ]]
-local function SecureScript()
-    local g = getgenv()
-    local namecall; namecall = hookmetamethod(game, "__namecall", function(self, ...)
-        local method = getnamecallmethod()
-        local args = {...}
-        
-        -- ดักจับการ Kick จากระบบ (ถ้าเกมสั่ง Kick ให้ยกเลิก)
-        if not checkcaller() and (method == "Kick" or method == "kick") then
-            print("Blocked a Kick attempt!")
-            return nil
-        end
-
-        -- ป้องกันการส่งค่า Log บางอย่างที่ผิดปกติกลับไปที่ Server
-        if method == "FireServer" and (self.Name == "RemoteEvent" or self.Name:find("Log")) then
-            return nil
-        end
-
-        return namecall(self, ...)
-    end)
+    FOVCircle.Visible = IsVisible -- ถ้าเงื่อนไขไม่ครบ จะเป็น false ทันที
     
-    -- ซ่อนสคริปต์จากตัวตรวจจับ Memory
-    if g.setfflag then
-        g.setfflag("AbuseReportScreenshot", "False")
-        g.setfflag("RbxCrashUploadEnabled", "False")
-    end
-end
-
-pcall(SecureScript)
-
-Tabs.ESP:AddDropdown("ESP_Style", {
-    Title = "เลือกรูปแบบ ESP",
-    Values = {"ปิด", "Normal (เส้นขอบ)", "Hardcore (เรืองแสง)"},
-    Default = "ปิด",
-    Callback = function(Value) _G.ESP_Selected = Value end
-})
-
-Tabs.ESP:AddColorpicker("MainColor", {
-    Title = "เปลี่ยนสีตัวละคร",
-    Default = Color3.fromRGB(255, 0, 0)
-}):OnChanged(function(Value)
-    _G.SharedColor = Value
-end)
-
-
-task.spawn(function()
-    while task.wait(0.5) do
-        pcall(function()
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= game.Players.LocalPlayer and player.Character then
-                    local char = player.Character
-                    
-                    -- ถ้าเลือกปิด ให้ลบ Highlight ทิ้งทันที
-                    if _G.ESP_Selected == "ปิด" or _G.ESP_Selected == nil then
-                        if char:FindFirstChild("U_ESP") then
-                            char:FindFirstChild("U_ESP"):Destroy()
-                        end
-                    else
-                        -- ถ้ายังไม่มีให้สร้างใหม่
-                        local hl = char:FindFirstChild("U_ESP") or Instance.new("Highlight")
-                        hl.Name = "U_ESP"
-                        hl.Parent = char
-                        hl.Adornee = char
-                        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- บังคับให้เห็นทะลุ
-                        
-                        local color = _G.SharedColor or Color3.fromRGB(255, 0, 0)
-                        
-                        if _G.ESP_Selected == "Normal (เส้นขอบ)" then
-                            hl.Enabled = true
-                            hl.FillTransparency = 1        -- ตัวใส
-                            hl.OutlineColor = color        -- มีแค่เส้นขอบ
-                            hl.OutlineTransparency = 0
-                        elseif _G.ESP_Selected == "Hardcore (เรืองแสง)" then
-                            hl.Enabled = true
-                            hl.FillColor = color           -- เรืองแสงทั้งตัว
-                            hl.FillTransparency = 0.5
-                            hl.OutlineTransparency = 1     -- ปิดเส้นขอบ
-                        end
-                    end
-                end
-            end
-        end)
+    if IsVisible then
+        FOVCircle.Transparency = 1
+        FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        FOVCircle.Color = _G.U_HUB_CORE.PovColor or Color3.new(1,1,1)
+    else
+        FOVCircle.Transparency = 0 -- ทำให้ใสปิ๊ง
+        FOVCircle.Position = Vector2.new(-9999, -9999) -- เตะออกนอกจอ
     end
 end)
-
-
