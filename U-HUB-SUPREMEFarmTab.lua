@@ -275,13 +275,3 @@ task.spawn(function()
 end)
 
 
-Tabs.ESP:AddSlider("EspTrans", {
-    Title = "ความใสของสี",
-    Default = 0.5,
-    Min = 0,
-    Max = 1,
-    Rounding = 1,
-    Callback = function(Value)
-        _G.U_HUB_CORE.EspTrans = Value
-    end
-})
