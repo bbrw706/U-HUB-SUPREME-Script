@@ -179,37 +179,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- [[ 1. ระบบ Anti-Detection & Anti-Kick (วางบนสุด) ]]
-local function SecureScript()
-    local g = getgenv()
-    local namecall; namecall = hookmetamethod(game, "__namecall", function(self, ...)
-        local method = getnamecallmethod()
-        local args = {...}
-        
-        -- ดักจับการ Kick จากระบบ (ถ้าเกมสั่ง Kick ให้ยกเลิก)
-        if not checkcaller() and (method == "Kick" or method == "kick") then
-            print("Blocked a Kick attempt!")
-            return nil
-        end
-
-        -- ป้องกันการส่งค่า Log บางอย่างที่ผิดปกติกลับไปที่ Server
-        if method == "FireServer" and (self.Name == "RemoteEvent" or self.Name:find("Log")) then
-            return nil
-        end
-
-        return namecall(self, ...)
-    end)
-    
-    -- ซ่อนสคริปต์จากตัวตรวจจับ Memory
-    if g.setfflag then
-        g.setfflag("AbuseReportScreenshot", "False")
-        g.setfflag("RbxCrashUploadEnabled", "False")
-    end
-end
-
-pcall(SecureScript)
-
-Tabs.ESP:AddDropdown("ESP_Style", {
+abs.ESP:AddDropdown("ESP_Style", {
     Title = "เลือกรูปแบบ ESP",
     Values = {"ปิด", "Normal (เส้นขอบ)", "Hardcore (เรืองแสง)"},
     Default = "ปิด",
