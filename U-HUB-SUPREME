@@ -7,6 +7,8 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 math.randomseed(tick())
 
+
+
 -- [[ 1. SETTINGS CORE ]]
 _G.U_HUB_CORE = {
     AutoLockNoClick = false, 
@@ -29,13 +31,8 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ 3. ระบบปลดล็อคเมาส์ ]]
-RunService.RenderStepped:Connect(function()
-    if _G.U_HUB_CORE.UnlockMouse and not Window.Minimized then
-        UserInputService.MouseIconEnabled = true
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-    end
-end)
+
+
 
 -- [[ 4. ระบบปุ่มลอยวิบวับ (ห้ามลบ!) ]]
 local function SetupLogoV50(MainBtn)
@@ -81,16 +78,9 @@ Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องก�
     _G.U_HUB_CORE.AutoLockNoClick = Value 
 end)
 
-Tabs.Combat:AddDropdown("LockType", {
-    Title = "โหมดความโหด",
-    Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"},
-    Default = "Normal (ระยะสายตา)",
-    Callback = function(Value)
-        _G.U_HUB_CORE.LockMode = Value
-    end
-})
 
-Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.1, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
+
+Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
 Tabs.Visuals:AddSlider("FOVSize", { Title = "POV Radius", Default = 150, Min = 50, Max = 800, Rounding = 0, Callback = function(Value) _G.U_HUB_CORE.FovRadius = Value end})
 
 -- [[ 6. LOGIC ENGINE ]]
@@ -274,37 +264,51 @@ task.spawn(function()
     end
 end)
 
--- [[ 1. ปุ่มเปิด/ปิด ในหน้าเมนู ]]
-Tabs.Combat:AddToggle("ShowFOV", {
-    Title = "แสดงวงกลม FOV", 
-    Default = false 
-}):OnChanged(function(Value)
-    _G.U_HUB_CORE.ShowFOV = Value
-    if _G.FOV_Circle then
-        _G.FOV_Circle.Visible = Value
+Tabs.Combat:AddDropdown("MouseSpecial", {
+    Title = "โหมดความโหด",
+    Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)", "ปลดล็อคเมาส์"}, -- เพิ่มชื่อเข้าไปในนี้เลย
+    Default = "Normal (ระยะสายตา)",
+    Callback = function(Value)
+        _G.U_HUB_CORE.LockMode = Value
+    end
+})
+
+
+
+
+
+-- [[ Dropdown แถบเดิม เพิ่มปลดเมาส์เข้าไป ]]
+Tabs.Combat:AddDropdown("LockType", {
+    Title = "โหมดล็อกห้ามเลือกซ้ำกันมีโอกาสโดนแบน",
+    Values = {"ปิด", "Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"},
+    Default = "ปิด",
+    Callback = function(Value)
+        _G.U_HUB_CORE.LockMode = Value
+    end
+})
+
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if _G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.LockMode == "ปลดล็อคเมาส์" then
+        game:GetService("UserInputService").MouseBehavior = Enum.MouseBehavior.Default
+        game:GetService("UserInputService").MouseIconEnabled = true
     end
 end)
 
--- [[ 2. สร้างตัววงกลม ]]
-if not _G.FOV_Circle then
-    _G.FOV_Circle = Drawing.new("Circle")
-    _G.FOV_Circle.Thickness = 1
-    _G.FOV_Circle.NumSides = 100 -- เพิ่มความเนียนให้วงกลม
-    _G.FOV_Circle.Filled = false
-    _G.FOV_Circle.Color = Color3.fromRGB(255, 255, 255)
-end
 
--- [[ 3. ระบบอัปเดตตำแหน่ง (ตามเมาส์) ]]
+-- [[ โค้ดย่อยแก้เมาส์ค้างกลางจอ (วางล่างสุด) ]]
 RunService.RenderStepped:Connect(function()
-    if _G.FOV_Circle then
-        local mouse = LocalPlayer:GetMouse()
-        -- อัปเดตตำแหน่งให้ตรงเมาส์เป๊ะๆ
-        _G.FOV_Circle.Position = Vector2.new(mouse.X, mouse.Y + 36)
-        
-        -- แก้ชื่อตัวแปรให้ตรงกับ Slider ที่น้องใช้ (FovRadius)
-        _G.FOV_Circle.Radius = _G.U_HUB_CORE.FovRadius or 150
-        
-        -- เช็คเปิด/ปิด
-        _G.FOV_Circle.Visible = _G.U_HUB_CORE.ShowFOV or false
+    -- ถ้าเปิด AutoLock และ เลือกโหมดปลดล็อคเมาส์
+    if _G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.LockMode == "ปลดล็อคเมาส์" then
+        -- สั่งเมาส์ให้ขยับได้อิสระ (ไม่ล็อคกลางจอ)
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default 
+        UserInputService.MouseIconEnabled = true
+        -- บังคับโชว์เมาส์ (กันเหนียว)
+        UserInputService.OverrideMouseIconBehavior = Enum.OverrideMouseIconBehavior.ForceShow
+    else
+        -- ถ้าไม่ได้เลือกปลดเมาส์ ให้คืนค่าระบบตามปกติ
+        if _G.U_HUB_CORE.LockMode ~= "ปลดล็อคเมาส์" then
+            UserInputService.OverrideMouseIconBehavior = Enum.OverrideMouseIconBehavior.None
+        end
     end
 end)
