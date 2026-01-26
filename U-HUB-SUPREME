@@ -211,3 +211,48 @@ RunService.RenderStepped:Connect(function()
         FOVCircle.Position = Vector2.new(-9999, -9999) -- เตะออกนอกจอ
     end
 end)
+
+
+-- [[ ส่วนที่เพิ่มใหม่: วางต่อท้ายสุดได้เลย ไม่ตีกับของเก่าแน่นอน ]]
+
+local function GetNewTarget()
+    local target, dist = nil, _G.U_HUB_CORE.FovRadius or 150
+    local mousePos = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+
+    for _, v in pairs(Players:GetPlayers()) do
+        -- เช็ค: ไม่ใช่เรา, อยู่คนละทีม (หรือไม่มีทีม), ตัวไม่ตาย, และมีส่วนหัว
+        if v ~= LocalPlayer and (v.Team ~= LocalPlayer.Team or v.Team == nil) and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            local p = v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or v.Character:FindFirstChild("HumanoidRootPart")
+            if p then
+                local pos, on = Camera:WorldToViewportPoint(p.Position)
+                if on then
+                    local mag = (mousePos - Vector2.new(pos.X, pos.Y)).Magnitude
+                    if mag < dist then
+                        -- เช็คกำแพง (IsVisible) ใช้ฟังก์ชันเดิมที่น้องมีได้เลย
+                        if IsVisible(p) then 
+                            dist = mag
+                            target = v
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- สั่งให้ระบบใหม่ทำงานครอบคลุมอันเก่า
+RunService.RenderStepped:Connect(function()
+    if _G.U_HUB_CORE.AutoLockNoClick then
+        local target = GetNewTarget()
+        if target and target.Character then
+            local part = target.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or target.Character:FindFirstChild("HumanoidRootPart")
+            if part then
+                -- สั่งล็อคเป้าแบบลื่นๆ
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, part.Position), _G.U_HUB_CORE.Sensitivity or 0.1)
+            end
+        end
+    end
+end)
+
+
