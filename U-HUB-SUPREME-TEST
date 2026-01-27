@@ -1,1 +1,234 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+math.randomseed(tick())
 
+-- [[ 1. SETTINGS CORE ]]
+_G.U_HUB_CORE = {
+    AutoLockNoClick = false, 
+    AimPart = "Head",
+    Sensitivity = 0.05,
+    FovEnabled = true,
+    FovRadius = 150,
+    LockMode = "Normal (ระยะสายตา)",
+    EspStyle = "ปิด", -- ใช้ตัวแปรนี้คุม ESP แทน
+    SharedColor = Color3.fromRGB(255, 0, 0)
+}
+
+-- [[ 2. สร้างหน้าต่างหลัก ]]
+local Window = Fluent:CreateWindow({
+    Title = "U-HUB SUPREME",
+    SubTitle = "BY Neung",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false, 
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.U 
+})
+
+-- [[ 4. ระบบปุ่มลอยวิบวับ ]]
+local function SetupLogoV50(MainBtn)
+    local Container = Instance.new("Frame", MainBtn)
+    Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
+    for i = 1, 15 do
+        local d = Instance.new("Frame", Container)
+        d.Size = UDim2.new(0, 1, 0, 1); d.BackgroundColor3 = Color3.fromRGB(255, 255, 255); d.Position = UDim2.new(math.random(), 0, math.random(), 0)
+        task.spawn(function() while task.wait(math.random(2, 4)) do TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 1}):Play(); task.wait(1.2); TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 0.4}):Play() end end)
+    end
+    local function CreateChar(txt, color)
+        local h = Instance.new("Frame", Container); h.Size = UDim2.new(1, 0, 1, 0); h.BackgroundTransparency = 1
+        local l = Instance.new("TextLabel", h); l.Text = txt; l.TextColor3 = color; l.Font = Enum.Font.GothamBold; l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1
+        task.spawn(function() while true do TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,2)}):Play(); task.wait(1.5); TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,-2)}):Play(); task.wait(1.5) end end)
+        return h, l
+    end
+    local holderU, textU = CreateChar("U", Color3.fromRGB(0, 255, 100)); local holderN, textN = CreateChar("N", Color3.fromRGB(0, 170, 255))
+    holderU.Position = UDim2.new(0,0,0,0); textU.TextSize = 35; holderN.Position = UDim2.new(-0.25,0,-0.25,0); textN.TextSize = 14
+    return function(isMinimized)
+        if isMinimized then TweenService:Create(holderU, TweenInfo.new(0.4), {Position = UDim2.new(0,0,0,0)}):Play(); textU.TextSize = 35; TweenService:Create(holderN, TweenInfo.new(0.4), {Position = UDim2.new(-0.25,0,-0.25,0)}):Play(); textN.TextSize = 14
+        else TweenService:Create(holderN, TweenInfo.new(0.4), {Position = UDim2.new(0,0,0,0)}):Play(); textN.TextSize = 35; TweenService:Create(holderU, TweenInfo.new(0.4), {Position = UDim2.new(-0.25,0,-0.25,0)}):Play(); textU.TextSize = 14 end
+    end
+end
+
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui); local MainBtn = Instance.new("Frame", ScreenGui)
+MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0); MainBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0); MainBtn.Active = true
+Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 12); local UpdateLogo = SetupLogoV50(MainBtn)
+
+local dragging, dragStart, startPos, startTime
+MainBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true; startTime = tick(); dragStart = input.Position; startPos = MainBtn.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false
+        if tick() - startTime < 0.25 then Window:Minimize(); task.wait(0.05); UpdateLogo(Window.Minimized) end end end)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input) if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then local delta = input.Position - dragStart; MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y) end end)
+
+-- [[ 5. TABS ]]
+local Tabs = { 
+    Combat = Window:AddTab({ Title = "Combat", Icon = "target" }), 
+    Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
+    ESP = Window:AddTab({ Title = "ESP", Icon = "ghost" }) 
+}
+
+-- [[ COMBAT TABS ]]
+Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
+Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
+Tabs.Combat:AddDropdown("MouseSpecial", {
+    Title = "โหมดความโหด",
+    Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)", },
+    Default = "Normal (ระยะสายตา)",
+    Callback = function(Value) _G.U_HUB_CORE.LockMode = Value end
+})
+
+-- [[ VISUALS TABS ]]
+Tabs.Visuals:AddToggle("ShowFovBtn", {Title = "แสดงวงกลม POV", Default = true}):OnChanged(function(Value) _G.U_HUB_CORE.FovEnabled = Value end)
+Tabs.Visuals:AddSlider("FOVSize", { Title = "POV Radius", Default = 150, Min = 50, Max = 800, Rounding = 0, Callback = function(Value) _G.U_HUB_CORE.FovRadius = Value end})
+Tabs.Visuals:AddColorpicker("POVColor", {Title = "POV Color (สีวงกลม)", Default = Color3.fromRGB(255, 255, 255)}):OnChanged(function(Value) _G.U_HUB_CORE.PovColor = Value end)
+
+-- [[ ESP TABS ]]
+Tabs.ESP:AddDropdown("ESP_Style", {
+    Title = "เลือกรูปแบบ ESP",
+    Values = {"ปิด", "Normal (เส้นขอบ)", "Hardcore (เรืองแสง)"},
+    Default = "ปิด",
+    Callback = function(Value) _G.U_HUB_CORE.EspStyle = Value end
+})
+Tabs.ESP:AddColorpicker("MainColor", {Title = "เปลี่ยนสี ESP", Default = Color3.fromRGB(255, 0, 0)}):OnChanged(function(Value) _G.U_HUB_CORE.SharedColor = Value end)
+
+-- [[ 6. LOGIC ENGINE (POV & LOCK) ]]
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1; FOVCircle.NumSides = 100; FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+
+local function IsVisible(TargetPart)
+    if _G.U_HUB_CORE.LockMode == "Hardcore (ล็อคโหด)" then return true end
+    local RayParams = RaycastParams.new()
+    RayParams.FilterType = Enum.RaycastFilterType.Exclude
+    RayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    local Result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position), RayParams)
+    return (Result == nil or Result.Instance:IsDescendantOf(TargetPart.Parent))
+end
+
+local function GetClosestPlayer()
+    local Target, Distance = nil, _G.U_HUB_CORE.FovRadius
+    local Center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            local Part = v.Character[_G.U_HUB_CORE.AimPart]
+            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(Part.Position)
+            if OnScreen then
+                local MouseDist = (Center - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
+                if MouseDist < Distance and IsVisible(Part) then Distance = MouseDist; Target = v end
+            end
+        end
+    end
+    return Target
+end
+
+-- 2. AimLock Logic (แก้ใหม่ให้เลือกเป้าได้จริง)
+    if _G.U_HUB_CORE.AutoLockNoClick then
+        local Target = GetClosestPlayer()
+        if Target and Target.Character then
+            -- ใช้ฟังก์ชัน GetTargetPart ที่พี่เคยส่งให้ หรือเขียนดักตรงนี้เลย
+            local mode = _G.U_HUB_CORE.AimPart
+            local PartToLock
+            
+            if mode == "Random" then
+                local p = {"Head", "UpperTorso", "LeftLeg", "RightLeg"}
+                PartToLock = Target.Character:FindFirstChild(p[math.random(1, #p)])
+            elseif mode == "UpperTorso" then
+                PartToLock = Target.Character:FindFirstChild("UpperTorso") or Target.Character:FindFirstChild("Torso") or Target.Character:FindFirstChild("HumanoidRootPart")
+            elseif mode == "LeftLeg" then
+                PartToLock = Target.Character:FindFirstChild("LeftLeg") or Target.Character:FindFirstChild("RightLeg")
+            else
+                PartToLock = Target.Character:FindFirstChild("Head")
+            end
+
+            if PartToLock then
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, PartToLock.Position), _G.U_HUB_CORE.Sensitivity)
+            end
+        end
+    end
+
+
+-- [[ จุดที่แก้: รวมเงื่อนไข POV ให้จบในที่เดียว ]]
+RunService.RenderStepped:Connect(function()
+    -- เช็คเงื่อนไข: ต้องเปิด AutoLock "และ" ต้องเปิด ShowFovBtn เท่านั้น
+    local IsVisible = _G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.FovEnabled
+
+    FOVCircle.Visible = IsVisible -- ถ้าเงื่อนไขไม่ครบ จะเป็น false ทันที
+    
+    if IsVisible then
+        FOVCircle.Transparency = 1
+        FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        FOVCircle.Color = _G.U_HUB_CORE.PovColor or Color3.new(1,1,1)
+    else
+        FOVCircle.Transparency = 0 -- ทำให้ใสปิ๊ง
+        FOVCircle.Position = Vector2.new(-9999, -9999) -- เตะออกนอกจอ
+    end
+end)
+
+
+-- [[ ส่วนที่เพิ่มใหม่: วางต่อท้ายสุดได้เลย ไม่ตีกับของเก่าแน่นอน ]]
+
+local function GetNewTarget()
+    local target, dist = nil, _G.U_HUB_CORE.FovRadius or 150
+    local mousePos = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+
+    for _, v in pairs(Players:GetPlayers()) do
+        -- เช็ค: ไม่ใช่เรา, อยู่คนละทีม (หรือไม่มีทีม), ตัวไม่ตาย, และมีส่วนหัว
+        if v ~= LocalPlayer and (v.Team ~= LocalPlayer.Team or v.Team == nil) and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            local p = v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or v.Character:FindFirstChild("HumanoidRootPart")
+            if p then
+                local pos, on = Camera:WorldToViewportPoint(p.Position)
+                if on then
+                    local mag = (mousePos - Vector2.new(pos.X, pos.Y)).Magnitude
+                    if mag < dist then
+                        -- เช็คกำแพง (IsVisible) ใช้ฟังก์ชันเดิมที่น้องมีได้เลย
+                        if IsVisible(p) then 
+                            dist = mag
+                            target = v
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- สั่งให้ระบบใหม่ทำงานครอบคลุมอันเก่า
+RunService.RenderStepped:Connect(function()
+    if _G.U_HUB_CORE.AutoLockNoClick then
+        local target = GetNewTarget()
+        if target and target.Character then
+            local part = target.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or target.Character:FindFirstChild("HumanoidRootPart")
+            if part then
+                -- สั่งล็อคเป้าแบบลื่นๆ
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, part.Position), _G.U_HUB_CORE.Sensitivity or 0.1)
+            end
+        end
+    end
+end)
+
+
+-- [[ โค้ด Dropdown เลือกส่วนที่จะล็อค ]]
+Tabs.Combat:AddDropdown("AimPartSelect", {
+    Title = "โหมดโจมตี (เลือกเป้าหมาย)",
+    Values = {"หัว", "ตัว", "ขา", "แบบสุ่ม"},
+    Default = "หัว",
+    Callback = function(Value)
+        -- เก็บค่าที่เลือกไว้ในตัวแปรหลัก
+        _G.U_HUB_CORE.AimPart = Value
+        
+        -- แจ้งเตือนเล็กน้อยให้รู้ว่าเปลี่ยนโหมดแล้ว
+        Fluent:Notify({
+            Title = "U-HUB",
+            Content = "เปลี่ยนเป้าหมายเป็น: " .. Value,
+            Duration = 2
+        })
+    end
+})
