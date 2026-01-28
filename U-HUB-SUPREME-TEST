@@ -258,7 +258,7 @@ end)
 -- [[ ตัว Dropdown เลือกจุดล็อค ]]
 Tabs.Combat:AddDropdown("AimPartDropdown", {
     Title = "เลือกจุดที่จะล็อค",
-    Values = {"Head", "HumanoidRootPart", "UpperTorso"},
+    Values = {"Head", "HumanoidRootPart", },
     Default = "Head",
     Callback = function(Value)
         _G.U_HUB_CORE.AimPart = Value -- พอกดเลือกปุ๊บ มันจะเปลี่ยนเป้าหมายทันที
