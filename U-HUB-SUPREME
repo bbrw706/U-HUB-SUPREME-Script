@@ -308,3 +308,25 @@ _G.U_HUB_CORE.AimPart = AimParts[math.random(1, #AimParts)]
     end
 end)
 
+
+
+-- [[ ปุ่มเปิด-ปิด แยกชื่อ กับ ระยะทาง ]]
+Tabs.ESP:AddToggle("EspName", {Title = "แสดงชื่อผู้เล่น", Default = false}):OnChanged(function(Value) 
+    _G.U_HUB_CORE.ShowName = Value 
+end)
+
+Tabs.ESP:AddToggle("EspDistance", {Title = "แสดงระยะทาง (พิกัด)", Default = false}):OnChanged(function(Value) 
+    _G.U_HUB_CORE.ShowDistance = Value 
+end)
+
+
+-- [[ ปุ่มปรับสีชื่อและพิกัด - แยกจากสี ESP ตัวละคร ]]
+Tabs.ESP:AddColorpicker("TextInfoColorPicker", {
+    Title = "สีของชื่อและพิกัด (แยกต่างหาก)",
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) 
+        _G.U_HUB_CORE.MyCustomTextColor = Value -- เปลี่ยนชื่อตัวแปรให้ไม่ซ้ำกับตัวอื่น
+    end
+})
+
+
