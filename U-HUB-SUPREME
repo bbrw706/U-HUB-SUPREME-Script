@@ -7,7 +7,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 math.randomseed(tick())
 
--- [[ 1. SETTINGS CORE ]]
+-- [[ 1. SETTINGS CORE - เก็บทุกอย่างไว้ครบ ]]
 _G.U_HUB_CORE = {
     AutoLockNoClick = false, 
     AimPart = "Head",
@@ -17,9 +17,14 @@ _G.U_HUB_CORE = {
     LockMode = "Normal (ระยะสายตา)",
     EspStyle = "ปิด",
     SharedColor = Color3.fromRGB(255, 0, 0),
+    PovColor = Color3.fromRGB(255, 255, 255),
+    -- ระบบ ESP แบบละเอียด
     ShowName = false,
     ShowDistance = false,
-    MyCustomTextColor = Color3.fromRGB(255, 255, 255)
+    MyCustomTextColor = Color3.fromRGB(255, 255, 255),
+    -- ระยะที่น้องสั่งเพิ่ม
+    MaxLockDistance = 500,
+    MaxEspDistance = 500
 }
 
 -- [[ 2. สร้างหน้าต่างหลัก ]]
@@ -33,7 +38,7 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ 4. ระบบปุ่มลอยวิบวับ ]]
+-- [[ 3. ปุ่มลอยวิบวับ - อยู่ครบเหมือนเดิม ]]
 local function SetupLogoV50(MainBtn)
     local Container = Instance.new("Frame", MainBtn)
     Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
@@ -70,55 +75,42 @@ MainBtn.InputBegan:Connect(function(input)
 end)
 UserInputService.InputChanged:Connect(function(input) if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then local delta = input.Position - dragStart; MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y) end end)
 
--- [[ 5. TABS ]]
+-- [[ 4. TABS ]]
 local Tabs = { 
     Combat = Window:AddTab({ Title = "Combat", Icon = "target" }), 
     Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
-    ESP = Window:AddTab({ Title = "ESP", Icon = "ghost" }) 
+    ESP = Window:AddTab({ Title = "ESP", Icon = "ghost" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
--- [[ COMBAT TABS ]]
+-- [[ COMBAT ]]
 Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
 Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
+Tabs.Combat:AddDropdown("AimPartDropdown", { Title = "เลือกจุดที่จะล็อค", Values = {"Head", "HumanoidRootPart"}, Default = "Head", Callback = function(v) _G.U_HUB_CORE.AimPart = v end })
+Tabs.Combat:AddDropdown("MouseSpecial", { Title = "โหมดความโหด", Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"}, Default = "Normal (ระยะสายตา)", Callback = function(Value) _G.U_HUB_CORE.LockMode = Value end })
 
--- แก้เป็นภาษาไทย และเหลือแค่ หัว กับ ตัว
-Tabs.Combat:AddDropdown("AimPartDropdown", {
-    Title = "เลือกจุดที่จะล็อค",
-    Values = {"หัว", "ตัว"},
-    Default = "หัว",
-    Callback = function(Value)
-        if Value == "หัว" then _G.U_HUB_CORE.AimPart = "Head"
-        elseif Value == "ตัว" then _G.U_HUB_CORE.AimPart = "HumanoidRootPart" end
-    end
-})
-
-Tabs.Combat:AddDropdown("MouseSpecial", {
-    Title = "โหมดความโหด",
-    Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)", },
-    Default = "Normal (ระยะสายตา)",
-    Callback = function(Value) _G.U_HUB_CORE.LockMode = Value end
-})
-
--- [[ VISUALS TABS ]]
+-- [[ VISUALS ]]
 Tabs.Visuals:AddToggle("ShowFovBtn", {Title = "แสดงวงกลม POV", Default = true}):OnChanged(function(Value) _G.U_HUB_CORE.FovEnabled = Value end)
 Tabs.Visuals:AddSlider("FOVSize", { Title = "POV Radius", Default = 150, Min = 50, Max = 800, Rounding = 0, Callback = function(Value) _G.U_HUB_CORE.FovRadius = Value end})
-Tabs.Visuals:AddColorpicker("POVColor", {Title = "POV Color (สีวงกลม)", Default = Color3.fromRGB(255, 255, 255)}):OnChanged(function(Value) _G.U_HUB_CORE.PovColor = Value end)
+Tabs.Visuals:AddColorpicker("POVColor", {Title = "POV Color", Default = Color3.fromRGB(255, 255, 255)}):OnChanged(function(Value) _G.U_HUB_CORE.PovColor = Value end)
 
--- [[ ESP TABS ]]
-Tabs.ESP:AddDropdown("ESP_Style", {
-    Title = "เลือกรูปแบบ ESP",
-    Values = {"ปิด", "Normal (เส้นขอบ)", "Hardcore (เรืองแสง)"},
-    Default = "ปิด",
-    Callback = function(Value) _G.U_HUB_CORE.EspStyle = Value end
-})
-Tabs.ESP:AddColorpicker("MainColor", {Title = "เปลี่ยนสี ESP ตัวละคร", Default = Color3.fromRGB(255, 0, 0)}):OnChanged(function(Value) _G.U_HUB_CORE.SharedColor = Value end)
-Tabs.ESP:AddToggle("ShowNameBtn", {Title = "แสดงชื่อผู้เล่น", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowName = Value end)
-Tabs.ESP:AddToggle("ShowDistBtn", {Title = "แสดงพิกัด (ระยะ)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowDistance = Value end)
-Tabs.ESP:AddColorpicker("TextColorBtn", {Title = "สีชื่อและพิกัด", Default = Color3.fromRGB(255, 255, 255)}):OnChanged(function(Value) _G.U_HUB_CORE.MyCustomTextColor = Value end)
+-- [[ ESP - เอาตั้งค่าละเอียดกลับมาให้ครบ ]]
+Tabs.ESP:AddDropdown("ESP_Style", { Title = "เลือกรูปแบบ ESP", Values = {"ปิด", "Normal (เส้นขอบ)", "Hardcore (เรืองแสง)"}, Default = "ปิด", Callback = function(Value) _G.U_HUB_CORE.EspStyle = Value end })
+Tabs.ESP:AddColorpicker("MainColor", {Title = "เปลี่ยนสี ESP", Default = Color3.fromRGB(255, 0, 0)}):OnChanged(function(Value) _G.U_HUB_CORE.SharedColor = Value end)
+Tabs.ESP:AddToggle("ShowName", {Title = "แสดงชื่อ", Default = false}):OnChanged(function(v) _G.U_HUB_CORE.ShowName = v end)
+Tabs.ESP:AddToggle("ShowDist", {Title = "แสดงระยะ", Default = false}):OnChanged(function(v) _G.U_HUB_CORE.ShowDistance = v end)
+Tabs.ESP:AddColorpicker("TextColor", {Title = "สีตัวอักษร", Default = Color3.fromRGB(255, 255, 255)}):OnChanged(function(v) _G.U_HUB_CORE.MyCustomTextColor = v end)
 
--- [[ 6. LOGIC ENGINE ]]
+-- [[ SETTINGS - เอาปุ่มเก่ากลับมา + เพิ่ม Slider ใหม่ ]]
+Tabs.Settings:AddSlider("LockDistSlider", { Title = "ระยะการล็อคเป้า (เมตร)", Default = 1000, Min = 50, Max = 4500, Rounding = 0, Callback = function(v) _G.U_HUB_CORE.MaxLockDistance = v end})
+Tabs.Settings:AddSlider("EspDistSlider", { Title = "ระยะ ESP (เมตร)", Default = 1500, Min = 50, Max = 10000, Rounding = 0, Callback = function(v) _G.U_HUB_CORE.MaxEspDistance = v end})
+Tabs.Settings:AddButton({ Title = "Destroy UI", Callback = function() Window:Destroy(); ScreenGui:Destroy(); if FOVCircle then FOVCircle:Remove() end end })
+Tabs.Settings:AddSection("User Info")
+Tabs.Settings:AddParagraph({ Title = "Player Name: " .. LocalPlayer.Name, Content = "Account Age: " .. LocalPlayer.AccountAge .. " days" })
+
+-- [[ 5. LOGIC ENGINE ]]
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1; FOVCircle.NumSides = 100; FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+FOVCircle.Thickness = 1; FOVCircle.NumSides = 100
 
 local function IsVisible(TargetPart)
     if _G.U_HUB_CORE.LockMode == "Hardcore (ล็อคโหด)" then return true end
@@ -129,74 +121,74 @@ local function IsVisible(TargetPart)
     return (Result == nil or Result.Instance:IsDescendantOf(TargetPart.Parent))
 end
 
-local function GetClosestPlayer()
-    local Target, Distance = nil, _G.U_HUB_CORE.FovRadius
+local function GetTarget()
+    local Target, Closest = nil, _G.U_HUB_CORE.FovRadius
     local Center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and (v.Team ~= LocalPlayer.Team or v.Team == nil) and v.Character and v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
-            local Part = v.Character[_G.U_HUB_CORE.AimPart]
-            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(Part.Position)
-            if OnScreen then
-                local MouseDist = (Center - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
-                if MouseDist < Distance and IsVisible(Part) then Distance = MouseDist; Target = v end
+        if v ~= LocalPlayer and (v.Team ~= LocalPlayer.Team or v.Team == nil) and v.Character then
+            local Root = v.Character:FindFirstChild("HumanoidRootPart")
+            if Root and v.Character.Humanoid.Health > 0 then
+                local Mag = (LocalPlayer.Character.HumanoidRootPart.Position - Root.Position).Magnitude
+                if Mag <= _G.U_HUB_CORE.MaxLockDistance then
+                    local Part = v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or v.Character:FindFirstChild("Head")
+                    local Pos, OnScreen = Camera:WorldToViewportPoint(Part.Position)
+                    if OnScreen then
+                        local Dist = (Center - Vector2.new(Pos.X, Pos.Y)).Magnitude
+                        if Dist < Closest and IsVisible(Part) then Closest = Dist; Target = Part end
+                    end
+                end
             end
         end
     end
     return Target
 end
 
--- [[ MAIN LOOP - รันทุกอย่างรวมถึง ESP ชื่อ/พิกัด ด้านล่างสุด ]]
+-- [[ 6. MAIN LOOP ]]
 RunService.RenderStepped:Connect(function()
-    -- POV
-    if _G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.FovEnabled then
-        FOVCircle.Visible = true; FOVCircle.Radius = _G.U_HUB_CORE.FovRadius; FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2); FOVCircle.Color = _G.U_HUB_CORE.PovColor or Color3.fromRGB(255, 255, 255)
-    else FOVCircle.Visible = false end
-
-    -- AimLock
-    if _G.U_HUB_CORE.AutoLockNoClick then
-        local Target = GetClosestPlayer()
-        if Target and Target.Character then
-            local Part = Target.Character:FindFirstChild(_G.U_HUB_CORE.AimPart)
-            if Part then
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, Part.Position), _G.U_HUB_CORE.Sensitivity)
-            end
-        end
+    local IsFovVisible = _G.U_HUB_CORE.AutoLockNoClick and _G.U_HUB_CORE.FovEnabled
+    FOVCircle.Visible = IsFovVisible
+    if IsFovVisible then
+        FOVCircle.Radius = _G.U_HUB_CORE.FovRadius; FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2); FOVCircle.Color = _G.U_HUB_CORE.PovColor
     end
 
-    -- ESP & Name System
+    if _G.U_HUB_CORE.AutoLockNoClick then
+        local LockTo = GetTarget()
+        if LockTo then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, LockTo.Position), _G.U_HUB_CORE.Sensitivity) end
+    end
+
+    -- ESP SYSTEM (แบบละเอียดที่น้องต้องการ)
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local char = player.Character
-            
-            -- 1. Highlight ESP
-            local hl = char:FindFirstChild("U_ESP")
-            if _G.U_HUB_CORE.EspStyle ~= "ปิด" then
-                if not hl then hl = Instance.new("Highlight", char); hl.Name = "U_ESP" end
-                hl.FillTransparency = (_G.U_HUB_CORE.EspStyle == "Hardcore (เรืองแสง)" and 0.5 or 1)
-                hl.OutlineColor = _G.U_HUB_CORE.SharedColor
-            elseif hl then hl:Destroy() end
-
-            -- 2. Name & Distance ESP (วางไว้ล่างสุดของระบบ ESP ตามสั่งครับ)
-            local head = char:FindFirstChild("Head")
-            if head then
-                local espGui = head:FindFirstChild("U_NameESP")
-                if _G.U_HUB_CORE.ShowName or _G.U_HUB_CORE.ShowDistance then
-                    if not espGui then
-                        espGui = Instance.new("BillboardGui", head); espGui.Name = "U_NameESP"; espGui.Size = UDim2.new(0, 100, 0, 50); espGui.StudsOffset = Vector3.new(0, 3, 0); espGui.AlwaysOnTop = true
-                        local l = Instance.new("TextLabel", espGui); l.Name = "InfoLabel"; l.BackgroundTransparency = 1; l.Size = UDim2.new(1, 0, 1, 0); l.Font = Enum.Font.GothamBold; l.TextSize = 14; l.OutlineAlpha = 1
-                    end
-                    local info = ""
-                    if _G.U_HUB_CORE.ShowName then info = player.Name end
-                    if _G.U_HUB_CORE.ShowDistance then
-                        local d = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - head.Position).Magnitude)
-                        info = (info ~= "" and info .. "\n" or "") .. "[" .. d .. "m]"
-                    end
-                    espGui.InfoLabel.Text = info; espGui.InfoLabel.TextColor3 = _G.U_HUB_CORE.MyCustomTextColor
-                elseif espGui then espGui:Destroy() end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then
+                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
+                local canSee = dist <= _G.U_HUB_CORE.MaxEspDistance
+                
+                -- Highlight
+                local hl = char:FindFirstChild("U_ESP")
+                if _G.U_HUB_CORE.EspStyle ~= "ปิด" and canSee then
+                    if not hl then hl = Instance.new("Highlight", char); hl.Name = "U_ESP" end
+                    hl.Enabled = true; hl.FillTransparency = (_G.U_HUB_CORE.EspStyle == "Hardcore (เรืองแสง)" and 0.5 or 1); hl.OutlineColor = _G.U_HUB_CORE.SharedColor
+                elseif hl then hl:Destroy() end
+                
+                -- Name/Dist Text
+                local head = char:FindFirstChild("Head")
+                if head then
+                    local b = head:FindFirstChild("U_B")
+                    if (_G.U_HUB_CORE.ShowName or _G.U_HUB_CORE.ShowDistance) and canSee then
+                        if not b then
+                            b = Instance.new("BillboardGui", head); b.Name = "U_B"; b.Size = UDim2.new(0,100,0,50); b.AlwaysOnTop = true; b.StudsOffset = Vector3.new(0,2,0)
+                            local l = Instance.new("TextLabel", b); l.Size = UDim2.new(1,0,1,0); l.BackgroundTransparency = 1; l.Font = "GothamBold"; l.TextSize = 14; l.OutlineAlpha = 1
+                        end
+                        b.TextLabel.Text = (_G.U_HUB_CORE.ShowName and player.Name or "") .. (_G.U_HUB_CORE.ShowDistance and "\n["..math.floor(dist).."m]" or "")
+                        b.TextLabel.TextColor3 = _G.U_HUB_CORE.MyCustomTextColor
+                    elseif b then b:Destroy() end
+                end
             end
         end
     end
 end)
 
 Window:SelectTab(1)
-Fluent:Notify({Title = "U-HUB", Content = "ภาษาไทยเรียบร้อย! ตัดขา/สุ่มออกแล้วนะน้องหนึ่ง", Duration = 5})
+Fluent:Notify({Title = "U-HUB", Content = "กลับมาครบทุกปุ่มแล้วครับน้องหนึ่ง!", Duration = 5})
