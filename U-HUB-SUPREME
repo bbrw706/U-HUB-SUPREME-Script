@@ -190,5 +190,71 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-Window:SelectTab(1)
-Fluent:Notify({Title = "U-HUB", Content = "กลับมาครบทุกปุ่มแล้วครับน้องหนึ่ง!", Duration = 5})
+-- [[ 1. ตัวสร้างวงกลม (Drawing) ]]
+if not _G.FOV_Circle then
+    _G.FOV_Circle = Drawing.new("Circle")
+    _G.FOV_Circle.Thickness = 1
+    _G.FOV_Circle.NumSides = 100
+    _G.FOV_Circle.Filled = false
+    _G.FOV_Circle.Color = Color3.fromRGB(255, 255, 255)
+    _G.FOV_Circle.Visible = false
+end
+
+-- [[ 2. ปุ่มเปิด/ปิด (วางในหน้า Combat) ]]
+Tabs.Combat:AddToggle("MainLockSystem", {
+    Title = "เปิดวงกลม + ล็อคปกติ", 
+    Default = false 
+}):OnChanged(function(Value)
+    _G.U_HUB_CORE.ShowFOV = Value
+    _G.MouseLockEnabled = Value
+    if _G.FOV_Circle then
+        _G.FOV_Circle.Visible = Value
+    end
+end)
+
+-- [[ 3. สมองอัปเดตตำแหน่งและระบบล็อค (ใส่ไว้ล่างสุด) ]]
+RunService.RenderStepped:Connect(function()
+    local MousePos = UserInputService:GetMouseLocation()
+    
+    -- วงกลมวิ่งตามเมาส์
+    if _G.FOV_Circle then
+        _G.FOV_Circle.Position = MousePos
+        _G.FOV_Circle.Radius = _G.U_HUB_CORE.FovRadius or 150
+        _G.FOV_Circle.Visible = _G.U_HUB_CORE.ShowFOV or false
+    end
+
+    -- ระบบล็อคปกติ (ไม่ทะลุกำแพง)
+    if _G.MouseLockEnabled then
+        local Target = nil
+        local Closest = _G.U_HUB_CORE.FovRadius or 150
+        
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                local Part = v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or v.Character:FindFirstChild("Head")
+                if Part then
+                    local ScreenPos, OnScreen = Camera:WorldToViewportPoint(Part.Position)
+                    if OnScreen then
+                        local Dist = (Vector2.new(ScreenPos.X, ScreenPos.Y) - MousePos).Magnitude
+                        
+                        -- อยู่ในวง + เช็คกำแพง (Raycast)
+                        if Dist < Closest then
+                            local RayParams = RaycastParams.new()
+                            RayParams.FilterType = Enum.RaycastFilterType.Exclude
+                            RayParams.FilterDescendantsInstances = {LocalPlayer.Character, v.Character, Camera}
+                            local Result = workspace:Raycast(Camera.CFrame.Position, (Part.Position - Camera.CFrame.Position), RayParams)
+                            
+                            if Result == nil then -- โล่งถึงจะล็อค
+                                Closest = Dist
+                                Target = Part
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        if Target then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, Target.Position), _G.U_HUB_CORE.Sensitivity or 0.04)
+        end
+    end
+end)
