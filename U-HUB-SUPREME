@@ -31,7 +31,7 @@ _G.U_HUB_CORE = {
 
 _G.MouseLockEnabled = false
 
--- [[ 2. สร้างหน้าต่างหลัก ]]
+-- [[ 2. สร้างหน้าต่างหลัก - แก้ไขให้ถูกต้องแล้ว ]]
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME",
     SubTitle = "BY Neung",
@@ -39,7 +39,7 @@ local Window = Fluent:CreateWindow({
     Size = UDim2.fromOffset(580, 460),
     Acrylic = false, 
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.U 
+    CurrentSize = NewSize
 })
 
 -- [[ 3. ปุ่มลอยวิบวับ ]]
@@ -88,10 +88,10 @@ local Tabs = {
 }
 
 -- [[ COMBAT ]]
-Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
-Tabs.Combat:AddToggle("MainLockSystem", {Title = "เปิดวงกลม + ล็อคปกติ", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowFOV = Value; _G.MouseLockEnabled = Value end)
-Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
-Tabs.Combat:AddDropdown("AimPartDropdown", { Title = "เลือกจุดที่จะล็อค", Values = {"Head", "HumanoidRootPart"}, Default = "Head", Callback = function(v) _G.U_HUB_CORE.AimPart = v end })
+Tabs.Combat:AddToggle("AutoLock", {Title = "ล็อคเป้า", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
+Tabs.Combat:AddToggle("MainLockSystem", {Title = "ล็อคพิเศษ (เฉพาะ pc)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowFOV = Value; _G.MouseLockEnabled = Value end)
+Tabs.Combat:AddSlider("Smooth", { Title = "ความเร็วในการล็อค", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
+Tabs.Combat:AddDropdown("AimPartDropdown", { Title = "เลือกจุดที่จะล็อค", Values = {"Head (หัว)", "HumanoidRootPart (ตัว)"}, Default = "Head", Callback = function(v) _G.U_HUB_CORE.AimPart = v end })
 Tabs.Combat:AddDropdown("MouseSpecial", { Title = "โหมดความโหด", Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"}, Default = "Normal (ระยะสายตา)", Callback = function(Value) _G.U_HUB_CORE.LockMode = Value end })
 
 -- [[ VISUALS ]]
@@ -226,6 +226,70 @@ Tabs.Settings:AddDropdown("WindowSize", {
             -- สั่งปรับขนาดไปที่ตัว Frame หลักของ UI เลย
             Window.Root.Size = NewSize
         end
+    end
+})
+
+-- [[ ปุ่มเปลี่ยนปุ่มเมนู แบบโชว์ให้กดเปลี่ยนได้ ]]
+Tabs.Settings:AddKeybind("MenuBind", {
+    Title = "ตั้งค่าปุ่มเปิด/ปิดเมนู",
+    Default = "U",
+    Mode = "Toggle",
+    Callback = function() Window:Minimize() end
+})
+
+-- [[ ⚡ สคริปต์ FORCE BOOST (แปลงจาก FastFlags เป๊ะๆ) ⚡ ]]
+
+local function ForceExtremeBoost()
+    -- 1. ปลดล็อค FPS (พยายามฝืนให้สูงที่สุดเท่าที่ Lua ทำได้)
+    setfpscap(2147483647) 
+
+    -- 2. ตั้งค่า Rendering ให้ต่ำสุด (เลียนแบบ QualityLevel 1)
+    settings().Rendering.QualityLevel = 1
+    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level10
+    
+    -- 3. ปรับระบบแสงและเงา (เลียนแบบ DisablePostFx & Voxel)
+    local Lighting = game:GetService("Lighting")
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.Brightness = 0
+    Lighting.ExposureCompensation = 0
+    for _, v in pairs(Lighting:GetChildren()) do
+        if v:IsA("PostEffect") or v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") then
+            v.Enabled = false
+        end
+    end
+
+    -- 4. จัดการพื้นผิวและวัตถุ (เลียนแบบ TextureQuality & CSG Level)
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.CastShadow = false
+        elseif v:IsA("Texture") or v:IsA("Decal") then
+            v:Destroy() -- ลบรูปภาพพื้นผิวออกให้หมดตามสูตร
+        elseif v:IsA("DataModelMesh") then
+            v.LODEffortMode = Enum.LODEffortMode.Low
+        end
+    end
+
+    -- 5. ปิดหญ้าและน้ำ (เลียนแบบ FRMMaxGrassDistance & WaterSlice)
+    if workspace:FindFirstChildOfClass("Terrain") then
+        local t = workspace.Terrain
+        t.WaterWaveSize = 0
+        t.WaterWaveSpeed = 0
+        t.WaterReflectance = 0
+        t.WaterTransparency = 0
+        sethiddenproperty(t, "Decoration", false)
+    end
+
+    -- [[ ส่วนอันตราย: ถ้าอยากให้หน้าจอหายไปเลยตามสูตรเป๊ะ ให้เอา -- ออกข้างล่างนี้ ]]
+    -- game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+end
+
+-- เพิ่มปุ่มในเมนู Settings ของน้องหนึ่ง
+Tabs.Settings:AddButton({
+    Title = "เปิดโหมด Extreme Boost (เป๊ะตาม FastFlags)",
+    Callback = function()
+        ForceExtremeBoost()
     end
 })
 
