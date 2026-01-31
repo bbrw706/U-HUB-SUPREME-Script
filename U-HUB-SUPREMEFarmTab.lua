@@ -120,7 +120,6 @@ end
 local function GetTarget(Point)
     local Target, Closest = nil, _G.U_HUB_CORE.FovRadius
     for _, v in pairs(Players:GetPlayers()) do
-        -- ถอดระบบเช็คทีมออกแล้ว (v.Team ~= LocalPlayer.Team) ออกไปเลย
         if v ~= LocalPlayer and v.Character and v.Character:FindFirstChildOfClass("Humanoid") and v.Character.Humanoid.Health > 0 then
             local Part = v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or v.Character:FindFirstChild("Head") or v.Character:FindFirstChild("HumanoidRootPart")
             if Part then
@@ -130,7 +129,6 @@ local function GetTarget(Point)
                     if OnScreen then
                         local Dist = (Point - Vector2.new(Pos.X, Pos.Y)).Magnitude
                         if Dist < Closest then
-                            -- เช็คกำแพงตามโหมด
                             if _G.U_HUB_CORE.LockMode == "Hardcore (ล็อคโหด)" then
                                 Closest = Dist; Target = Part
                             else
@@ -156,7 +154,6 @@ RunService.RenderStepped:Connect(function()
     local MousePos = UserInputService:GetMouseLocation()
     local Center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     
-    -- อัปเดตวงกลม
     if _G.FOV_Circle then
         _G.FOV_Circle.Visible = (_G.U_HUB_CORE.ShowFOV or _G.U_HUB_CORE.AutoLockNoClick) and _G.U_HUB_CORE.FovEnabled
         _G.FOV_Circle.Radius = _G.U_HUB_CORE.FovRadius
@@ -164,7 +161,6 @@ RunService.RenderStepped:Connect(function()
         _G.FOV_Circle.Position = _G.U_HUB_CORE.AutoLockNoClick and Center or MousePos
     end
 
-    -- ระบบการหันกล้อง (ล็อคเป้าทุกคน)
     local LockTarget = nil
     if _G.U_HUB_CORE.AutoLockNoClick then
         LockTarget = GetTarget(Center)
@@ -181,6 +177,8 @@ RunService.RenderStepped:Connect(function()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            
+            -- จุดเดียวที่พี่เพิ่มเข้าไป: เช็คระยะทางจาก Slider
             if dist <= _G.U_HUB_CORE.MaxEspDistance then
                 local hl = player.Character:FindFirstChild("U_ESP")
                 if _G.U_HUB_CORE.EspStyle ~= "ปิด" then
@@ -201,6 +199,10 @@ RunService.RenderStepped:Connect(function()
                         b.TextLabel.TextColor3 = _G.U_HUB_CORE.MyCustomTextColor
                     elseif b then b:Destroy() end
                 end
+            else
+                -- ถ้าเกินระยะ ให้ลบ ESP ออก (เพื่อให้ Slider มันทำงานได้จริง)
+                if player.Character:FindFirstChild("U_ESP") then player.Character.U_ESP:Destroy() end
+                if player.Character:FindFirstChild("Head") and player.Character.Head:FindFirstChild("U_B") then player.Character.Head.U_B:Destroy() end
             end
         end
     end
