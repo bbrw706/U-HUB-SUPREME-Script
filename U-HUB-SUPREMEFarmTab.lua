@@ -1,5 +1,5 @@
--- [[ U-HUB SUPREME FINAL FIXED - NO TEAM CHECK ]]
--- ล็อคทุกคนไม่สนทีม / ไม่ลบของเดิม / รวมระบบล็อคให้เสถียรที่สุด
+-- [[ U-HUB SUPREME  ]]
+
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local TweenService = game:GetService("TweenService")
@@ -9,7 +9,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 math.randomseed(tick())
-
+local CurrentSize = UDim2.fromOffset(580, 460) -- ค่าเริ่มต้นกลาง
 -- [[ 1. SETTINGS CORE - ครบถ้วนตามต้นฉบับ ]]
 _G.U_HUB_CORE = {
     AutoLockNoClick = false, 
@@ -34,7 +34,7 @@ _G.MouseLockEnabled = false
 -- [[ 2. สร้างหน้าต่างหลัก ]]
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME",
-    SubTitle = "BY Neung (No Team Edition)",
+    SubTitle = "BY Neung",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = false, 
@@ -42,7 +42,7 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ 3. ปุ่มลอยวิบวับ - ห้ามลบตามสั่ง ]]
+-- [[ 3. ปุ่มลอยวิบวับ ]]
 local function SetupLogoV50(MainBtn)
     local Container = Instance.new("Frame", MainBtn)
     Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
@@ -88,8 +88,8 @@ local Tabs = {
 }
 
 -- [[ COMBAT ]]
-Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
-Tabs.Combat:AddToggle("MainLockSystem", {Title = "เปิดวงกลม + ล็อคปกติ", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowFOV = Value; _G.MouseLockEnabled = Value end)
+Tabs.Combat:AddToggle("AutoLock", {Title = "ล็อคเป้า", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
+Tabs.Combat:AddToggle("MainLockSystem", {Title = "ล็อคเป้าพิเศษ (แค่คอมเท่านั้น)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowFOV = Value; _G.MouseLockEnabled = Value end)
 Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
 Tabs.Combat:AddDropdown("AimPartDropdown", { Title = "เลือกจุดที่จะล็อค", Values = {"Head", "HumanoidRootPart"}, Default = "Head", Callback = function(v) _G.U_HUB_CORE.AimPart = v end })
 Tabs.Combat:AddDropdown("MouseSpecial", { Title = "โหมดความโหด", Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"}, Default = "Normal (ระยะสายตา)", Callback = function(Value) _G.U_HUB_CORE.LockMode = Value end })
@@ -109,9 +109,8 @@ Tabs.ESP:AddColorpicker("TextColor", {Title = "สีตัวอักษร", 
 -- [[ SETTINGS ]]
 Tabs.Settings:AddSlider("LockDistSlider", { Title = "ระยะการล็อคเป้า (เมตร)", Default = 1000, Min = 50, Max = 4500, Rounding = 0, Callback = function(v) _G.U_HUB_CORE.MaxLockDistance = v end})
 Tabs.Settings:AddSlider("EspDistSlider", { Title = "ระยะ ESP (เมตร)", Default = 1500, Min = 50, Max = 10000, Rounding = 0, Callback = function(v) _G.U_HUB_CORE.MaxEspDistance = v end})
-Tabs.Settings:AddButton({ Title = "Destroy UI", Callback = function() Window:Destroy(); ScreenGui:Destroy(); if _G.FOV_Circle then _G.FOV_Circle:Remove() end end })
+Tabs.Settings:AddButton({ Title = "ลบ เมนู", Callback = function() Window:Destroy(); ScreenGui:Destroy(); if _G.FOV_Circle then _G.FOV_Circle:Remove() end end })
 
--- [[ 5. LOGIC ENGINE - แก้ไข: ถอดระบบเช็คทีมออกล็อคติดแน่นอน ]]
 if not _G.FOV_Circle then
     _G.FOV_Circle = Drawing.new("Circle")
     _G.FOV_Circle.Thickness = 1; _G.FOV_Circle.NumSides = 100; _G.FOV_Circle.Filled = false; _G.FOV_Circle.Visible = false
@@ -149,7 +148,7 @@ local function GetTarget(Point)
     return Target
 end
 
--- [[ 6. MASTER LOOP - รวมทุกฟังก์ชันการล็อค ]]
+
 RunService.RenderStepped:Connect(function()
     local MousePos = UserInputService:GetMouseLocation()
     local Center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -178,7 +177,7 @@ RunService.RenderStepped:Connect(function()
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
             
-            -- จุดเดียวที่พี่เพิ่มเข้าไป: เช็คระยะทางจาก Slider
+          
             if dist <= _G.U_HUB_CORE.MaxEspDistance then
                 local hl = player.Character:FindFirstChild("U_ESP")
                 if _G.U_HUB_CORE.EspStyle ~= "ปิด" then
@@ -207,3 +206,59 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
+Tabs.Settings:AddDropdown("WindowSize", {
+    Title = "ปรับขนาดเมนู",
+    Values = {"เล็ก", "กลาง", "ใหญ่"},
+    Default = "กลาง",
+    Callback = function(Value)
+        -- เช็คว่าตัวแปร Window ของน้องมีอยู่จริงไหม
+        if Window and Window.Root then
+            local NewSize
+            if Value == "เล็ก" then 
+                NewSize = UDim2.fromOffset(480, 360)
+            elseif Value == "กลาง" then 
+                NewSize = UDim2.fromOffset(580, 460)
+            elseif Value == "ใหญ่" then 
+                NewSize = UDim2.fromOffset(800, 600) 
+            end
+            
+            -- สั่งปรับขนาดไปที่ตัว Frame หลักของ UI เลย
+            Window.Root.Size = NewSize
+        end
+    end
+})
+
+Tabs.Settings:AddButton({
+    Title = "รี เซิร์ฟ",
+    Description = "กลับเข้าเซิร์ฟเวอร์เดิมแบบไวๆ",
+    Callback = function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+})
+
+Tabs.Settings:AddButton({
+    Title = "เปลี่ยนเซิร์ฟใหม่",
+    Description = "สุ่มย้ายไปเซิร์ฟเวอร์อื่นที่คนไม่เต็ม",
+    Callback = function()
+        local Http = game:GetService("HttpService")
+        local Tps = game:GetService("TeleportService")
+        local Api = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
+        
+        local function Hop()
+            local Raw = game:HttpGet(Api)
+            local Decode = Http:JSONDecode(Raw)
+            if Decode and Decode.data then
+                for _, v in pairs(Decode.data) do
+                    if type(v) == "table" and v.playing < v.maxPlayers and v.id ~= game.JobId then
+                        Tps:TeleportToPlaceInstance(game.PlaceId, v.id, LocalPlayer)
+                        break
+                    end
+                end
+            end
+        end
+        
+        Hop() -- เริ่มทำงานทันทีที่กดปุ่ม
+    end
+})
+
