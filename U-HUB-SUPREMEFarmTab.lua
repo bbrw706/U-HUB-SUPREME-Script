@@ -88,8 +88,8 @@ local Tabs = {
 }
 
 -- [[ COMBAT ]]
-Tabs.Combat:AddToggle("AutoLock", {Title = "ล็อคเป้า", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
-Tabs.Combat:AddToggle("MainLockSystem", {Title = "ล็อคเป้าพิเศษ (แค่คอมเท่านั้น)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowFOV = Value; _G.MouseLockEnabled = Value end)
+Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
+Tabs.Combat:AddToggle("MainLockSystem", {Title = "เปิดวงกลม + ล็อคปกติ", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowFOV = Value; _G.MouseLockEnabled = Value end)
 Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
 Tabs.Combat:AddDropdown("AimPartDropdown", { Title = "เลือกจุดที่จะล็อค", Values = {"Head", "HumanoidRootPart"}, Default = "Head", Callback = function(v) _G.U_HUB_CORE.AimPart = v end })
 Tabs.Combat:AddDropdown("MouseSpecial", { Title = "โหมดความโหด", Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"}, Default = "Normal (ระยะสายตา)", Callback = function(Value) _G.U_HUB_CORE.LockMode = Value end })
