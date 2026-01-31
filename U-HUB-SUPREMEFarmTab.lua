@@ -1,3 +1,6 @@
+-- [[ U-HUB SUPREME FINAL FIXED - NO TEAM CHECK ]]
+-- ล็อคทุกคนไม่สนทีม / ไม่ลบของเดิม / รวมระบบล็อคให้เสถียรที่สุด
+
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -7,7 +10,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 math.randomseed(tick())
 
--- [[ 1. SETTINGS CORE - เก็บทุกอย่างไว้ครบ ]]
+-- [[ 1. SETTINGS CORE - ครบถ้วนตามต้นฉบับ ]]
 _G.U_HUB_CORE = {
     AutoLockNoClick = false, 
     AimPart = "Head",
@@ -21,15 +24,17 @@ _G.U_HUB_CORE = {
     ShowName = false,
     ShowDistance = false,
     MyCustomTextColor = Color3.fromRGB(255, 255, 255),
-    MaxLockDistance = 500,
-    MaxEspDistance = 500,
-    ShowFOV = false -- เพิ่มตัวแปรเช็คสถานะวงกลม
+    MaxLockDistance = 1000,
+    MaxEspDistance = 1500,
+    ShowFOV = false
 }
+
+_G.MouseLockEnabled = false
 
 -- [[ 2. สร้างหน้าต่างหลัก ]]
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME",
-    SubTitle = "BY Neung",
+    SubTitle = "BY Neung (No Team Edition)",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = false, 
@@ -37,19 +42,19 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ 3. ปุ่มลอยวิบวับ - อยู่ครบเหมือนเดิม ]]
+-- [[ 3. ปุ่มลอยวิบวับ - ห้ามลบตามสั่ง ]]
 local function SetupLogoV50(MainBtn)
     local Container = Instance.new("Frame", MainBtn)
     Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
     for i = 1, 15 do
         local d = Instance.new("Frame", Container)
         d.Size = UDim2.new(0, 1, 0, 1); d.BackgroundColor3 = Color3.fromRGB(255, 255, 255); d.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        task.spawn(function() while task.wait(math.random(2, 4)) do TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 1}):Play(); task.wait(1.2); TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 0.4}):Play() end end)
+        task.spawn(function() while task.wait(math.random(2, 4)) do if not d then break end TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 1}):Play(); task.wait(1.2); TweenService:Create(d, TweenInfo.new(1), {BackgroundTransparency = 0.4}):Play() end end)
     end
     local function CreateChar(txt, color)
         local h = Instance.new("Frame", Container); h.Size = UDim2.new(1, 0, 1, 0); h.BackgroundTransparency = 1
         local l = Instance.new("TextLabel", h); l.Text = txt; l.TextColor3 = color; l.Font = Enum.Font.GothamBold; l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1
-        task.spawn(function() while true do TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,2)}):Play(); task.wait(1.5); TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,-2)}):Play(); task.wait(1.5) end end)
+        task.spawn(function() while true do if not l then break end TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,2)}):Play(); task.wait(1.5); TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,-2)}):Play(); task.wait(1.5) end end)
         return h, l
     end
     local holderU, textU = CreateChar("U", Color3.fromRGB(0, 255, 100)); local holderN, textN = CreateChar("N", Color3.fromRGB(0, 170, 255))
@@ -84,6 +89,7 @@ local Tabs = {
 
 -- [[ COMBAT ]]
 Tabs.Combat:AddToggle("AutoLock", {Title = "Auto Lock (ไม่ต้องกด)", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
+Tabs.Combat:AddToggle("MainLockSystem", {Title = "เปิดวงกลม + ล็อคปกติ", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.ShowFOV = Value; _G.MouseLockEnabled = Value end)
 Tabs.Combat:AddSlider("Smooth", { Title = "Lock Speed", Default = 0.05, Min = 0.01, Max = 1, Rounding = 2, Callback = function(Value) _G.U_HUB_CORE.Sensitivity = Value end})
 Tabs.Combat:AddDropdown("AimPartDropdown", { Title = "เลือกจุดที่จะล็อค", Values = {"Head", "HumanoidRootPart"}, Default = "Head", Callback = function(v) _G.U_HUB_CORE.AimPart = v end })
 Tabs.Combat:AddDropdown("MouseSpecial", { Title = "โหมดความโหด", Values = {"Normal (ระยะสายตา)", "Hardcore (ล็อคโหด)"}, Default = "Normal (ระยะสายตา)", Callback = function(Value) _G.U_HUB_CORE.LockMode = Value end })
@@ -103,36 +109,40 @@ Tabs.ESP:AddColorpicker("TextColor", {Title = "สีตัวอักษร", 
 -- [[ SETTINGS ]]
 Tabs.Settings:AddSlider("LockDistSlider", { Title = "ระยะการล็อคเป้า (เมตร)", Default = 1000, Min = 50, Max = 4500, Rounding = 0, Callback = function(v) _G.U_HUB_CORE.MaxLockDistance = v end})
 Tabs.Settings:AddSlider("EspDistSlider", { Title = "ระยะ ESP (เมตร)", Default = 1500, Min = 50, Max = 10000, Rounding = 0, Callback = function(v) _G.U_HUB_CORE.MaxEspDistance = v end})
-Tabs.Settings:AddButton({ Title = "Destroy UI", Callback = function() Window:Destroy(); ScreenGui:Destroy(); if FOVCircle then FOVCircle:Remove() end end })
+Tabs.Settings:AddButton({ Title = "Destroy UI", Callback = function() Window:Destroy(); ScreenGui:Destroy(); if _G.FOV_Circle then _G.FOV_Circle:Remove() end end })
 
--- [[ 5. THE ONE BRAIN ENGINE - รวมทุกสมองไว้ที่นี่ ห้ามลบ! ]]
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1; FOVCircle.NumSides = 100
-
--- ฟังก์ชั่นเช็คกำแพงแบบรวม
-local function IsVisible(TargetPart)
-    if _G.U_HUB_CORE.LockMode == "Hardcore (ล็อคโหด)" then return true end
-    local RayParams = RaycastParams.new()
-    RayParams.FilterType = Enum.RaycastFilterType.Exclude
-    RayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
-    local Result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position), RayParams)
-    return (Result == nil or Result.Instance:IsDescendantOf(TargetPart.Parent))
+-- [[ 5. LOGIC ENGINE - แก้ไข: ถอดระบบเช็คทีมออกล็อคติดแน่นอน ]]
+if not _G.FOV_Circle then
+    _G.FOV_Circle = Drawing.new("Circle")
+    _G.FOV_Circle.Thickness = 1; _G.FOV_Circle.NumSides = 100; _G.FOV_Circle.Filled = false; _G.FOV_Circle.Visible = false
 end
 
--- ฟังก์ชั่นหาเป้าหมายตัวเดียวใช้ร่วมกัน (Master Target Finder)
-local function GetMasterTarget(PositionSource)
+local function GetTarget(Point)
     local Target, Closest = nil, _G.U_HUB_CORE.FovRadius
     for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and (v.Team ~= LocalPlayer.Team or v.Team == nil) and v.Character then
-            local Hum = v.Character:FindFirstChildOfClass("Humanoid")
-            local Part = v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or v.Character:FindFirstChild("Head")
-            if Part and Hum and Hum.Health > 0 then
+        -- ถอดระบบเช็คทีมออกแล้ว (v.Team ~= LocalPlayer.Team) ออกไปเลย
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChildOfClass("Humanoid") and v.Character.Humanoid.Health > 0 then
+            local Part = v.Character:FindFirstChild(_G.U_HUB_CORE.AimPart) or v.Character:FindFirstChild("Head") or v.Character:FindFirstChild("HumanoidRootPart")
+            if Part then
                 local Mag = (LocalPlayer.Character.HumanoidRootPart.Position - Part.Position).Magnitude
                 if Mag <= _G.U_HUB_CORE.MaxLockDistance then
                     local Pos, OnScreen = Camera:WorldToViewportPoint(Part.Position)
                     if OnScreen then
-                        local Dist = (PositionSource - Vector2.new(Pos.X, Pos.Y)).Magnitude
-                        if Dist < Closest and IsVisible(Part) then Closest = Dist; Target = Part end
+                        local Dist = (Point - Vector2.new(Pos.X, Pos.Y)).Magnitude
+                        if Dist < Closest then
+                            -- เช็คกำแพงตามโหมด
+                            if _G.U_HUB_CORE.LockMode == "Hardcore (ล็อคโหด)" then
+                                Closest = Dist; Target = Part
+                            else
+                                local RayParams = RaycastParams.new()
+                                RayParams.FilterType = Enum.RaycastFilterType.Exclude
+                                RayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+                                local Result = workspace:Raycast(Camera.CFrame.Position, (Part.Position - Camera.CFrame.Position), RayParams)
+                                if Result == nil or Result.Instance:IsDescendantOf(v.Character) then
+                                    Closest = Dist; Target = Part
+                                end
+                            end
+                        end
                     end
                 end
             end
@@ -141,51 +151,48 @@ local function GetMasterTarget(PositionSource)
     return Target
 end
 
--- [[ 6. MASTER LOOP - รวมการทำงานทั้งหมด ]]
+-- [[ 6. MASTER LOOP - รวมทุกฟังก์ชันการล็อค ]]
 RunService.RenderStepped:Connect(function()
     local MousePos = UserInputService:GetMouseLocation()
-    local ScreenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local Center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     
-    -- จัดการวงกลม (ใช้ตัวแปรเดียวเช็ค)
-    local FinalFovVisible = (_G.U_HUB_CORE.AutoLockNoClick or _G.MouseLockEnabled) and _G.U_HUB_CORE.FovEnabled
-    FOVCircle.Visible = FinalFovVisible
-    if FinalFovVisible then
-        FOVCircle.Radius = _G.U_HUB_CORE.FovRadius
-        FOVCircle.Color = _G.U_HUB_CORE.PovColor
-        -- ถ้า Auto Lock ให้วงกลมอยู่กลางจอ ถ้า Mouse Lock ให้ตามเมาส์
-        FOVCircle.Position = _G.U_HUB_CORE.AutoLockNoClick and ScreenCenter or MousePos
+    -- อัปเดตวงกลม
+    if _G.FOV_Circle then
+        _G.FOV_Circle.Visible = (_G.U_HUB_CORE.ShowFOV or _G.U_HUB_CORE.AutoLockNoClick) and _G.U_HUB_CORE.FovEnabled
+        _G.FOV_Circle.Radius = _G.U_HUB_CORE.FovRadius
+        _G.FOV_Circle.Color = _G.U_HUB_CORE.PovColor
+        _G.FOV_Circle.Position = _G.U_HUB_CORE.AutoLockNoClick and Center or MousePos
     end
 
-    -- ระบบล็อค (ใช้สมองร่วมกัน)
-    local TargetToLock = nil
+    -- ระบบการหันกล้อง (ล็อคเป้าทุกคน)
+    local LockTarget = nil
     if _G.U_HUB_CORE.AutoLockNoClick then
-        TargetToLock = GetMasterTarget(ScreenCenter)
+        LockTarget = GetTarget(Center)
     elseif _G.MouseLockEnabled then
-        TargetToLock = GetMasterTarget(MousePos)
+        LockTarget = GetTarget(MousePos)
     end
 
-    if TargetToLock then
-        Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, TargetToLock.Position), _G.U_HUB_CORE.Sensitivity)
+    if LockTarget then
+        local TargetCF = CFrame.new(Camera.CFrame.Position, LockTarget.Position)
+        Camera.CFrame = Camera.CFrame:Lerp(TargetCF, _G.U_HUB_CORE.Sensitivity)
     end
 
-    -- ESP SYSTEM (อยู่ครบ)
+    -- ESP SYSTEM
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local char = player.Character
-            local root = char:FindFirstChild("HumanoidRootPart")
-            if root then
-                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
-                local canSee = dist <= _G.U_HUB_CORE.MaxEspDistance
-                local hl = char:FindFirstChild("U_ESP")
-                if _G.U_HUB_CORE.EspStyle ~= "ปิด" and canSee then
-                    if not hl then hl = Instance.new("Highlight", char); hl.Name = "U_ESP" end
-                    hl.Enabled = true; hl.FillTransparency = (_G.U_HUB_CORE.EspStyle == "Hardcore (เรืองแสง)" and 0.5 or 1); hl.OutlineColor = _G.U_HUB_CORE.SharedColor
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            if dist <= _G.U_HUB_CORE.MaxEspDistance then
+                local hl = player.Character:FindFirstChild("U_ESP")
+                if _G.U_HUB_CORE.EspStyle ~= "ปิด" then
+                    if not hl then hl = Instance.new("Highlight", player.Character); hl.Name = "U_ESP" end
+                    hl.FillTransparency = (_G.U_HUB_CORE.EspStyle == "Hardcore (เรืองแสง)" and 0.5 or 1)
+                    hl.OutlineColor = _G.U_HUB_CORE.SharedColor
                 elseif hl then hl:Destroy() end
                 
-                local head = char:FindFirstChild("Head")
+                local head = player.Character:FindFirstChild("Head")
                 if head then
                     local b = head:FindFirstChild("U_B")
-                    if (_G.U_HUB_CORE.ShowName or _G.U_HUB_CORE.ShowDistance) and canSee then
+                    if _G.U_HUB_CORE.ShowName or _G.U_HUB_CORE.ShowDistance then
                         if not b then
                             b = Instance.new("BillboardGui", head); b.Name = "U_B"; b.Size = UDim2.new(0,100,0,50); b.AlwaysOnTop = true; b.StudsOffset = Vector3.new(0,2,0)
                             local l = Instance.new("TextLabel", b); l.Size = UDim2.new(1,0,1,0); l.BackgroundTransparency = 1; l.Font = "GothamBold"; l.TextSize = 14; l.OutlineAlpha = 1
@@ -197,12 +204,4 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
-end)
-
--- [[ 2. ปุ่มเปิด/ปิดแบบ Mouse Lock (วางหน้า Combat) ]]
-Tabs.Combat:AddToggle("MainLockSystem", {
-    Title = "เปิดวงกลม + ล็อคตามเมาส์", 
-    Default = false 
-}):OnChanged(function(Value)
-    _G.MouseLockEnabled = Value
 end)
