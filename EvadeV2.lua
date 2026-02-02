@@ -147,7 +147,7 @@ for i=1,1e7 do local a=math.random() end
 end
 end
 
-MainTab:AddButton({
+MainTab:AddButton("a",{
 Title="Lag Switch (ปกติ)",
 Description="กดแล้วค้างกระตุก 0.5 วินาที",
 Callback=function() lagSwitch(0.5) end
@@ -413,7 +413,7 @@ local root = player.Character and player.Character:FindFirstChild("HumanoidRootP
 if root then root.CFrame += Vector3.new(0,500,0) end
 end
 
-TeleportTab:AddButton({
+TeleportTab:AddButton("b",{
 Title="เทเลพอร์ตขึ้นหลังคา (ปกติ)",
 Description="กดเพื่อขึ้นหลังคา",
 Callback=teleportRoof
@@ -434,7 +434,7 @@ floatingTPAddButton.Draggable=true
 floatingTPAddButton.MouseButton1Click:Connect(teleportRoof)
 end
 
-TeleportTab:AddToggle({
+TeleportTab:AddToggle("c",{
 Title="เทเลพอร์ตขึ้นหลังคา (ปุ่มลอย)",
 Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Teleport Roof",
 Default=false,
@@ -505,7 +505,7 @@ end
 -- =========================
 -- ปุ่มเปิดระบบ
 -- =========================
-TeleportTab:AddButton({
+TeleportTab:AddButton("d",{
 	Title = "AFK Money (ของเดิม)",
 	Description = "ยืนบนฟ้า กันตาย/กันหลุดแมพ",
 	Callback = function()
@@ -538,7 +538,7 @@ root.CFrame=originalCFrame
 end
 end
 
-TeleportTab:AddButton({
+TeleportTab:AddButton("e",{
 Title="ไปหาผู้เล่นที่ล้ม (ปกติ)",
 Description="วาร์ปไปผู้เล่นที่ล้ม 1 วินาที",
 Callback=teleportToDead
@@ -559,7 +559,7 @@ floatingDeadTPAddButton.Draggable=true
 floatingDeadTPAddButton.MouseButton1Click:Connect(teleportToDead)
 end
 
-TeleportTab:AddToggle({
+TeleportTab:AddToggle("f",{
 Title="ไปหาผู้เล่นที่ล้ม (ปุ่มลอย)",
 Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Dead TP",
 Default=false,
@@ -647,14 +647,14 @@ local function createWallFloatingAddButton()
 end
 
 -- ปุ่มปกติ
-ExtraTab:AddButton({
+ExtraTab:AddButton("g",{
     Title="Wall Hack (ปกติ)",
     Description="ทะลุกำแพงด้านหน้า/ด้านข้างจริง",
     Callback=AddToggleWallHack
 })
 
 -- ปุ่มลอย
-ExtraTab:AddToggle({
+ExtraTab:AddToggle("h",{
     Title="Wall Hack (ปุ่มลอย)",
     Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Wall Hack",
     Default=false,
@@ -724,7 +724,7 @@ end
 end
 
 -- ปุ่มปกติ
-TeleportTab:AddButton({
+TeleportTab:AddButton("i",{
 Title="TeleTo Player (ปกติ)",
 Description="เลือกผู้เล่นแล้วเทเลพอร์ตไปหา",
 Callback=createTPPlayerMenu
@@ -746,7 +746,7 @@ floatingTPPlayerAddButton.Draggable = true
 floatingTPPlayerAddButton.MouseButton1Click:Connect(createTPPlayerMenu)
 end
 
-TeleportTab:AddToggle({
+TeleportTab:AddToggle("j",{
 Title="TeleTo Player (ปุ่มลอย)",
 Description="แสดงปุ่มลอยบนหน้าจอสำหรับ TeleTo Player",
 Default=false,
@@ -803,13 +803,13 @@ floatingMoonAddButton.Draggable = true
 floatingMoonAddButton.MouseButton1Click:Connect(AddToggleMoonMode)
 end
 
-ExtraTab:AddButton({
+ExtraTab:AddButton("k",{
 Title="Moon Mode (ปกติ)",
 Description="ตกช้าๆจากที่สูง โดยไม่แข็งตัว",
 Callback=AddToggleMoonMode
 })
 
-ExtraTab:AddToggle({
+ExtraTab:AddToggle("l",{
 Title="Moon Mode (ปุ่มลอย)",
 Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Moon Mode",
 Default=false,
@@ -824,7 +824,7 @@ end
 -- =========================
 -- Extra Tab - Run External Script
 -- =========================
-ExtraTab:AddButton({
+ExtraTab:AddButton("m",{
 Title = "Run External Script",
 Description = "กดเพื่อรันสคริปต์จาก Pastebin",
 Callback = function()
@@ -920,7 +920,7 @@ end)
 -- =========================
 -- ปุ่มใน VisualsTab
 -- =========================
-VisualsTab:AddToggle({
+VisualsTab:AddToggle("n",{
     Title="มองผู้เล่น",
     Description="แสดงชื่อบนหัวและกรอบรอบลำตัว",
     Default=false,
@@ -969,7 +969,7 @@ end
 
 -- =========================
 -- GUI AddToggle
-SettingsTab:AddToggle({
+SettingsTab:AddToggle("o",{
     Title="Smooth Dash (ปกติ)",
     Description="พุ่งตามมุมมองแบบลื่น ไม่กระตุก",
     Default=false,
@@ -985,7 +985,7 @@ SettingsTab:AddToggle({
 })
 
 -- AddInput ปรับความเร็ว
-SettingsTab:AddInput({
+SettingsTab:AddInput("p",{
     Title="Dash Speed",
     Description="ปรับความเร็ว Dash",
     Placeholder=tostring(dashSpeed),
@@ -1022,7 +1022,7 @@ local function createFloatingDashAddButton()
     end)
 end
 
-SettingsTab:AddToggle({
+SettingsTab:AddToggle("q",{
     Title="Smooth Dash (ปุ่มลอย)",
     Description="แสดงปุ่มลอยสำหรับ Smooth Dash",
     Default=false,
@@ -1046,7 +1046,7 @@ SettingsTab:AddToggle({
 -- =========================
 -- ปุ่ม มองตั๋ว (ESP Ticket)
 -- =========================
-EventTab:AddToggle({
+EventTab:AddToggle("r",{
     Title = "มองตั๋ว (ESP Ticket)",
     Description = "แสดงตำแหน่งตั๋วทั้งหมดในแมพ",
     Default = false,
@@ -1141,7 +1141,7 @@ EventTab:AddToggle({
 -- =========================
 -- ปุ่ม มองเน็กบอท (ESP Nextbot)
 -- =========================
-VisualsTab:AddButton({
+VisualsTab:AddButton("s",{
     Title = "มองเน็กบอท",
     Description = "เปิด/ปิด ESP Nextbot",
     Callback = function()
@@ -1239,7 +1239,7 @@ VisualsTab:AddButton({
 -- =========================
 -- ปุ่มแสดง FPS
 -- =========================
-FPSTab:AddButton({
+FPSTab:AddButton("t",{
     Title = "แสดง FPS",
     Description = "กดเพื่อเปิด/ปิดการแสดง FPS",
     Callback = function()
@@ -1354,7 +1354,7 @@ local teleportConnection
 
 -- =========================
 -- ปุ่มปกติในหมวด Teleport
-TeleportTab:AddToggle({
+TeleportTab:AddToggle("u",{
     Title = "คริป Teleport",
     Description  = "กดเพื่อเปิด/ปิด Teleport Mode",
     Default = false,
@@ -1398,7 +1398,7 @@ local function createFloatingTeleportAddButton()
 end
 
 -- ปุ่ม AddToggle สำหรับลอย
-TeleportTab:AddToggle({
+TeleportTab:AddToggle("v",{
     Title = "คริป Teleport (ปุ่มลอย)",
     Description  = "แสดงปุ่มลอยสำหรับ Teleport",
     Default = false,
@@ -1422,7 +1422,7 @@ TeleportTab:AddToggle({
 -- =========================
 -- ปุ่ม Reduce Graphics V.1
 -- =========================
-FPSTab:AddButton({
+FPSTab:AddButton("v",{
     Title = "ลดกราฟฟิก V.1",
     Description  = "ทุก Part เรียบเนียน",
     Callback = function()
@@ -1441,7 +1441,7 @@ FPSTab:AddButton({
 -- =========================
 -- ปุ่ม Reduce Graphics V.2
 -- =========================
-FPSTab:AddButton({
+FPSTab:AddButton("x",{
     Title = "ลดกราฟฟิก V.2",
     Description  = "เรียบเนียน + ลบหมอกและเอฟเฟกต์",
     Callback = function()
@@ -1469,7 +1469,7 @@ FPSTab:AddButton({
 -- =========================
 -- ปุ่ม เพิ่มแสงหน้าจอ
 -- =========================
-FPSTab:AddButton({
+FPSTab:AddButton("w",{
     Title = "เพิ่มแสงหน้าจอ",
     Description  = "หน้าจอสว่างขึ้นเล็กน้อย",
     Callback = function()
@@ -1482,7 +1482,7 @@ FPSTab:AddButton({
 -- =========================
 -- AUTO TICKET FARM (EventTab)
 -- =========================
-EventTab:AddToggle({
+EventTab:AddToggle("y",{
 Title = "Auto Ticket Farm",
 Description = "เก็บตั๋วอัตโนมัติทั้งเซิร์ฟ",
 Default = false,
@@ -1669,7 +1669,7 @@ local function createCarryFloatingAddButton()
 end
 
 
-MainTab:AddButton({
+MainTab:AddButton("z",{
     Title="ดึงปุ่ม Auto Carry",
     Description="สร้าง/ลบปุ่มลอยอุ้มผู้เล่น",
     Callback=createCarryFloatingAddButton
@@ -1776,7 +1776,7 @@ MainTab:AddToggle("009",{
 
 -- =========================
 -- Slider ปรับค่า Slide Friction ใน MainTab
-SettingsTab:Slider({
+SettingsTab:Slider("a1",{
     Title="Slide Friction",
     Description="ปรับค่าแรงสไลด์ (ต่ำ=เร็วกว่า)",
     Min=-500,
@@ -1819,7 +1819,7 @@ local function createSlideFloatingAddButton()
     floatingSlideAddButton.MouseButton1Click:Connect(AddToggleInfiniteSlide)
 end
 
-MainTab:AddButton({
+MainTab:AddButton("a2",{
     Title="ดึงปุ่ม Infinite Slide",
     Description="สร้างปุ่มลอยสำหรับ Infinite Slide",
     Callback=createSlideFloatingAddButton
@@ -1878,7 +1878,7 @@ end
 -- =========================
 
 -- Speed
-SettingsTab:Slider({
+SettingsTab:Slider("a3",{
     Title = "Speed",
     Min = 1450,
     Max = 1000000,
@@ -1890,7 +1890,7 @@ SettingsTab:Slider({
 })
 
 -- JumpCap
-SettingsTab:Slider({
+SettingsTab:Slider("a4",{
     Title = "Jump Cap",
     Min = 0.1,
     Max = 5000,
@@ -1915,7 +1915,7 @@ SettingsTab:Slider({
 
 -- Dropdown Apply Method
 getgenv().ApplyMode = "Not Optimized"
-SettingsTab:Dropdown({
+SettingsTab:Dropdown("a5",{
     Title = "Apply Method",
     Options = {"Not Optimized", "Optimized"},
     Default = {getgenv().ApplyMode},
@@ -1993,7 +1993,7 @@ task.spawn(function()
 end)
 
 -- AddToggle ใน VisualsTab
-VisualsTab:AddToggle({
+VisualsTab:AddToggle("a6",{
     Title="มองผู้เล่นที่ล้ม",
     Description="แสดงข้อความ 'ล้ม' สีแดงเหนือหัวผู้เล่นที่มีเลือด 0",
     Default=false,
@@ -2002,7 +2002,7 @@ VisualsTab:AddToggle({
     end
 })
 
-EventTab:AddButton({
+EventTab:AddButton("a7",{
     Title = "เก็บตั๋วเรียบแมพ",
     Description = "เทเลพอร์ตเก็บตั๋วทีละตัวจนหมด",
     Callback = function()
@@ -2077,7 +2077,7 @@ end
 -- =========================
 -- ปุ่ม 1: Record
 -- =========================
-ExtraTab:AddButton({
+ExtraTab:AddButton("a8",{
     Title="เริ่มอัดการเคลื่อนไหว",
     Description="กดเพื่อเริ่ม/หยุดอัดการเคลื่อนไหว",
     Callback=function()
@@ -2110,7 +2110,7 @@ ExtraTab:AddButton({
 -- =========================
 -- ปุ่ม 2: Playback Smooth
 -- =========================
-ExtraTab:AddButton({
+ExtraTab:AddButton("a9",{
     Title="เล่นการเคลื่อนไหว (ลื่น)",
     Description="กดเพื่อเริ่ม/หยุดเล่นการเคลื่อนไหวที่บันทึก",
     Callback=function()
@@ -2138,7 +2138,7 @@ ExtraTab:AddButton({
 -- =========================
 -- ปุ่ม 3: Reset
 -- =========================
-ExtraTab:AddButton({
+ExtraTab:AddButton("a10",{
     Title="รีเซ็ตการเคลื่อนไหว",
     Description="ล้างข้อมูลการอัดทั้งหมด",
     Callback=function()
@@ -2204,7 +2204,7 @@ end
 -- =========================
 -- ปุ่มในหมวด ExtraTab
 -- =========================
-ExtraTab:AddToggle({
+ExtraTab:AddToggle("67",{
     Title = "ลบ/คืนค่า Barrier & MapBarrier",
     Description = "กดเพื่อสลับลบหรือคืนค่า Part ทั้งหมด",
     Default = false,
@@ -2224,7 +2224,7 @@ ExtraTab:AddToggle({
 local autoTurkey = false
 local autoTurkeyThread
 
-EventTab:AddToggle({
+EventTab:AddToggle("69",{
     Title = "ออโต้เก็บไก่งวง",
     Description = "เทเลพอร์ตไป Nextbot ชื่อ Turkey อัตโนมัติ",
     Default = false,
@@ -2280,7 +2280,7 @@ EventTab:AddToggle({
 local warpBotActive = false
 local warpBotCoroutine
 
-ExtraTab:AddToggle({
+ExtraTab:AddToggle("61",{
     Title = "วาปหนีบอท",
     Description = "เมื่อเน็กบอทใกล้ จะวาปไปผู้เล่นที่สูงที่สุด",
     Default = false,
@@ -2345,7 +2345,7 @@ ExtraTab:AddToggle({
 -- =========================
 -- ปุ่ม เปลี่ยนเป็นกลางวัน
 -- =========================
-ExtraTab:AddButton({
+ExtraTab:AddButton("123",{
     Title = "เปลี่ยนเป็นกลางวัน",
     Description = "ตั้งเวลา Map เป็น 12:00",
     Callback = function()
@@ -2358,7 +2358,7 @@ ExtraTab:AddButton({
 -- =========================
 -- ปุ่ม เปลี่ยนเป็นกลางคืน
 -- =========================
-ExtraTab:AddButton({
+ExtraTab:AddButton("45",{
     Title = "เปลี่ยนเป็นกลางคืน",
     Description = "ตั้งเวลา Map เป็น 22:00",
     Callback = function()
@@ -2371,7 +2371,7 @@ ExtraTab:AddButton({
 local AutoCarryEnabled = false
 local CarryConnection
 
-TeleportTab:AddToggle({
+TeleportTab:AddToggle("ggbro",{
     Title = "เก็บผู้เล่นที่ล้ม",
     Description = "เทเลพอร์ตไปหาผู้เล่นที่ล้มและอุ้ม",
     Default = false,
@@ -2518,7 +2518,7 @@ end
 -- ปุ่มบินในหมวดเมนูหลัก
 -- =========================================
 
-MainTab:AddButton({
+MainTab:AddButton("pj",{
     Title = "บิน (Fly)",
     Description = "เปิด/ปิดระบบบิน",
     Callback = function()
@@ -2535,7 +2535,7 @@ MainTab:AddButton({
 -- ช่องใส่ความเร็วอยู่ใต้ปุ่มบิน
 -- =========================================
 
-MainTab:AddInput({
+MainTab:AddInput("jj",{
     Title = "ความเร็วบิน (Speed)",
     Default = tostring(FlySpeed),
     Placeholder = "1.5",
@@ -2594,7 +2594,7 @@ ExtraTab:AddToggle({
 -- =============================
 -- ปุ่ม Headless
 -- =============================
-ExtraTab:AddToggle({
+ExtraTab:AddToggle("neung",{
     Title = "หัวล่องหน (Headless)",
     Description = "เปิด/ปิด หัวล่องหน โดยใช้สคริปต์จากลิงก์",
     Default = false,
@@ -2607,7 +2607,7 @@ ExtraTab:AddToggle({
 -- =========================
 -- ลบความมืดออก / เพิ่มแสง
 -- =========================
-ExtraTab:AddButton({
+ExtraTab:AddButton("diaw",{
     Title = "ลบมืดออก",
     Description = "ทำให้ Map สว่าง และตัดเงาออกทั้งหมด",
     Callback = function()
@@ -2641,7 +2641,7 @@ local fakeEdashRunning = false
 local fakeEdashConnection
 
 -- ปุ่มในหมวด ของเสริม
-ExtraTab:AddButton({
+ExtraTab:AddButton("hhgd",{
     Title = "เสกท่าเวล100 ของปลอม❌(ของคนอื่น)",
     Description = "กดเพื่อเปิด/ปิดสคริปต์ fake edash",
     Callback = function()
@@ -2795,7 +2795,7 @@ MainTab:AddToggle("011",{
 -- =========================
 local infoVisible = true
 
-ExtraTab:AddToggle({
+ExtraTab:AddToggle("ffds",{
     Title = "เปิดแฟ้มอีโมท(เสกท่า)",
     Description = "รันสคริปต์ Emote จาก Pastebin",
     Callback = function()
@@ -2820,7 +2820,7 @@ getgenv().Resolution = { [".gg/scripters"] = 0.65 }
 local Camera = workspace.CurrentCamera
 local ScreenStretchConn
 
-ExtraTab:AddToggle({
+ExtraTab:AddToggle("wasd",{
     Title = "หน้าจอยืด",
     Description = "เปิด/ปิด ปรับแกน Y ของกล้อง",
     Default = false,
@@ -3118,7 +3118,7 @@ end)
 -- =========================
 -- UI AddToggleS
 -- =========================
-TeleportTab:AddToggle({
+TeleportTab:AddToggle("dnaj",{
 Title = "Auto Revive",
 Description = "ชุบเพื่อนที่ล้มใกล้ตัว",
 Callback = function(state)
@@ -3131,7 +3131,7 @@ end
 end
 })
 
-TeleportTab:AddToggle({
+TeleportTab:AddToggle("483",{
 Title = "AFK Money (New)",
 Description = "เสก Part + วาร์ปชุบอัตโนมัติ",
 Callback = function(state)
@@ -3219,7 +3219,7 @@ local function createCameraPart()
 end
 
 -- ปุ่ม 1: สร้าง / ลบ Part กล้อง
-SettingsTab:AddButton({
+SettingsTab:AddButton("232243",{
 	Title = "สร้าง / ลบ กล้อง",
 	Description = "สร้าง Part กล้องไว้ตรงหน้า (กดซ้ำเพื่อลบ)",
 	Callback = function()
@@ -3245,7 +3245,7 @@ SettingsTab:AddButton({
 })
 
 -- ปุ่ม 2: สลับมุมมอง
-SettingsTab:AddButton({
+SettingsTab:AddButton("lkoeii",{
 	Title = "สลับมุมมองกล้อง",
 	Description = "กล้อง ↔ ตัวละคร",
 	Callback = function()
@@ -3287,19 +3287,20 @@ local floorReflectOn = false
 local originalParts = {}
 
 local function enableFloorReflect()
-	for _, obj in pairs(workspace:GetDescriptionendants()) do
-		if obj:IsA("BasePart") then
-			-- เก็บค่าเดิม
-			if not originalParts[obj] then
-				originalParts[obj] = {
-					Material = obj.Material,
-					Reflectance = obj.Reflectance
-				}
-			end
-			obj.Material = Enum.Material.SmoothPlastic
-			obj.Reflectance = 0.3
-		end
-	end
+    for _, obj in pairs(workspace:GetDescendants()) do -- เปลี่ยนตรงนี้เป็น obj
+        if obj:IsA("BasePart") then
+            -- เก็บค่าเดิม
+            if not originalParts[obj] then
+                originalParts[obj] = {
+                    Material = obj.Material,
+                    Reflectance = obj.Reflectance
+                }
+            end
+            -- ตั้งค่าใหม่ให้สะท้อนแสง
+            obj.Material = Enum.Material.Glass
+            obj.Reflectance = 1
+        end
+    end
 end
 
 local function disableFloorReflect()
@@ -3312,7 +3313,7 @@ local function disableFloorReflect()
 	originalParts = {}
 end
 
-ExtraTab:AddToggle({
+ExtraTab:AddToggle("may",{
 	Title = "พื้นใส",
 	Description = "ทำให้ Part ทั้งแมพสะท้อนแสง",
 	Default = false,
@@ -3330,7 +3331,7 @@ ExtraTab:AddToggle({
 -- =========================
 -- Notify
 -- =========================
-Window:Notify({
+Window:Notify("nlwokws",{
 Title="Evade Hub",
 Description="เมนูทั้งหมดโหลดเรียบร้อยแล้ว! เปิด/ปิดเมนูได้ทั้ง Desktop และ มือถือ",
 Time=4
