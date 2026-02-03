@@ -122,20 +122,7 @@ local Tabs = {
 -------------------------------------------------------------------------
 -- [[ 1. รวม Tabs ไว้ในที่เดียวจบ ]]
 local Tabs = {
-    Main = Window:AddTab({ Title = "ฟาร์ม", Icon = "home" }),
     Combat = Window:AddTab({ Title = "สู้", Icon = "swords" }),
     Settings = Window:AddTab({ Title = "ตั้งค่า", Icon = "settings" })
 }
-
--- [[ ปุ่มหน้าต่อสู้ (Combat Tab) ]]
-local CombatSection = Tabs.Combat:AddSection("ระบบล็อกเป้าขั้นสูง")
-
-Tabs.Combat:AddToggle("AimLockToggle", {
-    Title = "เปิดระบบล็อกยิง (ล็อกตายทั้งแมพ)",
-    Default = false,
-    Callback = function(Value)
-        _G.AutoAim = Value
-    end
-})
-
 
