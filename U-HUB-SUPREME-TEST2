@@ -1,0 +1,29 @@
+-- [[ U-HUB AUTO RUNNER (2 SLOTS) ]]
+local script_mode = "PVP" -- หรือ "FARM" ตามใจมึง
+
+local scripts = {
+    [136801880565837] = { 
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/U-HUB-SUPREME",
+        FARM = ""
+    },
+    [994732206] = { 
+        PVP  = "",
+        FARM = ""
+    }
+}
+
+
+local cfg = scripts[game.GameId] or scripts[game.PlaceId]
+
+if cfg then
+    local targetUrl = cfg[script_mode:upper()] or cfg.PVP
+    if targetUrl and targetUrl ~= "" then
+        print("U-HUB: Loading for Game ID " .. game.PlaceId)
+        loadstring(game:HttpGet(targetUrl))()
+    else
+        warn("U-HUB: ลิงก์ว่างนะไอ้หนึ่ง!")
+    end
+else
+
+    game:GetService("Players").LocalPlayer:Kick("Game ID: " .. game.PlaceId .. " ไม่รองรับนะไอ้หนึ่ง ไปเติมโค้ดก่อน!")
+end
