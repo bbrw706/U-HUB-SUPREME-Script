@@ -81,14 +81,12 @@ UserInputService.InputChanged:Connect(function(input) if dragging and (input.Use
 
 -- [[ 4. TABS ]]
 local Tabs = { 
-    Home = Window:AddTab({ Title = "Home", Icon = "layout-grid" }), 
+    home = Window:AddTab({ Title = "home", Icon = "layout-grid" }), 
     Combat = Window:AddTab({ Title = "Combat", Icon = "target" }), 
     Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
     ESP = Window:AddTab({ Title = "ESP", Icon = "ghost" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
-
-
 
 -- [[ COMBAT ]]
 Tabs.Combat:AddToggle("AutoLock", {Title = "ล็อคเป้า", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
@@ -240,7 +238,27 @@ Tabs.Settings:AddKeybind("MenuBind", {
     Callback = function() Window:Minimize() end
 })
 
+-- [[ ⚡ สคริปต์ FORCE BOOST (แปลงจาก FastFlags เป๊ะๆ) ⚡ ]]
 
+local function ForceExtremeBoost()
+    -- 1. ปลดล็อค FPS (พยายามฝืนให้สูงที่สุดเท่าที่ Lua ทำได้)
+    setfpscap(2147483647) 
+
+    -- 2. ตั้งค่า Rendering ให้ต่ำสุด (เลียนแบบ QualityLevel 1)
+    settings().Rendering.QualityLevel = 1
+    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level10
+    
+    -- 3. ปรับระบบแสงและเงา (เลียนแบบ DisablePostFx & Voxel)
+    local Lighting = game:GetService("Lighting")
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.Brightness = 0
+    Lighting.ExposureCompensation = 0
+    for _, v in pairs(Lighting:GetChildren()) do
+        if v:IsA("PostEffect") or v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") then
+            v.Enabled = false
+        end
+    end
 
     -- 4. จัดการพื้นผิวและวัตถุ (เลียนแบบ TextureQuality & CSG Level)
     for _, v in pairs(game:GetDescendants()) do
@@ -308,7 +326,4 @@ Tabs.Settings:AddButton({
         Hop() -- เริ่มทำงานทันทีที่กดปุ่ม
     end
 })
-
-
-
 
