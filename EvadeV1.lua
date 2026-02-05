@@ -503,3 +503,1141 @@ MainTab:AddToggle("007",{
 })
 
 
+-- =========================
+-- Teleport Roof
+-- =========================
+local floatingTPAddButton
+local function teleportRoof()
+local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+if root then root.CFrame += Vector3.new(0,500,0) end
+end
+
+TeleportTab:AddButton("b",{
+Title="เทเลพอร์ตขึ้นหลังคา (ปกติ)",
+Description="กดเพื่อขึ้นหลังคา",
+Callback=teleportRoof
+})
+
+local function createTPFloatingAddButton()
+if floatingTPAddButton then return end
+floatingTPAddButton = Instance.new("TextButton")
+floatingTPAddButton.Size=UDim2.new(0,100,0,50)
+floatingTPAddButton.Position=UDim2.new(0.5,-50,0.6,0)
+floatingTPAddButton.AnchorPoint=Vector2.new(0.5,0)
+floatingTPAddButton.BackgroundColor3=Color3.fromRGB(0,255,100)
+floatingTPAddButton.TextColor3=Color3.fromRGB(0,0,0)
+floatingTPAddButton.Text="TP Roof"
+floatingTPAddButton.Parent=FloatingGui
+floatingTPAddButton.Active=true
+floatingTPAddButton.Draggable=true
+floatingTPAddButton.MouseButton1Click:Connect(teleportRoof)
+end
+
+TeleportTab:AddToggle("c",{
+Title="เทเลพอร์ตขึ้นหลังคา (ปุ่มลอย)",
+Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Teleport Roof",
+Default=false,
+Callback=function(state)
+if state then createTPFloatingAddButton() else
+if floatingTPAddButton then floatingTPAddButton:Destroy(); floatingTPAddButton=nil end
+end
+end
+})
+
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+local camera = workspace.CurrentCamera
+
+-- =========================
+-- ตั้งค่า
+-- =========================
+getgenv().AntiAFK = true      -- เปิด/ปิดระบบ Anti-AFK + หมุนกล้อง
+local afkActive = false
+local afkPart
+local afkLoop
+
+-- =========================
+-- AFK Money System (ของเดิม)
+-- =========================
+
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local afkActive = false
+local afkPart
+local afkLoop
+
+local function AddToggleAFKMoney()
+	afkActive = not afkActive
+
+	if afkActive then
+		-- สร้าง part กันตก
+		afkPart = Instance.new("Part")
+		afkPart.Size = Vector3.new(8, 1, 8)
+		afkPart.Position = Vector3.new(0, 6000, 0)
+		afkPart.Anchored = true
+		afkPart.Transparency = 1
+		afkPart.Parent = workspace
+
+		-- วนลูปย้ายผู้เล่นขึ้นไปบน part
+		afkLoop = RunService.Heartbeat:Connect(function()
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				player.Character.HumanoidRootPart.CFrame = afkPart.CFrame + Vector3.new(0, 4, 0)
+			end
+		end)
+
+	else
+		-- ปิดระบบ
+		if afkLoop then
+			afkLoop:Disconnect()
+			afkLoop = nil
+		end
+		if afkPart then
+			afkPart:Destroy()
+			afkPart = nil
+		end
+	end
+end
+
+
+-- =========================
+-- ปุ่มเปิดระบบ
+-- =========================
+TeleportTab:AddButton("d",{
+	Title = "AFK Money (ของเดิม)",
+	Description = "ยืนบนฟ้า กันตาย/กันหลุดแมพ",
+	Callback = function()
+		AddToggleAFKMoney()
+	end
+})
+
+-- =========================
+-- Teleport to Dead Player 1s
+-- =========================
+local floatingDeadTPAddButton
+local function teleportToDead()
+local char = player.Character
+if not char then return end
+local root = char:FindFirstChild("HumanoidRootPart")
+if not root then return end
+local deadPlayer=nil
+for _,plr in pairs(Players:GetPlayers()) do
+local h = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+if h and h.Health==0 then
+deadPlayer=plr
+break
+end
+end
+if deadPlayer and deadPlayer.Character and deadPlayer.Character:FindFirstChild("HumanoidRootPart") then
+local originalCFrame=root.CFrame
+root.CFrame = deadPlayer.Character.HumanoidRootPart.CFrame
+task.wait(1)
+root.CFrame=originalCFrame
+end
+end
+
+TeleportTab:AddButton("e",{
+Title="ไปหาผู้เล่นที่ล้ม (ปกติ)",
+Description="วาร์ปไปผู้เล่นที่ล้ม 1 วินาที",
+Callback=teleportToDead
+})
+
+local function createDeadTPFloatingAddButton()
+if floatingDeadTPAddButton then return end
+floatingDeadTPAddButton = Instance.new("TextButton")
+floatingDeadTPAddButton.Size=UDim2.new(0,100,0,50)
+floatingDeadTPAddButton.Position=UDim2.new(0.5,-50,0.8,0)
+floatingDeadTPAddButton.AnchorPoint=Vector2.new(0.5,0)
+floatingDeadTPAddButton.BackgroundColor3=Color3.fromRGB(0,255,255)
+floatingDeadTPAddButton.TextColor3=Color3.fromRGB(0,0,0)
+floatingDeadTPAddButton.Text="Dead TP"
+floatingDeadTPAddButton.Parent=FloatingGui
+floatingDeadTPAddButton.Active=true
+floatingDeadTPAddButton.Draggable=true
+floatingDeadTPAddButton.MouseButton1Click:Connect(teleportToDead)
+end
+
+TeleportTab:AddToggle("f",{
+Title="ไปหาผู้เล่นที่ล้ม (ปุ่มลอย)",
+Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Dead TP",
+Default=false,
+Callback=function(state)
+if state then createDeadTPFloatingAddButton() else
+if floatingDeadTPAddButton then floatingDeadTPAddButton:Destroy(); floatingDeadTPAddButton=nil end
+end
+end
+})
+
+
+
+-- =========================
+-- Wall Hack (ทะลุกำแพงด้านหน้า/ด้านข้างจริง)
+-- =========================
+local wallHackActive = false
+local floatingWallAddButton
+local wallPartsOriginalCollide = {} -- เก็บค่า CanCollide เดิม
+
+local function setWallHack(state)
+    wallHackActive = state
+    if not wallHackActive then
+        -- รีเซ็ตค่า CanCollide ทุกชิ้นที่เราจำไว้
+        for part, collide in pairs(wallPartsOriginalCollide) do
+            if part and part.Parent then
+                part.CanCollide = collide
+            end
+        end
+        wallPartsOriginalCollide = {}
+    end
+end
+
+local function AddToggleWallHack()
+    setWallHack(not wallHackActive)
+    if floatingWallAddButton then
+        floatingWallAddButton.Text = wallHackActive and "Wall Hack: ON" or "Wall Hack: OFF"
+    end
+end
+
+task.spawn(function()
+    while true do
+        if wallHackActive then
+            local char = player.Character
+            if char then
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local origin = root.Position
+                    local forwardDir = root.CFrame.LookVector -- ด้านหน้าตัวละคร
+                    for _, part in pairs(workspace:GetDescriptionendants()) do
+                        if part:IsA("BasePart") then
+                            local toPart = part.Position - origin
+                            local forwardDist = forwardDir:Dot(toPart)
+                            local horizontalDist = (Vector3.new(toPart.X,0,toPart.Z)).Magnitude
+                            local verticalDist = toPart.Y
+                            -- เช็คเฉพาะกำแพงด้านหน้า/ด้านข้าง ไม่รวมพื้น/เพดาน
+                            if forwardDist > 0 and forwardDist < 5 and horizontalDist < 3 and verticalDist > -2 and verticalDist < 5 then
+                                if wallPartsOriginalCollide[part] == nil then
+                                    wallPartsOriginalCollide[part] = part.CanCollide
+                                end
+                                part.CanCollide = false
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(0.05)
+    end
+end)
+
+-- ปุ่มลอย Wall Hack
+local function createWallFloatingAddButton()
+    if floatingWallAddButton then return end
+    floatingWallAddButton = Instance.new("TextButton")
+    floatingWallAddButton.Size = UDim2.new(0,100,0,50)
+    floatingWallAddButton.Position = UDim2.new(0.2,-50,0.6,0)
+    floatingWallAddButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingWallAddButton.BackgroundColor3 = Color3.fromRGB(100,255,100)
+    floatingWallAddButton.TextColor3 = Color3.fromRGB(0,0,0)
+    floatingWallAddButton.Text = wallHackActive and "Wall Hack: ON" or "Wall Hack: OFF"
+    floatingWallAddButton.Parent = FloatingGui
+    floatingWallAddButton.Active = true
+    floatingWallAddButton.Draggable = true
+    floatingWallAddButton.MouseButton1Click:Connect(AddToggleWallHack)
+end
+
+-- ปุ่มปกติ
+ExtraTab:AddButton("g",{
+    Title="Wall Hack (ปกติ)",
+    Description="ทะลุกำแพงด้านหน้า/ด้านข้างจริง",
+    Callback=AddToggleWallHack
+})
+
+-- ปุ่มลอย
+ExtraTab:AddToggle("h",{
+    Title="Wall Hack (ปุ่มลอย)",
+    Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Wall Hack",
+    Default=false,
+    Callback=function(state)
+        if state then
+            createWallFloatingAddButton()
+        else
+            if floatingWallAddButton then
+                floatingWallAddButton:Destroy()
+                floatingWallAddButton = nil
+            end
+            setWallHack(false)
+        end
+    end
+})
+
+-- =========================
+-- Teleport To Player (ปกติ + ลอย)
+-- =========================
+local floatingTPPlayerAddButton
+local function teleportToPlayer(targetPlayer)
+local char = player.Character
+if not char then return end
+local root = char:FindFirstChild("HumanoidRootPart")
+if not root then return end
+if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+root.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+end
+end
+
+local function createTPPlayerMenu()
+-- สร้าง UI แบบ Simple Folder / Frame
+local menuGui = PlayerGui:FindFirstChild("TPPlayerMenu")
+if menuGui then menuGui:Destroy() end
+
+menuGui = Instance.new("ScreenGui")  
+menuGui.Name = "TPPlayerMenu"  
+menuGui.Parent = PlayerGui  
+menuGui.ResetOnSpawn = false  
+
+local frame = Instance.new("Frame")  
+frame.Size = UDim2.new(0,200,0,300)  
+frame.Position = UDim2.new(0.5,-100,0.3,0)  
+frame.BackgroundColor3 = Color3.fromRGB(50,50,50)  
+frame.Parent = menuGui  
+
+local layout = Instance.new("UIListLayout")  
+layout.Parent = frame  
+layout.SortOrder = Enum.SortOrder.LayoutOrder  
+layout.Padding = UDim.new(0,5)  
+
+for _, plr in pairs(Players:GetPlayers()) do  
+    if plr ~= player then  
+        local btn = Instance.new("TextButton")  
+        btn.Size = UDim2.new(1,0,0,30)  
+        btn.Text = plr.Name  
+        btn.BackgroundColor3 = Color3.fromRGB(100,100,255)  
+        btn.TextColor3 = Color3.fromRGB(255,255,255)  
+        btn.Parent = frame  
+        btn.MouseButton1Click:Connect(function()  
+            teleportToPlayer(plr)  
+            menuGui:Destroy()  
+        end)  
+    end  
+end
+
+end
+
+
+-- ปุ่มปกติ
+TeleportTab:AddButton("i",{
+Title="TeleTo Player (ปกติ)",
+Description="เลือกผู้เล่นแล้วเทเลพอร์ตไปหา",
+Callback=createTPPlayerMenu
+})
+
+-- ปุ่มลอย
+local function createFloatingTPPlayerAddButton()
+if floatingTPPlayerAddButton then return end
+floatingTPPlayerAddButton = Instance.new("TextButton")
+floatingTPPlayerAddButton.Size = UDim2.new(0,120,0,50)
+floatingTPPlayerAddButton.Position = UDim2.new(0.5,-60,0.75,0)
+floatingTPPlayerAddButton.AnchorPoint = Vector2.new(0.5,0)
+floatingTPPlayerAddButton.BackgroundColor3 = Color3.fromRGB(150,0,255)
+floatingTPPlayerAddButton.TextColor3 = Color3.fromRGB(255,255,255)
+floatingTPPlayerAddButton.Text = "TeleTo Player"
+floatingTPPlayerAddButton.Parent = FloatingGui
+floatingTPPlayerAddButton.Active = true
+floatingTPPlayerAddButton.Draggable = true
+floatingTPPlayerAddButton.MouseButton1Click:Connect(createTPPlayerMenu)
+end
+
+TeleportTab:AddToggle("j",{
+Title="TeleTo Player (ปุ่มลอย)",
+Description="แสดงปุ่มลอยบนหน้าจอสำหรับ TeleTo Player",
+Default=false,
+Callback=function(state)
+if state then createFloatingTPPlayerAddButton() else
+if floatingTPPlayerAddButton then floatingTPPlayerAddButton:Destroy(); floatingTPPlayerAddButton=nil end
+end
+end
+})
+
+
+-- =========================
+-- Moon Mode (ปุ่มปกติ + ปุ่มลอย)
+-- =========================
+local moonModeActive = false
+local floatingMoonAddButton
+
+local function AddToggleMoonMode()
+moonModeActive = not moonModeActive
+if floatingMoonAddButton then
+floatingMoonAddButton.Text = moonModeActive and "Moon Mode: ON" or "Moon Mode: OFF"
+end
+end
+
+task.spawn(function()
+while true do
+if moonModeActive then
+local char = player.Character
+if char then
+local root = char:FindFirstChild("HumanoidRootPart")
+local humanoid = char:FindFirstChildOfClass("Humanoid")
+if root and humanoid then
+if humanoid.FloorMaterial == Enum.Material.Air and root.Velocity.Y < 0 then
+root.Velocity = Vector3.new(root.Velocity.X, root.Velocity.Y * 0.3, root.Velocity.Z)
+end
+end
+end
+end
+task.wait(0.05)
+end
+end)
+
+local function createMoonFloatingAddButton()
+if floatingMoonAddButton then return end
+floatingMoonAddButton = Instance.new("TextButton")
+floatingMoonAddButton.Size = UDim2.new(0,100,0,50)
+floatingMoonAddButton.Position = UDim2.new(0.8,-50,0.6,0)
+floatingMoonAddButton.AnchorPoint = Vector2.new(0.5,0)
+floatingMoonAddButton.BackgroundColor3 = Color3.fromRGB(100,100,255)
+floatingMoonAddButton.TextColor3 = Color3.fromRGB(255,255,255)
+floatingMoonAddButton.Text = moonModeActive and "Moon Mode: ON" or "Moon Mode: OFF"
+floatingMoonAddButton.Parent = FloatingGui
+floatingMoonAddButton.Active = true
+floatingMoonAddButton.Draggable = true
+floatingMoonAddButton.MouseButton1Click:Connect(AddToggleMoonMode)
+end
+
+ExtraTab:AddButton("k",{
+Title="Moon Mode (ปกติ)",
+Description="ตกช้าๆจากที่สูง โดยไม่แข็งตัว",
+Callback=AddToggleMoonMode
+})
+
+ExtraTab:AddToggle("l",{
+Title="Moon Mode (ปุ่มลอย)",
+Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Moon Mode",
+Default=false,
+Callback=function(state)
+if state then createMoonFloatingAddButton() else
+if floatingMoonAddButton then floatingMoonAddButton:Destroy(); floatingMoonAddButton=nil end
+moonModeActive=false
+end
+end
+})
+
+-- =========================
+-- Extra Tab - Run External Script
+-- =========================
+ExtraTab:AddButton("m",{
+Title = "Run External Script",
+Description = "กดเพื่อรันสคริปต์จาก Pastebin",
+Callback = function()
+local success, err = pcall(function()
+loadstring(game:HttpGet("https://pastebin.com/raw/GHDdPh2c"))()
+end)
+if not success then
+warn("เกิดข้อผิดพลาดในการรันสคริปต์: "..tostring(err))
+end
+end
+})
+
+-- =========================
+-- Player ESP (Visuals)
+-- =========================
+local playerESPActive = false
+local ESPBoxes = {}
+
+local function createESPForPlayer(targetPlayer)
+    if targetPlayer == player then return end
+    local char = targetPlayer.Character
+    if not char then return end
+
+    local head = char:FindFirstChild("Head")
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not head or not root then return end
+
+    -- TextLabel บนหัว
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESPBillboard"
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0,200,0,50)
+    billboard.StudsOffset = Vector3.new(0,2,0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = head
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255,255,255)
+    label.TextStrokeTransparency = 0
+    label.Font = Enum.Font.SourceSansBold
+    label.TextScaled = true
+    label.Text = targetPlayer.Name
+    label.Parent = billboard
+
+    -- Box รอบตัว
+    local box = Instance.new("BoxHandleAdornment")
+    box.Adornee = root
+    box.Size = root.Size
+    box.Color = BrickColor.new("White")
+    box.AlwaysOnTop = true
+    box.ZIndex = 5
+    box.Parent = root
+
+    ESPBoxes[targetPlayer] = {Billboard=billboard, Box=box}
+end
+
+local function removeESPForPlayer(targetPlayer)
+    if ESPBoxes[targetPlayer] then
+        if ESPBoxes[targetPlayer].Billboard then ESPBoxes[targetPlayer].Billboard:Destroy() end
+        if ESPBoxes[targetPlayer].Box then ESPBoxes[targetPlayer].Box:Destroy() end
+        ESPBoxes[targetPlayer] = nil
+    end
+end
+
+local function AddTogglePlayerESP(state)
+    playerESPActive = state
+    if state then
+        for _, plr in pairs(Players:GetPlayers()) do
+            createESPForPlayer(plr)
+        end
+    else
+        for plr, _ in pairs(ESPBoxes) do
+            removeESPForPlayer(plr)
+        end
+    end
+end
+
+-- Update ESP เมื่อผู้เล่นเข้ามาหรือออก
+Players.PlayerAdded:Connect(function(plr)
+    if playerESPActive then
+        plr.CharacterAdded:Connect(function()
+            createESPForPlayer(plr)
+        end)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+    removeESPForPlayer(plr)
+end)
+
+-- =========================
+-- ปุ่มใน VisualsTab
+-- =========================
+VisualsTab:AddToggle("n",{
+    Title="มองผู้เล่น",
+    Description="แสดงชื่อบนหัวและกรอบรอบลำตัว",
+    Default=false,
+    Callback=AddTogglePlayerESP
+})
+
+-- =========================
+-- Smooth Dash (แก้กระตุกกลางอากาศ)
+-- =========================
+local dashEnabled = false
+local dashSpeed = 50 -- ความเร็วเริ่มต้น
+local floatingDashAddButton
+local dashVelocity = nil
+
+-- ฟังก์ชันเปิด Dash
+local function startDash()
+    if dashVelocity then return end
+    local char = player.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    dashVelocity = Instance.new("BodyVelocity")
+    dashVelocity.MaxForce = Vector3.new(400000, 0, 400000)
+    dashVelocity.P = 1250
+    dashVelocity.Parent = root
+
+    -- อัปเดตทิศทางเรื่อย ๆ
+    task.spawn(function()
+        while dashEnabled and dashVelocity and dashVelocity.Parent do
+            local cam = workspace.CurrentCamera
+            if cam and root then
+                local dir = cam.CFrame.LookVector
+                dir = Vector3.new(dir.X, 0, dir.Z)
+                if dir.Magnitude > 0 then dir = dir.Unit end
+                dashVelocity.Velocity = dir * dashSpeed
+            end
+            task.wait(0.03)
+        end
+        if dashVelocity then
+            dashVelocity:Destroy()
+            dashVelocity = nil
+        end
+    end)
+end
+
+-- =========================
+-- GUI AddToggle
+SettingsTab:AddToggle("o",{
+    Title="Smooth Dash (ปกติ)",
+    Description="พุ่งตามมุมมองแบบลื่น ไม่กระตุก",
+    Default=false,
+    Callback=function(state)
+        dashEnabled = state
+        if state then
+            startDash()
+        elseif dashVelocity then
+            dashVelocity:Destroy()
+            dashVelocity = nil
+        end
+    end
+})
+
+-- AddInput ปรับความเร็ว
+SettingsTab:AddInput("p",{
+    Title="Dash Speed",
+    Description="ปรับความเร็ว Dash",
+    Placeholder=tostring(dashSpeed),
+    Callback=function(txt)
+        local num = tonumber(txt)
+        if num then dashSpeed = num end
+    end
+})
+
+-- =========================
+-- ปุ่มลอย
+local function createFloatingDashAddButton()
+    if floatingDashAddButton then return end
+    floatingDashAddButton = Instance.new("TextButton")
+    floatingDashAddButton.Size = UDim2.new(0,120,0,50)
+    floatingDashAddButton.Position = UDim2.new(0.5,-60,0.3,0)
+    floatingDashAddButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingDashAddButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    floatingDashAddButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingDashAddButton.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+    floatingDashAddButton.Parent = FloatingGui
+    floatingDashAddButton.Active = true
+    floatingDashAddButton.Draggable = true
+
+    floatingDashAddButton.MouseButton1Click:Connect(function()
+        dashEnabled = not dashEnabled
+        floatingDashAddButton.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+        if dashEnabled then
+            startDash()
+        elseif dashVelocity then
+            dashVelocity:Destroy()
+            dashVelocity = nil
+        end
+    end)
+end
+
+SettingsTab:AddToggle("q",{
+    Title="Smooth Dash (ปุ่มลอย)",
+    Description="แสดงปุ่มลอยสำหรับ Smooth Dash",
+    Default=false,
+    Callback=function(state)
+        if state then
+            createFloatingDashAddButton()
+        else
+            if floatingDashAddButton then
+                floatingDashAddButton:Destroy()
+                floatingDashAddButton = nil
+            end
+            dashEnabled = false
+            if dashVelocity then
+                dashVelocity:Destroy()
+                dashVelocity = nil
+            end
+        end
+    end
+})
+
+
+-- =========================
+-- ปุ่ม มองตั๋ว (ESP Ticket)
+-- =========================
+EventTab:AddToggle("r",{
+    Title = "มองตั๋ว (ESP Ticket)",
+    Description = "แสดงตำแหน่งตั๋วทั้งหมดในแมพ",
+    Default = false,
+    Callback = function(state)
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local ticketESPThread
+
+        local function getDistance(pos)
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            return hrp and (pos - hrp.Position).Magnitude or nil
+        end
+
+        local function createESP(part)
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "TicketESP"
+            billboard.Adornee = part
+            billboard.Size = UDim2.new(0, 180, 0, 25)
+            billboard.StudsOffset = Vector3.new(0, 3.2, 0)
+            billboard.AlwaysOnTop = true
+            billboard.LightInfluence = 0
+            billboard.Parent = part
+
+            local label = Instance.new("TextLabel")
+            label.Name = "Ticket"
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.BackgroundTransparency = 1
+            label.TextStrokeTransparency = 0.25
+            label.TextScaled = true
+            label.Font = Enum.Font.GothamSemibold
+            label.TextColor3 = Color3.fromRGB(255, 255, 150) -- สีเหลืองอ่อน
+            label.Text = "Ticket"
+            label.Parent = billboard
+
+            return billboard
+        end
+
+        local function removeAllTicketESP()
+            local ticketFolder = workspace:FindFirstChild("Game") 
+                and workspace.Game:FindFirstChild("Effects") 
+                and workspace.Game.Effects:FindFirstChild("Tickets")
+            if ticketFolder then
+                for _, ticketModel in ipairs(ticketFolder:GetChildren()) do
+                    if ticketModel:IsA("Model") then
+                        local part = ticketModel:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            local existing = part:FindFirstChild("TicketESP")
+                            if existing then existing:Destroy() end
+                        end
+                    end
+                end
+            end
+        end
+
+        if state then
+            -- เปิดระบบ ESP
+            ticketESPThread = task.spawn(function()
+                while state do
+                    local ticketFolder = workspace:FindFirstChild("Game") 
+                        and workspace.Game:FindFirstChild("Effects") 
+                        and workspace.Game.Effects:FindFirstChild("Tickets")
+                    if ticketFolder then
+                        for _, ticketModel in ipairs(ticketFolder:GetChildren()) do
+                            if ticketModel:IsA("Model") then
+                                local part = ticketModel:FindFirstChildWhichIsA("BasePart")
+                                if part then
+                                    local billboard = part:FindFirstChild("TicketESP") or createESP(part)
+                                    local label = billboard and billboard:FindFirstChild("Ticket")
+                                    if label then
+                                        local dist = getDistance(part.Position)
+                                        if dist then
+                                            label.Text = string.format("%s\n%.0f studs", ticketModel.Name, dist)
+                                        else
+                                            label.Text = ticketModel.Name
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+        else
+            -- ปิดระบบ ESP
+            removeAllTicketESP()
+        end
+    end
+})
+
+-- =========================
+-- ปุ่ม มองเน็กบอท (ESP Nextbot)
+-- =========================
+VisualsTab:AddButton("s",{
+    Title = "มองเน็กบอท",
+    Description = "เปิด/ปิด ESP Nextbot",
+    Callback = function()
+        local LocalPlayer = game:GetService("Players").LocalPlayer
+
+        -- เช็คว่าเปิดอยู่หรือไม่
+        if _G.NextbotESPEnabled then
+            -- ปิด ESP
+            _G.NextbotESPEnabled = false
+            if _G.NextbotESPThread and coroutine.status(_G.NextbotESPThread) ~= "dead" then
+                coroutine.close(_G.NextbotESPThread)
+                _G.NextbotESPThread = nil
+            end
+
+            -- ลบ ESP ทุกอัน
+            local folder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Players")
+            if folder then
+                for _, npc in ipairs(folder:GetChildren()) do
+                    local part = (npc:IsA("Model") and (npc:FindFirstChild("Root") or npc:FindFirstChild("Head") or npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChildWhichIsA("BasePart"))) or nil
+                    if part then
+                        local esp = part:FindFirstChild("NextbotESP")
+                        if esp then esp:Destroy() end
+                    end
+                end
+            end
+
+            print("🛑 ESP Nextbot ปิดแล้ว")
+        else
+            -- เปิด ESP
+            _G.NextbotESPEnabled = true
+
+            _G.NextbotESPThread = coroutine.create(function()
+                while _G.NextbotESPEnabled do
+                    local folder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Players")
+                    if folder then
+                        for _, npc in ipairs(folder:GetChildren()) do
+                            if npc:GetAttribute("Team") == "Nextbot" then
+                                local part = (npc:IsA("Model") and (npc:FindFirstChild("Root") or npc:FindFirstChild("Head") or npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChildWhichIsA("BasePart"))) or nil
+                                if part then
+                                    local billboard = part:FindFirstChild("NextbotESP")
+                                    if not billboard then
+                                        billboard = Instance.new("BillboardGui")
+                                        billboard.Name = "NextbotESP"
+                                        billboard.Adornee = part
+                                        billboard.Size = UDim2.new(0, 180, 0, 25)
+                                        billboard.StudsOffset = Vector3.new(0, 3.2, 0)
+                                        billboard.AlwaysOnTop = true
+                                        billboard.LightInfluence = 0
+                                        billboard.Parent = part
+
+                                        local label = Instance.new("TextLabel")
+                                        label.Name = "Label"
+                                        label.Size = UDim2.new(1, 0, 1, 0)
+                                        label.BackgroundTransparency = 1
+                                        label.TextStrokeTransparency = 0.25
+                                        label.TextScaled = true
+                                        label.Font = Enum.Font.GothamSemibold
+                                        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                        label.Parent = billboard
+                                    end
+
+                                    local label = billboard:FindFirstChild("Label")
+                                    if label then
+                                        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                        local dist = hrp and (part.Position - hrp.Position).Magnitude or nil
+                                        if dist then
+                                            label.Text = string.format("%s\n%.0f studs", npc.Name, dist)
+                                            -- กำหนดสีตามระยะทาง
+                                            if dist <= 12 then
+                                                label.TextColor3 = Color3.fromRGB(50, 50, 50)
+                                            elseif dist <= 60 then
+                                                local t = (dist - 6) / 14
+                                                label.TextColor3 = Color3.fromRGB(255, 120 + (255 - 120) * t, 120)
+                                            else
+                                                label.TextColor3 = Color3.fromRGB(200, 150, 255)
+                                            end
+                                        else
+                                            label.Text = npc.Name
+                                            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+            coroutine.resume(_G.NextbotESPThread)
+            print("✅ ESP Nextbot เปิดแล้ว")
+        end
+    end
+})
+
+-- =========================
+-- ปุ่มแสดง FPS
+-- =========================
+FPSTab:AddButton("t",{
+    Title = "แสดง FPS",
+    Description = "กดเพื่อเปิด/ปิดการแสดง FPS",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local playerGui = player:WaitForChild("PlayerGui")
+
+        -- ตรวจสอบว่ามีอยู่แล้วไหม
+        local existingGui = playerGui:FindFirstChild("FPSGui")
+        if existingGui then
+            existingGui:Destroy()
+            return
+        end
+
+        -- สร้าง ScreenGui
+        local fpsGui = Instance.new("ScreenGui")
+        fpsGui.Name = "FPSGui"
+        fpsGui.ResetOnSpawn = false
+        fpsGui.Parent = playerGui
+
+        -- กรอบแสดง FPS
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0, 200, 0, 100)
+        frame.Position = UDim2.new(1, -210, 0, 10) -- มุมบนขวา
+        frame.BackgroundTransparency = 0.5
+        frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        frame.Parent = fpsGui
+
+        -- Label FPS ของเรา
+        local fpsLabel = Instance.new("TextLabel")
+        fpsLabel.Size = UDim2.new(1, -10, 0, 30)
+        fpsLabel.Position = UDim2.new(0, 5, 0, 5)
+        fpsLabel.BackgroundTransparency = 1
+        fpsLabel.TextColor3 = Color3.fromRGB(255,255,255)
+        fpsLabel.TextScaled = true
+        fpsLabel.Font = Enum.Font.GothamSemibold
+        fpsLabel.Text = "FPS: 0"
+        fpsLabel.Parent = frame
+
+        -- Label สำหรับผู้เล่นอื่น
+        local othersLabel = Instance.new("TextLabel")
+        othersLabel.Size = UDim2.new(1, -10, 1, -40)
+        othersLabel.Position = UDim2.new(0, 5, 0, 35)
+        othersLabel.BackgroundTransparency = 1
+        othersLabel.TextColor3 = Color3.fromRGB(180,180,255)
+        othersLabel.TextScaled = true
+        othersLabel.Font = Enum.Font.GothamSemibold
+        othersLabel.Text = "Players FPS:"
+        othersLabel.TextWrapped = true
+        othersLabel.TextYAlignment = Enum.TextYAlignment.Top
+        othersLabel.Parent = frame
+
+        -- อัปเดต FPS
+        local lastTime = tick()
+        local frameCount = 0
+        local runService = game:GetService("RunService")
+
+        runService.RenderStepped:Connect(function()
+            frameCount += 1
+            local now = tick()
+            if now - lastTime >= 1 then
+                fpsLabel.Text = "FPS: " .. frameCount
+                frameCount = 0
+                lastTime = now
+
+                -- อัปเดต FPS ของผู้เล่นอื่น (จำลองตัวอย่าง)
+                local players = game.Players:GetPlayers()
+                local otherText = "Players FPS:\n"
+                for _, p in pairs(players) do
+                    if p ~= player then
+                        otherText = otherText .. p.Name .. ": ?\n" -- จริง ๆ ต้องมีระบบเก็บ FPS ของแต่ละคน
+                    end
+                end
+                othersLabel.Text = otherText
+            end
+        end)
+    end
+})
+
+-- =========================
+-- ปุ่ม Teleport
+-- =========================
+local teleportEnabled = false
+local floatingTeleportAddButton
+
+-- ฟังก์ชันเปิด Teleport Mode
+local function startTeleport()
+    local UIS = game:GetService("UserInputService")
+    local player = game.Players.LocalPlayer
+    local mouse = player:GetMouse()
+
+    local function onClick()
+        if teleportEnabled then
+            local targetPos = mouse.Hit.Position + Vector3.new(0, 3, 0) -- ยกขึ้นเล็กน้อย
+            local char = player.Character
+            if char then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    hrp.CFrame = CFrame.new(targetPos)
+                end
+            end
+        end
+    end
+
+    -- เชื่อม Event
+    local clickConnection = mouse.AddButton1Down:Connect(onClick)
+    
+    -- คืนค่าปิด
+    return clickConnection
+end
+
+local teleportConnection
+
+-- =========================
+-- ปุ่มปกติในหมวด Teleport
+TeleportTab:AddToggle("u",{
+    Title = "คริป Teleport",
+    Description  = "กดเพื่อเปิด/ปิด Teleport Mode",
+    Default = false,
+    Callback = function(state)
+        teleportEnabled = state
+        if state then
+            teleportConnection = startTeleport()
+        elseif teleportConnection then
+            teleportConnection:Disconnect()
+            teleportConnection = nil
+        end
+    end
+})
+
+-- =========================
+-- ปุ่มลอย
+local function createFloatingTeleportAddButton()
+    if floatingTeleportAddButton then return end
+
+    floatingTeleportAddButton = Instance.new("TextButton")
+    floatingTeleportAddButton.Size = UDim2.new(0, 140, 0, 50)
+    floatingTeleportAddButton.Position = UDim2.new(0.5, -70, 0.4, 0)
+    floatingTeleportAddButton.AnchorPoint = Vector2.new(0.5, 0)
+    floatingTeleportAddButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    floatingTeleportAddButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingTeleportAddButton.Text = teleportEnabled and "Teleport: ON" or "Teleport: OFF"
+    floatingTeleportAddButton.Parent = FloatingGui
+    floatingTeleportAddButton.Active = true
+    floatingTeleportAddButton.Draggable = true
+
+    floatingTeleportAddButton.MouseButton1Click:Connect(function()
+        teleportEnabled = not teleportEnabled
+        floatingTeleportAddButton.Text = teleportEnabled and "Teleport: ON" or "Teleport: OFF"
+        if teleportEnabled then
+            teleportConnection = startTeleport()
+        elseif teleportConnection then
+            teleportConnection:Disconnect()
+            teleportConnection = nil
+        end
+    end)
+end
+
+-- ปุ่ม AddToggle สำหรับลอย
+TeleportTab:AddToggle("v",{
+    Title = "คริป Teleport (ปุ่มลอย)",
+    Description  = "แสดงปุ่มลอยสำหรับ Teleport",
+    Default = false,
+    Callback = function(state)
+        if state then
+            createFloatingTeleportAddButton()
+        else
+            if floatingTeleportAddButton then
+                floatingTeleportAddButton:Destroy()
+                floatingTeleportAddButton = nil
+            end
+            teleportEnabled = false
+            if teleportConnection then
+                teleportConnection:Disconnect()
+                teleportConnection = nil
+            end
+        end
+    end
+})
+
+-- =========================
+-- ปุ่ม Reduce Graphics V.1
+-- =========================
+FPSTab:AddButton("v",{
+    Title = "ลดกราฟฟิก V.1",
+    Description  = "ทุก Part เรียบเนียน",
+    Callback = function()
+        for _, obj in ipairs(workspace:GetDescriptionendants()) do
+            if obj:IsA("BasePart") then
+                obj.Material = Enum.Material.SmoothPlastic
+                obj.Reflectance = 0
+            elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+                obj.Enabled = false
+            end
+        end
+        print("✅ ลดกราฟฟิก V.1 เรียบร้อย")
+    end
+})
+
+-- =========================
+-- ปุ่ม Reduce Graphics V.2
+-- =========================
+FPSTab:AddButton("x",{
+    Title = "ลดกราฟฟิก V.2",
+    Description  = "เรียบเนียน + ลบหมอกและเอฟเฟกต์",
+    Callback = function()
+        -- เรียบเนียนเหมือน V.1
+        for _, obj in ipairs(workspace:GetDescriptionendants()) do
+            if obj:IsA("BasePart") then
+                obj.Material = Enum.Material.SmoothPlastic
+                obj.Reflectance = 0
+            elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+                obj.Enabled = false
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj:Destroy()
+            end
+        end
+
+        -- ลบหมอก/เอฟเฟกต์จาก Lighting
+        local Lighting = game:GetService("Lighting")
+        Lighting.FogEnd = 100000
+        Lighting.FogStart = 0
+        Lighting.GlobalShadows = false
+        print("✅ ลดกราฟฟิก V.2 เรียบร้อย")
+    end
+})
+
+-- =========================
+-- ปุ่ม เพิ่มแสงหน้าจอ
+-- =========================
+FPSTab:AddButton("w",{
+    Title = "เพิ่มแสงหน้าจอ",
+    Description  = "หน้าจอสว่างขึ้นเล็กน้อย",
+    Callback = function()
+        local Lighting = game:GetService("Lighting")
+        Lighting.Brightness = (Lighting.Brightness or 2) + 1 -- เพิ่มทีละ 1
+        print("✅ เพิ่มแสงเรียบร้อย")
+    end
+})
+
+-- =========================
+-- AUTO TICKET FARM (EventTab)
+-- =========================
+EventTab:AddToggle("y",{
+Title = "Auto Ticket Farm",
+Description = "เก็บตั๋วอัตโนมัติทั้งเซิร์ฟ",
+Default = false,
+Callback = function(state)
+getgenv().AutoTicketFarm = state
+if state then
+task.spawn(function()
+while getgenv().AutoTicketFarm do
+task.wait(0.1)
+if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+local hrp = player.Character.HumanoidRootPart
+local ticketsFolder = workspace:FindFirstChild("Game")
+and workspace.Game:FindFirstChild("Effects")
+and workspace.Game.Effects:FindFirstChild("Tickets")
+if ticketsFolder then
+for _, ticket in pairs(ticketsFolder:GetChildren()) do
+if not getgenv().AutoTicketFarm then break end
+local root = ticket:FindFirstChild("HumanoidRootPart")
+if root then
+local pos = root.Position
+local downPos = CFrame.new(pos.X, pos.Y - 15, pos.Z)
+local upPos = CFrame.new(pos.X, pos.Y + 2, pos.Z)
+
+hrp.CFrame = downPos
+task.wait(0.15)
+hrp.CFrame = upPos
+task.wait(0.05)
+
+local success = false    
+                            if game:GetService("ReplicatedStorage"):FindFirstChild("Events")     
+                               and game.ReplicatedStorage.Events:FindFirstChild("CollectTicket") then    
+                                local ok, _ = pcall(function()    
+                                    game.ReplicatedStorage.Events.CollectTicket:FireServer(ticket)    
+                                end)    
+                                success = ok    
+                            end    
+
+                            local startTime = tick()    
+                            repeat task.wait(0.05) until not ticket.Parent or tick() - startTime > 2    
+                            if not ticket.Parent or success then    
+                                hrp.CFrame = CFrame.new(pos.X, 1300, pos.Z)    
+                                task.wait(0.3)    
+                            end    
+                        end    
+                    end    
+                end    
+            end    
+        end    
+    end)    
+end
+
+end
+
+})
+
+
