@@ -218,154 +218,76 @@ SelectPoint:OnChanged(function(Value)
 end)
 
 
--- [[ 1. พิกัดโซน 1-9 (จุดที่มึงจะบินกลับมาพัก) ]]
 local Zones = {
-    ["โซน 1"] = Vector3.new(197.34, -2.51, -94.93),
-    ["โซน 2"] = Vector3.new(286.41, -2.51, 21.26),
-    ["โซน 3"] = Vector3.new(399.71, -2.51, 118.11),
-    ["โซน 4"] = Vector3.new(540.42, -2.51, 15.88),
-    ["โซน 5"] = Vector3.new(756.99, -2.51, 2.76),
-    ["โซน 6"] = Vector3.new(1074.24, -2.51, -10.50),
-    ["โซน 7"] = Vector3.new(1553.90, -2.51, -106.57),
-    ["โซน 8"] = Vector3.new(2245.50, -2.51, -19.42),
-    ["โซน 9"] = Vector3.new(2600.67, -2.51, -14.11)
+    [1] = Vector3.new(229.04, 3.49, -18.49),
+    [2] = Vector3.new(348.37, 3.49, -4.69),
+    [3] = Vector3.new(458.68, 3.49, 12.43),
+    [4] = Vector3.new(616.35, 3.49, 3.81),
+    [5] = Vector3.new(840.69, 3.49, 26.67),
+    [6] = Vector3.new(1266.16, 3.49, 4.94),
+    [7] = Vector3.new(1788.45, 3.49, -0.41),
+    [8] = Vector3.new(2426.10, 3.49, -7.20),
+    [9] = Vector3.new(2782.53, 3.49, -9.53)
 }
+_G.SelectedZone = 1
+local FlySpeed = 600
 
-local SelectedZone = "โซน 1"
+local function StartFlying()
+    local lp = game.Players.LocalPlayer
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
 
--- [[ 2. ฟังก์ชันหาของ "อะไรก็ได้" ที่อยู่ในรัศมีโซน ]]
-local function GetAnyInZone(zonePos)
+    local zonePos = Zones[_G.SelectedZone]
+
+    -- 1. บินไปที่โซนก่อนเลยสัด (กันพลาด)
+    local t1 = game:GetService("TweenService"):Create(hrp, TweenInfo.new((hrp.Position - zonePos).Magnitude/FlySpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(zonePos)})
+    t1:Play()
+    t1.Completed:Wait()
+    task.wait(0.2)
+
+    -- 2. สแกนหาตัวรวยสุด "เฉพาะในระยะสายตา" (ห้ามเอาคน)
     local target = nil
-    local scanRadius = 350 -- ปรับรัศมีวงกว้างของโซนได้ตรงนี้สัด
-
+    local maxVal = -1
     for _, v in pairs(workspace:GetChildren()) do
-        pcall(function()
-            -- เช็คว่ามันเป็น Object ที่มีพิกัด (Part หรือ Model)
-            local pos = (v:IsA("BasePart") and v.Position) or (v:FindFirstChildOfClass("Part") and v:FindFirstChildOfClass("Part").Position)
-            
-            if pos then
-                -- เช็คว่าไอเทมนี้อยู่ในโซนที่เราเลือกมั้ย
-                local distFromZone = (pos - zonePos).Magnitude
-                if distFromZone <= scanRadius then
-                    target = v -- เจอตัวแรกในเขตโซน เอาตัวนี้เลยสัด!
-                    return
-                end
+        if not game.Players:GetPlayerFromCharacter(v) and (v:FindFirstChild("Humanoid") or v.Name:find("Berry")) then
+            local p = v:FindFirstChild("HumanoidRootPart") or v:FindFirstChild("Handle") or v:IsA("BasePart") and v
+            if p then
+                local val = v:FindFirstChild("Money") or v:FindFirstChild("Value")
+                local cur = (val and val.Value) or 0
+                if cur > maxVal then maxVal = cur; target = p end
             end
-        end)
-        if target then break end -- ถ้าเจอแล้วหยุดลูปทันที จะได้ไวๆ
-    end
-    return target
-end
-
--- [[ 3. Dropdown เลือกโซนประจำการ ]]
-local ZoneSelect = Tabs.Farm:AddDropdown("ZoneSelector", {
-    Title = "เลือกโซนประจำการ",
-    Values = {"โซน 1", "โซน 2", "โซน 3", "โซน 4", "โซน 5", "โซน 6", "โซน 7", "โซน 8", "โซน 9"},
-    Default = "โซน 1",
-})
-
-ZoneSelect:OnChanged(function(Value)
-    SelectedZone = Value
-end)
-
--- [[ 4. ปุ่มฉกของในโซนแบบเน้นไว ]]
-Tabs.Farm:AddButton({
-    Title = "ฉกของที่ใกล้ที่สุดในโซน -> กลับจุดเดิม",
-    Callback = function()
-        local root = game.Players.LocalPlayer.Character.HumanoidRootPart
-        local zonePos = Zones[SelectedZone]
-        local speed = FlySpeed or 400
-
-        if not root then return end
-
-        -- 1. บินไปที่จุดประจำการของโซนนั้นก่อน
-        local toZone = game:GetService("TweenService"):Create(root, TweenInfo.new((root.Position - zonePos).Magnitude/speed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(zonePos)})
-        toZone:Play()
-
-        toZone.Completed:Connect(function()
-            task.wait(0.1)
-            -- 2. หาของอะไรก็ได้ในเขตโซน
-            local target = GetAnyInZone(zonePos)
-
-            if target then
-                local targetPos = target:IsA("BasePart") and target.Position or target:FindFirstChildOfClass("Part").Position
-                
-                -- 3. บินไปฉกทันที
-                local toTarget = game:GetService("TweenService"):Create(root, TweenInfo.new((root.Position - targetPos).Magnitude/speed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPos)})
-                toTarget:Play()
-
-                toTarget.Completed:Connect(function()
-                    task.wait(0.2) -- จังหวะเก็บ
-                    -- 4. บินดีดกลับมาที่จุดเดิมในโซน
-                    game:GetService("TweenService"):Create(root, TweenInfo.new((root.Position - zonePos).Magnitude/speed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(zonePos)}):Play()
-                end)
-            else
-                Fluent:Notify({Title = "U-HUB", Content = "โซนนี้ว่างเปล่า ไม่มีของให้ฉกเลยสัด!", Duration = 2})
-            end
-        end)
-    end
-})
-
-
--- [[ ฟังก์ชันสแกนหา Object ทุกอย่างที่อยู่ในโซนแบบละเอียด ]]
-local function ForceFindTarget(zonePos)
-    local target = nil
-    local minDistance = 500 -- รัศมีวงกว้าง (ปรับเพิ่มได้สัด)
-    
-    -- ใช้ GetDescendants เพื่อหาของที่ซ่อนอยู่ใน Folder อีกที
-    for _, v in pairs(workspace:GetDescendants()) do
-        pcall(function()
-            -- เช็คว่ามันเป็น Part หรือ Model ที่เรา "หยิบ" ได้
-            if v:IsA("BasePart") or v:IsA("Model") then
-                local pos = v:IsA("BasePart") and v.Position or v:FindFirstChildOfClass("Part").Position
-                
-                if pos then
-                    local distFromZone = (pos - zonePos).Magnitude
-                    -- ถ้ามันอยู่ในเขตโซน และ ไม่ใช่ตัวเราเอง
-                    if distFromZone < minDistance and not v:IsDescendantOf(game.Players.LocalPlayer.Character) then
-                        -- เน้นตัวที่มีชื่อว่า Berry หรือมี Value ข้างใน (มึงแก้ชื่อเบนรอดตรงนี้ถ้ามึงรู้ชื่อจริงมัน)
-                        if v.Name:find("Berry") or v:FindFirstChildOfClass("ValueBase") or v.Name:find("เบนรอด") then
-                            target = v
-                            return
-                        end
-                    end
-                end
-            end
-        end)
-        if target then break end
-    end
-    return target
-end
-
--- [[ ปุ่มกด: พุ่งไปฉก -> ดีดกลับ ]]
-Tabs.Farm:AddButton({
-    Title = "บังคับบินไปหยิบเบนรอด -> กลับจุดเดิม",
-    Callback = function()
-        local root = game.Players.LocalPlayer.Character.HumanoidRootPart
-        local homePos = Zones[SelectedZone] -- จุดที่มึงเลือกใน Dropdown
-        local speed = FlySpeed or 400
-
-        if not root or not homePos then return end
-
-        -- สแกนหาเป้าหมาย
-        local target = ForceFindTarget(homePos)
-
-        if target then
-            local targetPos = target:IsA("BasePart") and target.Position or target:FindFirstChildOfClass("Part").Position
-            
-            -- บินไปฉก
-            local toTarget = game:GetService("TweenService"):Create(root, TweenInfo.new((root.Position - targetPos).Magnitude/speed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPos)})
-            
-            Fluent:Notify({Title = "U-HUB", Content = "เจอแล้วสัด! กำลังพุ่งไปที่: " .. target.Name, Duration = 2})
-            toTarget:Play()
-
-            toTarget.Completed:Connect(function()
-                task.wait(0.5) -- จังหวะเก็บ (เพิ่มเวลาให้มันเก็บติดหน่อย)
-                -- บินกลับมาที่เดิม
-                game:GetService("TweenService"):Create(root, TweenInfo.new((root.Position - homePos).Magnitude/speed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(homePos)}):Play()
-            end)
-        else
-            Fluent:Notify({Title = "Error", Content = "โค้ดยังมองไม่เห็นเบนรอดในโซนนี้เลยสัด!", Duration = 3})
         end
     end
+
+    -- 3. ถ้าเจอตัวรวย บินเข้าใส่แล้วรัวหยิบ
+    if target then
+        local t2 = game:GetService("TweenService"):Create(hrp, TweenInfo.new((hrp.Position - target.Position).Magnitude/FlySpeed, Enum.EasingStyle.Linear), {CFrame = target.CFrame})
+        t2:Play()
+        t2.Completed:Wait()
+
+        for i = 1, 10 do
+            firetouchinterest(hrp, target, 0)
+            firetouchinterest(hrp, target, 1)
+            game:GetService("VirtualInputManager"):SendKeyEvent(true, "E", false, game)
+            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            task.wait(0.01)
+            game:GetService("VirtualInputManager"):SendKeyEvent(false, "E", false, game)
+            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        end
+    end
+end
+
+-- [[ ส่วนปุ่มกดในเมนูมึง ]]
+Tabs.Main:AddDropdown("ZoneSelector", {
+    Title = "เลือกโซน 1-9",
+    Values = {"1", "2", "3", "4", "5", "6", "7", "8", "9"},
+    Default = "1",
+    Callback = function(v) _G.SelectedZone = tonumber(v) end
 })
+
+Tabs.Main:AddButton({
+    Title = "บินไปฉกตัวรวยสุด! 🎯",
+    Callback = function() StartFlying() end
+})
+
+
