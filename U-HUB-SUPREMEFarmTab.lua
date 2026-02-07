@@ -485,83 +485,208 @@ Tabs.Event:AddToggle("BrainrotTimer", {
     end
 })
 
--- [[ 1. สร้างแถบ Teleport (ถ้ามีแล้วมันจะทับอันเดิม) ]]
-local TeleportTab = Window:AddTab({ Title = "Teleport", Icon = "map-pin" })
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
--- [[ 2. สร้าง Dropdown ยัดเข้าแถบ ]]
-local ZW = TeleportTab:AddDropdown("ZW_Menu", {
-    Title = "วาร์ปโซน (แวะ Base ออโต้)",
-    Values = {"ปิด", "Zone 2", "Zone 3"},
-    Default = "ปิด"
+local WarpTab = Window:AddTab({ Title = "วาร์ป", Icon = "map-pin" })
+local MySection = WarpTab:AddSection("เลือกจุดวาร์ป")
+
+
+local part1 = Instance.new("Part", workspace)
+part1.Name = "1"
+part1.Size = Vector3.new(10,1,10)
+part1.Anchored = true
+part1.CanCollide = true
+part1.CFrame = CFrame.new(
+	151.81601, -1.90734863e-06, -139.729675,
+	1,0,0,0,1,0,0,0,1
+)
+
+-- สร้าง Part 2
+local part2 = Instance.new("Part", workspace)
+part2.Name = "2"
+part2.Size = Vector3.new(10,1,10)
+part2.Anchored = true
+part2.CanCollide = true
+part2.CFrame = CFrame.new(
+	2280.77612, 0.0499992371, -139.261551,
+	1,0,0,0,1,0,0,0,1
+)
+
+-- สร้าง Part 3
+local part3 = Instance.new("Part", workspace)
+part3.Name = "3"
+part3.Size = Vector3.new(10,1,10)
+part3.Anchored = true
+part3.CanCollide = true
+part3.CFrame = CFrame.new(
+	2276.26221, -5.99998856, -126.776489,
+	1,0,0,0,1,0,0,0,1
+)
+
+local flying = false
+
+local function getChar()
+	return player.Character or player.CharacterAdded:Wait()
+end
+
+player.CharacterAdded:Connect(function()
+	flying = false
+end)
+
+local function flyTo(targetPart)
+	local char = getChar()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	local hum = char:WaitForChild("Humanoid")
+
+	hum.PlatformStand = true
+
+	for _,v in pairs(char:GetChildren()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = false
+		end
+	end
+
+	while char.Parent and (hrp.Position - targetPart.Position).Magnitude > 3 do
+		local dir = (targetPart.Position - hrp.Position).Unit
+		local speed = hum.WalkSpeed
+		hrp.AssemblyLinearVelocity = dir * speed
+		RunService.RenderStepped:Wait()
+	end
+
+	if char.Parent then
+		hrp.AssemblyLinearVelocity = Vector3.zero
+		hrp.CFrame = targetPart.CFrame + Vector3.new(0,3,0)
+	end
+end
+
+local function restore()
+	local char = getChar()
+	local hum = char:WaitForChild("Humanoid")
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	hum.PlatformStand = false
+	hrp.AssemblyLinearVelocity = Vector3.zero
+
+	for _,v in pairs(char:GetChildren()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = true
+		end
+	end
+end
+
+local function getClosestPart()
+	local char = getChar()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	local d1 = (hrp.Position - part1.Position).Magnitude
+	local d2 = (hrp.Position - part2.Position).Magnitude
+	local d3 = (hrp.Position - part3.Position).Magnitude
+
+	if d1 <= d2 and d1 <= d3 then
+		return 1
+	elseif d2 <= d1 and d2 <= d3 then
+		return 2
+	else
+		return 3
+	end
+end
+
+-- =====================
+-- ปุ่ม Teleport Last zone
+-- =====================
+ MySection:AddButton({
+	Title = "Teleport Last zone",
+	Callback = function()
+		if flying then return end
+		flying = true
+
+		local start = getClosestPart()
+
+		if start == 1 then
+			flyTo(part1)
+			flyTo(part2)
+			flyTo(part3)
+		elseif start == 2 then
+			flyTo(part2)
+			flyTo(part3)
+		else
+			flyTo(part3)
+		end
+
+		restore()
+		flying = false
+	end,
 })
 
--- [[ 3. ระบบวาร์ปแบบบังคับแวะ Base ]]
-ZW:OnChanged(function(Value)
-    if Value == "ปิด" or _G.IsWarping then return end
-    
-    _G.IsWarping = true
-    local char = lp.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if hrp then
-        -- [ พิกัดเดิมของมึงเป๊ะๆ ไม่มีการแก้เลข ]
-        local BaseCF = CFrame.new(151.816, -3.49, -139.729)
-        local TargetCF = (Value == "Zone 2" and CFrame.new(2280, 2.51, -139)) or (Value == "Zone 3" and CFrame.new(2625, 2.51, -126))
+-- =====================
+-- ปุ่ม Return to base
+-- =====================
+ MySection:AddButton({
+	Title = "Return to base",
+	Callback = function()
+		if flying then return end
+		flying = true
 
-        -- Step 1: บินไป Base ก่อน (151)
-        local d1 = (hrp.Position - BaseCF.Position).Magnitude
-        local t1 = TweenService:Create(hrp, TweenInfo.new(d1/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = BaseCF})
-        t1:Play()
-        t1.Completed:Wait()
-        
-        task.wait(0.01) -- คูลดาวน์ 0.01 วิ ตามสั่ง
+		local start = getClosestPart()
 
-        -- Step 2: บินไปโซนที่เลือก
-        if TargetCF then
-            local d2 = (hrp.Position - TargetCF.Position).Magnitude
-            local t2 = TweenService:Create(hrp, TweenInfo.new(d2/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = TargetCF})
-            t2:Play()
-            t2.Completed:Wait()
-        end
+		if start == 3 then
+			flyTo(part3)
+			flyTo(part2)
+			flyTo(part1)
+		elseif start == 2 then
+			flyTo(part2)
+			flyTo(part1)
+		else
+			flyTo(part1)
+		end
+
+		restore()
+		flying = false
+	end,
+})
+
+-- [[ ส่วนบินแบบ 2-in-1 (บินไปจุดพักก่อน แล้วค่อยไปจุดฟาร์ม) ]]
+local StartPos = CFrame.new(151.81601, -1.90734863e-06, -139.729675, 1,0,0,0,1,0,0,0,1)
+
+local ZoneWarp = WarpTab:AddDropdown("ZoneWarpDropdown", {
+    Title = "บินแบบ 2-in-1 (จุดพัก -> จุดฟาร์ม)",
+    Values = {"ปิด", "โซน 1", "โซน 2", "โซน 3", "โซน 4", "โซน 5", "โซน 6", "โซน 7", "โซน 8", "โซน 9"},
+    Multi = false,
+    Default = "ปิด",
+})
+
+ZoneWarp:OnChanged(function(Value)
+    if Value == "ปิด" then return end
+    
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local FinalTarget = nil
+
+    -- [[ 1. กำหนดพิกัดเป้าหมายสุดท้ายตามโซน ]]
+    if Value == "โซน 1" then
+        FinalTarget = CFrame.new(202.195755, -2.51145339, -128.197052)
+    elseif Value == "โซน 2" then
+        -- FinalTarget = CFrame.new(ใส่พิกัดโซน 2)
     end
 
-    _G.IsWarping = false
-    task.wait(0.1)
-    ZW:SetValue("ปิด") -- ถึงแล้วเด้งกลับ
-end)
-
--- [[ 3. ระบบวาร์ปแบบแก้ใหม่ตามสั่ง ]]
-ZW:OnChanged(function(Value)
-    if Value == "ปิด" or _G.IsWarping then return end
-    
-    _G.IsWarping = true
-    local char = lp.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if hrp then
-        -- พิกัดที่มึงกำหนด
-        local BaseCF = CFrame.new(151.816, -3.49, -139.729)
-        local TargetCF = CFrame.new(2280, 2.51, -139) -- จุดหมายบังคับไปที่นี่
-
-        -- Step 1: บินไป Base ก่อน (151)
-        local d1 = (hrp.Position - BaseCF.Position).Magnitude
-        local t1 = TweenService:Create(hrp, TweenInfo.new(d1/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = BaseCF})
-        t1:Play()
-        t1.Completed:Wait()
+    if FinalTarget then
+        -- [[ STEP 1: บินไปที่จุดเริ่มต้นก่อน ]]
+        local dist1 = (hrp.Position - StartPos.Position).Magnitude
+        local tween1 = TweenService:Create(hrp, TweenInfo.new(dist1 / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = StartPos})
+        tween1:Play()
+        tween1.Completed:Wait()
         
-        -- Step 2: คูลดาวน์ 1 วินาทีตามที่มึงขอ
-        task.wait(1) 
+        task.wait(0.2) -- พักแป๊บหนึ่งก่อนบินต่อ
 
-        -- Step 3: พุ่งไปที่พิกัด 2280, 2.51, -139 ทันที
-        local d2 = (hrp.Position - TargetCF.Position).Magnitude
-        local t2 = TweenService:Create(hrp, TweenInfo.new(d2/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = TargetCF})
-        t2:Play()
-        t2.Completed:Wait()
+        -- [[ STEP 2: บินต่อไปที่จุดฟาร์ม (พิกัดที่น้องให้มาล่าสุด) ]]
+        local dist2 = (hrp.Position - FinalTarget.Position).Magnitude
+        local tween2 = TweenService:Create(hrp, TweenInfo.new(dist2 / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = FinalTarget})
+        tween2:Play()
+        tween2.Completed:Wait()
     end
 
-    _G.IsWarping = false
+    -- พอถึงจุดสุดท้ายแล้วให้เด้งกลับไปที่ "ปิด"
     task.wait(0.1)
-    ZW:SetValue("ปิด") -- จบงานเด้งกลับ
+    ZoneWarp:SetValue("ปิด")
 end)
-
-ยังไม่เสร็จเหลือแค่ปรับพิกัดนะอุ๊
