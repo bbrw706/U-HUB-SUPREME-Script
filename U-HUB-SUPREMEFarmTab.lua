@@ -49,39 +49,72 @@ function HoldGrabLogic(zoneId)
     t1.Completed:Wait()
     task.wait(0.5)
 
-    -- หามอน (แก้บั๊ก: จำกัดระยะแค่ 150 บล็อก ไม่ให้บินข้ามไปโซน 6)
+  -- [[ หามอน/ไอเทมที่มีปุ่มกด ในระยะโซนฟาร์ม ]]
     local targetRoot = nil
-    local minDist = 150 
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("TextLabel") and (v.Text:lower():find("lv") or v.Text:lower():find("level")) then
-            local model = v:FindFirstAncestorOfClass("Model")
-            if model and model ~= char then
-                local r = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
-                if r then
-                    local dist = (r.Position - hrp.Position).Magnitude
-                    if dist < minDist then
-                        minDist = dist
-                        targetRoot = r
+    local minDist = 999
+    local zonePos = ZoneData[SelectedZoneID].Farm -- จุดศูนย์กลางโซน
+
+    -- 1. หา "ปุ่มกด" (ProximityPrompt) ทั่วแมพเฉพาะที่อยู่ใกล้โซน
+    for _, p in ipairs(workspace:GetDescendants()) do
+        if p:IsA("ProximityPrompt") then
+            local root = p.Parent:IsA("BasePart") and p.Parent or p.Parent:FindFirstChildWhichIsA("BasePart")
+            if root then
+                -- 2. เช็คว่าไอ้นี่อยู่ในโซนฟาร์มเราไหม (ระยะ 150 บล็อก)
+                local distToZone = (root.Position - zonePos).Magnitude
+                if distToZone < 150 then
+                    -- 3. เช็คว่าไม่ใช่ตัวเรา และไม่ใช่ผู้เล่น
+                    local model = root:FindFirstAncestorOfClass("Model")
+                    if model and model ~= lp.Character and not game.Players:GetPlayerFromCharacter(model) then
+                        -- 4. เลือกตัวที่ใกล้เราที่สุดเพื่อความไว
+                        local distToMe = (root.Position - hrp.Position).Magnitude
+                        if distToMe < minDist then
+                            minDist = distToMe
+                            targetRoot = root
+                        end
                     end
                 end
             end
         end
     end
 
-    if targetRoot and not _G.IsHiding then
+    -- [[ 5. พุ่งไปหยิบ (จบงาน) ]]
+    if targetRoot then
+        -- บินไปหาเป้าหมาย
+        local tween = TweenService:Create(hrp, TweenInfo.new((hrp.Position - targetRoot.Position).Magnitude/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetRoot.CFrame})
+        tween:Play()
+        tween.Completed:Wait()
+
+        -- สั่งหยิบ (ใช้ทั้ง fire และกดปุ่ม)
+        local prompt = targetRoot:FindFirstChildWhichIsA("ProximityPrompt") or targetRoot.Parent:FindFirstChildWhichIsA("ProximityPrompt")
+        if prompt then 
+            fireproximityprompt(prompt) 
+        end
+        vInput:SendKeyEvent(true, "E", false, game)
+        task.wait(0.1)
+        vInput:SendKeyEvent(false, "E", false, game)
+    end
+
+   if targetRoot and not _G.IsHiding then
         local t2 = TweenService:Create(hrp, TweenInfo.new((hrp.Position - targetRoot.Position).Magnitude/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetRoot.CFrame})
         t2:Play()
         t2.Completed:Wait()
+
+        -- [[ แก้ 3 บรรทัดนี้แทนอันที่มึงเขียนผิด ]]
+        local p = targetRoot.Parent:FindFirstChildWhichIsA("ProximityPrompt", true)
+        if p then 
+            fireproximityprompt(p) 
+        end
+        -- [[ -------------------------------- ]]
+
         vInput:SendKeyEvent(true, "E", false, game)
         firetouchinterest(hrp, targetRoot, 0)
-        task.wait(0.1)
+        task.wait(0.2) 
         vInput:SendKeyEvent(false, "E", false, game)
         firetouchinterest(hrp, targetRoot, 1)
         task.wait(0.2)
     end
     TweenService:Create(hrp, TweenInfo.new((hrp.Position - HomePos).Magnitude/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(HomePos)}):Play()
 end
-
 -- [[ 3. GUI INITIALIZATION ]]
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME ",
@@ -251,6 +284,42 @@ task.spawn(function()
     end
 end)
 
+-- [[ ตั้งค่าเริ่มต้น ]]
+local InstantEnabled = true -- สั่งให้สถานะเป็น "เปิด" ทันทีในตัวแปร
+
+-- ฟังก์ชันกลางสำหรับเปลี่ยนค่าปุ่ม
+local function ApplyInstant(obj)
+    if obj:IsA("ProximityPrompt") then
+        if InstantEnabled then
+            obj.HoldDuration = 0
+            obj.RequiresLineOfSight = false
+        else
+            obj.HoldDuration = 0.5 -- กลับเป็นค่าปกติเวลาปิด
+            obj.RequiresLineOfSight = true
+        end
+    end
+end
+
+-- 1. รันทันทีที่โหลดสคริปต์ (ไม่ต้องรอใครสั่ง)
+for _, v in pairs(workspace:GetDescendants()) do
+    ApplyInstant(v)
+end
+
+-- 2. ดักของที่เกิดใหม่ให้กดไวตลอดเวลา
+workspace.DescendantAdded:Connect(ApplyInstant)
+
+-- 3. ตัวปุ่ม Toggle ในเมนู (จะขึ้นว่าเปิดอยู่แล้ว)
+Tabs.Settings:AddToggle("InstantInteract", {
+    Title = "Instant Interaction (กดไวสัด)", 
+    Default = true, -- สวิตช์เปิดค้างไว้ให้เลย
+    Callback = function(Value)
+        InstantEnabled = Value
+        -- ถ้ามึงไปมือบอนกดปิด/เปิดใหม่ มันก็จะอัปเดตให้ทันที
+        for _, v in pairs(workspace:GetDescendants()) do
+            ApplyInstant(v)
+        end
+    end
+})
 
 Tabs.Settings:AddDropdown("WindowSize", {
     Title = "ปรับขนาดเมนู",
@@ -373,39 +442,23 @@ Tabs.Settings:AddButton({
     end
 })
 
--- ส่วนหัว (ตัวแปร)
-local CoinSuckerEnabled = false
-local CoinSuckerConnection
-
--- ส่วนปุ่มใน UI
-Tabs.Main:AddToggle("CoinSucker", {
-    Title = "Coin Sucker (ดูดทองสัดๆ)",
-    Default = false,
-    Callback = function(v)
-        CoinSuckerEnabled = v
-        if v then
-            CoinSuckerConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-                if not root then return end
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    if obj.Name == "GoldBar" and obj:IsA("Model") then
-                        local p = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-                        if p then 
-                            p.AssemblyLinearVelocity = Vector3.zero
-                            p.CFrame = p.CFrame:Lerp(root.CFrame * CFrame.new(0, 0, -2), 0.25) 
-                        end
-                    end
-                end
-            end)
-        elseif CoinSuckerConnection then
-            CoinSuckerConnection:Disconnect()
-        end
-    end
-})
 
 
-Tabs.Main:AddToggle("BrainrotTimer", {
-    Title = "Brainrot Event Timer",
+-- [[ 8. สร้างแถบใหม่ (Fluent Style) ]]
+local Tabs = {
+    Main = Tabs.Main,
+    Farm = Tabs.Farm,
+    Settings = Tabs.Settings,
+    -- เพิ่ม 2 แถบที่มึงขอ
+    Event = Window:AddTab({ Title = "Event / กิจกรรม", Icon = "star" }),
+
+}
+
+
+
+-- ย้ายป้ายเวลามาไว้ที่นี่ด้วย
+Tabs.Event:AddToggle("BrainrotTimer", {
+    Title = "Brainrot Event Timer (ป้ายเวลา)",
     Default = false,
     Callback = function(v)
         local PlayerGui = lp:WaitForChild("PlayerGui")
@@ -432,18 +485,83 @@ Tabs.Main:AddToggle("BrainrotTimer", {
     end
 })
 
+-- [[ 1. สร้างแถบ Teleport (ถ้ามีแล้วมันจะทับอันเดิม) ]]
+local TeleportTab = Window:AddTab({ Title = "Teleport", Icon = "map-pin" })
 
-Tabs.Main:AddButton({
-    Title = "Instant Interaction (กดไวสัด)",
-    Callback = function()
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then
-                v.HoldDuration = 0
-                v.RequiresLineOfSight = false
-            end
-        end
-        workspace.DescendantAdded:Connect(function(obj)
-            if obj:IsA("ProximityPrompt") then obj.HoldDuration = 0 obj.RequiresLineOfSight = false end
-        end)
-    end
+-- [[ 2. สร้าง Dropdown ยัดเข้าแถบ ]]
+local ZW = TeleportTab:AddDropdown("ZW_Menu", {
+    Title = "วาร์ปโซน (แวะ Base ออโต้)",
+    Values = {"ปิด", "Zone 2", "Zone 3"},
+    Default = "ปิด"
 })
+
+-- [[ 3. ระบบวาร์ปแบบบังคับแวะ Base ]]
+ZW:OnChanged(function(Value)
+    if Value == "ปิด" or _G.IsWarping then return end
+    
+    _G.IsWarping = true
+    local char = lp.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if hrp then
+        -- [ พิกัดเดิมของมึงเป๊ะๆ ไม่มีการแก้เลข ]
+        local BaseCF = CFrame.new(151.816, -3.49, -139.729)
+        local TargetCF = (Value == "Zone 2" and CFrame.new(2280, 2.51, -139)) or (Value == "Zone 3" and CFrame.new(2625, 2.51, -126))
+
+        -- Step 1: บินไป Base ก่อน (151)
+        local d1 = (hrp.Position - BaseCF.Position).Magnitude
+        local t1 = TweenService:Create(hrp, TweenInfo.new(d1/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = BaseCF})
+        t1:Play()
+        t1.Completed:Wait()
+        
+        task.wait(0.01) -- คูลดาวน์ 0.01 วิ ตามสั่ง
+
+        -- Step 2: บินไปโซนที่เลือก
+        if TargetCF then
+            local d2 = (hrp.Position - TargetCF.Position).Magnitude
+            local t2 = TweenService:Create(hrp, TweenInfo.new(d2/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = TargetCF})
+            t2:Play()
+            t2.Completed:Wait()
+        end
+    end
+
+    _G.IsWarping = false
+    task.wait(0.1)
+    ZW:SetValue("ปิด") -- ถึงแล้วเด้งกลับ
+end)
+
+-- [[ 3. ระบบวาร์ปแบบแก้ใหม่ตามสั่ง ]]
+ZW:OnChanged(function(Value)
+    if Value == "ปิด" or _G.IsWarping then return end
+    
+    _G.IsWarping = true
+    local char = lp.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if hrp then
+        -- พิกัดที่มึงกำหนด
+        local BaseCF = CFrame.new(151.816, -3.49, -139.729)
+        local TargetCF = CFrame.new(2280, 2.51, -139) -- จุดหมายบังคับไปที่นี่
+
+        -- Step 1: บินไป Base ก่อน (151)
+        local d1 = (hrp.Position - BaseCF.Position).Magnitude
+        local t1 = TweenService:Create(hrp, TweenInfo.new(d1/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = BaseCF})
+        t1:Play()
+        t1.Completed:Wait()
+        
+        -- Step 2: คูลดาวน์ 1 วินาทีตามที่มึงขอ
+        task.wait(1) 
+
+        -- Step 3: พุ่งไปที่พิกัด 2280, 2.51, -139 ทันที
+        local d2 = (hrp.Position - TargetCF.Position).Magnitude
+        local t2 = TweenService:Create(hrp, TweenInfo.new(d2/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = TargetCF})
+        t2:Play()
+        t2.Completed:Wait()
+    end
+
+    _G.IsWarping = false
+    task.wait(0.1)
+    ZW:SetValue("ปิด") -- จบงานเด้งกลับ
+end)
+
+ยังไม่เสร็จเหลือแค่ปรับพิกัดนะอุ๊
