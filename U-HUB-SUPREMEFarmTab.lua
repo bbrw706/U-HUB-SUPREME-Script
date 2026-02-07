@@ -74,7 +74,7 @@ function HoldGrabLogic(zoneId)
         t2.Completed:Wait()
         vInput:SendKeyEvent(true, "E", false, game)
         firetouchinterest(hrp, targetRoot, 0)
-        task.wait(1.5)
+        task.wait(0.1)
         vInput:SendKeyEvent(false, "E", false, game)
         firetouchinterest(hrp, targetRoot, 1)
         task.wait(0.2)
@@ -373,3 +373,77 @@ Tabs.Settings:AddButton({
     end
 })
 
+-- ส่วนหัว (ตัวแปร)
+local CoinSuckerEnabled = false
+local CoinSuckerConnection
+
+-- ส่วนปุ่มใน UI
+Tabs.Main:AddToggle("CoinSucker", {
+    Title = "Coin Sucker (ดูดทองสัดๆ)",
+    Default = false,
+    Callback = function(v)
+        CoinSuckerEnabled = v
+        if v then
+            CoinSuckerConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj.Name == "GoldBar" and obj:IsA("Model") then
+                        local p = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                        if p then 
+                            p.AssemblyLinearVelocity = Vector3.zero
+                            p.CFrame = p.CFrame:Lerp(root.CFrame * CFrame.new(0, 0, -2), 0.25) 
+                        end
+                    end
+                end
+            end)
+        elseif CoinSuckerConnection then
+            CoinSuckerConnection:Disconnect()
+        end
+    end
+})
+
+
+Tabs.Main:AddToggle("BrainrotTimer", {
+    Title = "Brainrot Event Timer",
+    Default = false,
+    Callback = function(v)
+        local PlayerGui = lp:WaitForChild("PlayerGui")
+        if v then
+            local sg = Instance.new("ScreenGui", PlayerGui)
+            sg.Name = "EventTimerGUI"
+            local timer = workspace:FindFirstChild("EventTimers", true)
+            if timer then
+                for _, p in ipairs(timer:GetDescendants()) do
+                    if p:IsA("SurfaceGui") then
+                        for _, g in ipairs(p:GetChildren()) do
+                            local c = g:Clone()
+                            c.Parent = sg
+                            Instance.new("UIScale", c).Scale = 0.2
+                            c.Position = UDim2.new(0.5, 0, 0.1, 0)
+                            c.AnchorPoint = Vector2.new(0.5, 0.5)
+                        end
+                    end
+                end
+            end
+        else
+            if PlayerGui:FindFirstChild("EventTimerGUI") then PlayerGui.EventTimerGUI:Destroy() end
+        end
+    end
+})
+
+
+Tabs.Main:AddButton({
+    Title = "Instant Interaction (กดไวสัด)",
+    Callback = function()
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ProximityPrompt") then
+                v.HoldDuration = 0
+                v.RequiresLineOfSight = false
+            end
+        end
+        workspace.DescendantAdded:Connect(function(obj)
+            if obj:IsA("ProximityPrompt") then obj.HoldDuration = 0 obj.RequiresLineOfSight = false end
+        end)
+    end
+})
