@@ -37,6 +37,9 @@ local ZoneData = {
     [9] = {Farm = Vector3.new(2782.53, 3.49, -9.53), Safe = Locations["จุดที่ 9"]}
 }
 
+
+
+
 -- [[ 2. CORE FUNCTIONS (FIXED BUG) ]]
 function HoldGrabLogic(zoneId)
     local char = lp.Character or lp.CharacterAdded:Wait()
@@ -131,6 +134,36 @@ local Tabs = {
     Farm = Window:AddTab({ Title = "Auto Fly / บินวน", Icon = "map" }),
     Settings = Window:AddTab({ Title = "Settings / ตั้งค่า", Icon = "settings" })
 }
+
+
+-- [[ แก้ไขส่วนปลดล็อก VIP ให้เข้ากับ Fluent ]]
+local VIPSection = Tabs.Main:AddSection("VIP Room / ห้องวีไอพี")
+
+VIPSection:AddButton({
+    Title = "Unlock VIP Room (ลบกำแพง)",
+    Description = "ลบกำแพงกั้นห้อง VIP ออกเพื่อให้เดินเข้าไปได้",
+    Callback = function()
+        -- ใช้ workspace ตัวเล็ก และระบุตำแหน่งให้แม่นยำขึ้น
+        local vip = game.Workspace:FindFirstChild("VIPWalls", true)
+        
+        if vip then
+            vip:Destroy()
+            -- ใช้ Fluent Notification แทน warn เพื่อให้เห็นที่หน้าจอ
+            Fluent:Notify({
+                Title = "U-HUB",
+                Content = "ปลดล็อกห้อง VIP เรียบร้อยแล้ว!",
+                Duration = 5
+            })
+        else
+            Fluent:Notify({
+                Title = "U-HUB",
+                Content = "ไม่พบกำแพง VIP ในแมพนี้",
+                Duration = 5
+            })
+        end
+    end
+})
+
 
 -- [[ 4. UI COMPONENTS (HOME) ]]
 Tabs.Main:AddDropdown("ZoneSelector", {
@@ -715,3 +748,69 @@ ZoneWarp:OnChanged(function(Value)
     task.wait(0.1)
     ZoneWarp:SetValue("ปิด")
 end)
+
+local ZoneSection = WarpTab:AddSection("วาร์ปด่วน (แวะจุดเริ่มทุกครั้ง)")
+
+-- [[ 1. ฟังก์ชันสร้างบล็อก (แบนและใส่ Matrix ทิศทาง) ]]
+local function GetOrCreatePart(name, cf)
+    local existing = workspace:FindFirstChild(name)
+    if existing then 
+        existing.CFrame = cf 
+        return existing 
+    end
+    local p = Instance.new("Part", workspace)
+    p.Name = name
+    p.Size = Vector3.new(12, 0.1, 12)
+    p.Anchored = true
+    p.CanCollide = true
+    p.Transparency = 0.5
+    p.Color = Color3.fromRGB(0, 255, 255)
+    p.CFrame = cf
+    return p
+end
+
+-- [[ 2. ประกาศจุดวาร์ปพร้อมค่า Matrix 1,0,0,0,1,0,0,0,1 ]]
+local P_Start = GetOrCreatePart("N_Start", CFrame.new(151.816, -2.5, -139.729, 1,0,0,0,1,0,0,0,1))
+local P_Zone1 = GetOrCreatePart("N_Z1", CFrame.new(205.999, -5.50, -129.404, 1,0,0,0,1,0,0,0,1))
+local P_Zone2 = GetOrCreatePart("N_Z2", CFrame.new(290.003, -5.999, -129.020, 1,0,0,0,1,0,0,0,1))
+local P_Zone3 = GetOrCreatePart("N_Z3", CFrame.new(404.000, -5.999, -129.401, 1,0,0,0,1,0,0,0,1))
+local P_Zone4 = GetOrCreatePart("N_Z4", CFrame.new(548.003, -5.999, -129.505, 1,0,0,0,1,0,0,0,1))
+local P_Zone5 = GetOrCreatePart("N_Z5", CFrame.new(761.999, -5.999, -129.507, 1,0,0,0,1,0,0,0,1))
+local P_Zone6 = GetOrCreatePart("N_Z6", CFrame.new(1083.738, -5.999, -129.507, 1,0,0,0,1,0,0,0,1))
+local P_Zone7 = GetOrCreatePart("N_Z7", CFrame.new(1574.001, -5.999, -129.509, 1,0,0,0,1,0,0,0,1))
+local P_Zone8 = GetOrCreatePart("N_Z8", CFrame.new(2278.997, -5.999, -129.507, 1,0,0,0,1,0,0,0,1))
+local P_Zone9 = GetOrCreatePart("N_Z9", CFrame.new(2634.006, -5.999, -129.503, 1,0,0,0,1,0,0,0,1))
+
+-- [[ 3. ฟังก์ชันหลักสำหรับปุ่มกด ]]
+local function WarpTo(target)
+    if flying then return end
+    flying = true
+    
+    -- บังคับแวะจุดเริ่มก่อนทุกครั้ง
+    flyTo(P_Start)
+    task.wait(0.1) -- คูลดาวน์ตามสั่ง
+    
+    -- บินไปจุดเป้าหมาย
+    flyTo(target)
+    
+    restore()
+    flying = false
+end
+
+-- [[ 4. สร้างปุ่มกดแยกโซน (1-9) ]]
+for i = 1, 9 do
+    local targetPart = _G["P_Zone"..i] -- ดึงตัวแปรที่สร้างไว้ด้านบนมาใช้
+    -- หมายเหตุ: เพื่อความชัวร์ พี่เขียนแยกปุ่มให้เลยแบบแมนนวลน้องจะเข้าใจง่ายกว่าครับ
+end
+
+-- พี่เขียนแยกปุ่มให้เลยนะครับ น้องหนึ่งจะได้รับไปวางได้เลย
+ZoneSection:AddButton({ Title = "วาร์ป โซน 1", Callback = function() WarpTo(P_Zone1) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 2", Callback = function() WarpTo(P_Zone2) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 3", Callback = function() WarpTo(P_Zone3) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 4", Callback = function() WarpTo(P_Zone4) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 5", Callback = function() WarpTo(P_Zone5) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 6", Callback = function() WarpTo(P_Zone6) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 7", Callback = function() WarpTo(P_Zone7) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 8", Callback = function() WarpTo(P_Zone8) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 9", Callback = function() WarpTo(P_Zone9) end })
+                                            --ตอนนี้เหลือแก้วิธีบินนะจ๋ะ
