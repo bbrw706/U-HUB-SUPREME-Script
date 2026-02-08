@@ -646,7 +646,7 @@ end
 	end,
 })
 
--- [[ ส่วนบินแบบ 2-in-1 (บินไปจุดพักก่อน แล้วค่อยไปจุดฟาร์ม) ]]
+-- [[ ส่วนบินแบบ 2-in-1 (ฉบับแก้ไขพิกัดครบ 9 โซนให้น้องหนึ่ง) ]]
 local StartPos = CFrame.new(151.81601, -1.90734863e-06, -139.729675, 1,0,0,0,1,0,0,0,1)
 
 local ZoneWarp = WarpTab:AddDropdown("ZoneWarpDropdown", {
@@ -663,30 +663,55 @@ ZoneWarp:OnChanged(function(Value)
     local hrp = char:WaitForChild("HumanoidRootPart")
     local FinalTarget = nil
 
-    -- [[ 1. กำหนดพิกัดเป้าหมายสุดท้ายตามโซน ]]
+    -- [[ 1. เช็คเงื่อนไขตามที่น้องเลือก (แก้ไข elseif ให้ถูกต้อง) ]]
     if Value == "โซน 1" then
-        FinalTarget = CFrame.new(202.195755, -2.51145339, -128.197052)
+        FinalTarget = CFrame.new(202.15524291992188, -2.5115811824798584, -128.19207763671875)
     elseif Value == "โซน 2" then
-        -- FinalTarget = CFrame.new(ใส่พิกัดโซน 2)
+        FinalTarget = CFrame.new(289.88079833984375, -2.5115811824798584, -129.25599670410156)
+    elseif Value == "โซน 3" then
+        FinalTarget = CFrame.new(403.9981994628906, -2.5115814208984375, -129.32992553710938)
+    elseif Value == "โซน 4" then
+        FinalTarget = CFrame.new(547.9777221679688, -2.5115811824798584, -129.37744140625)
+    elseif Value == "โซน 5" then
+        FinalTarget = CFrame.new(761.9934692382812, -2.5115859508514404, -129.50311279296875)
+    elseif Value == "โซน 6" then
+        FinalTarget = CFrame.new(1083.3145751953125, -2.5115880966186523, -129.501953125)
+    elseif Value == "โซน 7" then
+        FinalTarget = CFrame.new(1573.9476318359375, -2.511582851409912, -129.50994873046875)
+    elseif Value == "โซน 8" then
+        FinalTarget = CFrame.new(2276.26221, -5.99998856, -126.776489,1,0,0,0,1,0,0,0,1)
+    elseif Value == "โซน 9" then
+        FinalTarget = CFrame.new(2632.862060546875, -2.511453628540039, -129.5018310546875)
     end
 
+    -- [[ 2. เริ่มกระบวนการบินถ้ามีเป้าหมาย ]]
     if FinalTarget then
-        -- [[ STEP 1: บินไปที่จุดเริ่มต้นก่อน ]]
+        -- ปิดการชนกันเพื่อให้บินไม่ติดขัด
+        for _, v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+
+        -- STEP 1: บินไปจุดเริ่มต้นก่อน
         local dist1 = (hrp.Position - StartPos.Position).Magnitude
         local tween1 = TweenService:Create(hrp, TweenInfo.new(dist1 / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = StartPos})
         tween1:Play()
         tween1.Completed:Wait()
         
-        task.wait(0.2) -- พักแป๊บหนึ่งก่อนบินต่อ
+        task.wait(0.2) 
 
-        -- [[ STEP 2: บินต่อไปที่จุดฟาร์ม (พิกัดที่น้องให้มาล่าสุด) ]]
+        -- STEP 2: บินต่อไปที่โซนเป้าหมาย
         local dist2 = (hrp.Position - FinalTarget.Position).Magnitude
         local tween2 = TweenService:Create(hrp, TweenInfo.new(dist2 / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = FinalTarget})
         tween2:Play()
         tween2.Completed:Wait()
+
+        -- เปิดการชนกันกลับมาเหมือนเดิม
+        for _, v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then v.CanCollide = true end
+        end
     end
 
-    -- พอถึงจุดสุดท้ายแล้วให้เด้งกลับไปที่ "ปิด"
+    -- พอถึงที่หมายแล้ว ให้ Dropdown กลับเป็นคำว่า "ปิด"
     task.wait(0.1)
     ZoneWarp:SetValue("ปิด")
 end)
