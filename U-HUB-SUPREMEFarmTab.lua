@@ -629,7 +629,7 @@ end
 -- ปุ่ม Teleport Last zone
 -- =====================
  MySection:AddButton({
-	Title = "Teleport Last zone",
+	Title = "ไปโซนฟาร์ม",
 	Callback = function()
 		if flying then return end
 		flying = true
@@ -656,7 +656,7 @@ end
 -- ปุ่ม Return to base
 -- =====================
  MySection:AddButton({
-	Title = "Return to base",
+	Title = "กลับบ้าน",
 	Callback = function()
 		if flying then return end
 		flying = true
