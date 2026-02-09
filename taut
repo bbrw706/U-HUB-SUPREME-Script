@@ -164,6 +164,58 @@ VIPSection:AddButton({
     end
 })
 
+_G.GodNean = false
+
+-- [[ ฟังก์ชันวนลูปเช็คเลือดตลอดเวลา ]]
+task.spawn(function()
+    while task.wait() do -- วนลูปเช็คทุกๆ เสี้ยววินาที
+        if _G.GodNean then
+            pcall(function()
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        -- ถ้าเลือดเหลือน้อยกว่า 20 ให้เด้งกลับมาที่ 20 ทันที
+                        if hum.Health < 20 then
+                            hum.Health = 20
+                        end
+                        -- ล็อคสถานะไม่ให้ตาย
+                        hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+                    end
+                    -- ปิดสคริปต์ลดเลือดของแมพ (ถ้ามี)
+                    if char:FindFirstChild("Health") then
+                        char.Health.Disabled = true
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- [[ ปุ่ม Toggle ในหน้า Main ]]
+-- (น้องอย่าลืมเปลี่ยน Tabs.Main เป็นชื่อ Tab ของน้องนะจ๊ะ)
+local SurvivalSection = Tabs.Main:AddSection("Survival / ระบบอมตะเนียน")
+
+SurvivalSection:AddToggle("GodNeanToggle", {
+    Title = "🛡️ อมตะแบบเลือดไม่หมด (ล็อคเลือด)",
+    Default = false,
+    Callback = function(Value)
+        _G.GodNean = Value
+        if _G.GodNean then
+            Fluent:Notify({ Title = "U-HUB", Content = "เปิดระบบล็อคเลือดแล้ว! (เลือดจะไม่ต่ำกว่า 20)", Duration = 3 })
+        else
+            -- คืนค่าปกติ
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+                if char:FindFirstChild("Health") then
+                    char.Health.Disabled = false
+                end
+            end
+            Fluent:Notify({ Title = "U-HUB", Content = "ปิดระบบอมตะแล้วนะคัฟ", Duration = 3 })
+        end
+    end
+})
 
 -- [[ 4. UI COMPONENTS (HOME) ]]
 Tabs.Main:AddDropdown("ZoneSelector", {
@@ -814,3 +866,163 @@ ZoneSection:AddButton({ Title = "วาร์ป โซน 7", Callback = functi
 ZoneSection:AddButton({ Title = "วาร์ป โซน 8", Callback = function() WarpTo(P_Zone8) end })
 ZoneSection:AddButton({ Title = "วาร์ป โซน 9", Callback = function() WarpTo(P_Zone9) end })
                                             --ตอนนี้เหลือแก้วิธีบินนะจ๋ะ
+local HttpService = game:GetService("HttpService")
+local ConfigFolder = "UHub_Configs"
+
+if not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
+
+local function GetConfigList()
+    local files = listfiles(ConfigFolder)
+    local list = {}
+    for _, file in ipairs(files) do
+        -- แก้ไขการดึงชื่อไฟล์ให้รองรับทั้ง \ และ /
+        local name = file:match("([^/\\]+)%.json$")
+        if name then table.insert(list, name) end
+    end
+    if #list == 0 then return {"ไม่มีข้อมูลอะ🥀🥀"} end
+    return list
+end
+
+local ConfigSection = Tabs.Settings:AddSection("Configuration / จัดการไฟล์เซฟ")
+
+-- แก้ไข: ตั้งชื่อเริ่มต้นไว้ป้องกันค่าว่าง
+local SaveName = "MyConfig" 
+
+ConfigSection:AddInput("ConfigNameInput", {
+    Title = "ตั้งชื่อไฟล์เซฟ",
+    Default = "MyConfig",
+    Placeholder = "พิมพ์ชื่อไฟล์ที่นี่...",
+    Callback = function(Value) 
+        SaveName = Value 
+    end
+})
+
+local ConfigDropdown
+
+ConfigSection:AddButton({
+    Title = "กดเพื่อบันทึกการตั้งค่า❤️❤️",
+    Callback = function()
+        -- ป้องกันการเซฟชื่อว่าง
+        if SaveName == "" then 
+            Fluent:Notify({ Title = "U-HUB", Content = "กรุณาตั้งชื่อไฟล์ก่อนนะคัฟ!", Duration = 2 })
+            return 
+        end
+
+        local Data = {
+            FlySpeed = _G.FlySpeed or 400,
+            AutoFarm = _G.AutoFarm or false,
+            IsHiding = _G.IsHiding or false,
+            FlySeq = _G.FlySequence,
+            Zone = SelectedZoneID,
+            Instant = InstantEnabled
+        }
+        
+        writefile(ConfigFolder .. "/" .. SaveName .. ".json", HttpService:JSONEncode(Data))
+        
+        ConfigDropdown:SetValues(GetConfigList())
+        Fluent:Notify({ Title = "U-HUB", Content = "บันทึกไฟล์ " .. SaveName .. " เรียบร้อย!", Duration = 2 })
+    end
+})
+
+ConfigDropdown = ConfigSection:AddDropdown("ConfigDropdown", {
+    Title = "เลือกไฟล์ที่จะโหลดนะคัฟ",
+    Values = GetConfigList(),
+    Default = nil,
+    Callback = function(Value)
+        -- แก้ไข: เช็คข้อความให้ตรงกับ GetConfigList
+        if Value == "ไม่มีข้อมูลอะ🥀🥀" or not Value then return end
+        
+        local Path = ConfigFolder .. "/" .. Value .. ".json"
+        if isfile(Path) then
+            local status, Data = pcall(function() 
+                return HttpService:JSONDecode(readfile(Path)) 
+            end)
+            
+            if status then
+                _G.FlySpeed = Data.FlySpeed or 400
+                _G.AutoFarm = Data.AutoFarm or false
+                _G.IsHiding = Data.IsHiding or false
+                _G.FlySequence = Data.FlySeq or false
+                SelectedZoneID = Data.Zone or 1
+                InstantEnabled = Data.Instant or true
+                
+                Fluent:Notify({ Title = "U-HUB", Content = "U-HUB โหลดค่าจาก " .. Value .. " แล้ว!", Duration = 2 })
+            end
+        end
+    end
+})
+
+ConfigSection:AddButton({
+    Title = "🗑️ ลบไฟล์ที่เลือก",
+    Callback = function()
+        local Value = ConfigDropdown.Value
+        if Value and Value ~= "ไม่มีข้อมูลอะ🥀🥀" then
+            delfile(ConfigFolder .. "/" .. Value .. ".json")
+            ConfigDropdown:SetValues(GetConfigList())
+            ConfigDropdown:SetValue(nil)
+            Fluent:Notify({ Title = "U-HUB", Content = "ลบไฟล์ " .. Value .. " แล้ว!", Duration = 2 })
+        end
+    end
+})
+
+ConfigSection:AddButton({
+    Title = "🔄 รีเฟรชรายชื่อไฟล์ ลาก่อนนะไฟล์เก่า 🥀🥀",
+    Callback = function()
+        ConfigDropdown:SetValues(GetConfigList())
+    end
+})
+
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local CoinSuckerEnabled = false
+local CoinSuckerConnection
+
+-- [[ ส่วนสร้าง Toggle ในแถบ Event ]]
+-- (พี่เปลี่ยนชื่อจาก EventSection:NewToggle เป็น EventTab:AddToggle ตามแบบ Fluent นะคัฟ)
+local EventSection = Tabs.Event:AddSection("Auto Collect / ระบบดูดของ")
+
+EventSection:AddToggle("CoinSuckerToggle", {
+    Title = "🧲 Coin Sucker (ดูด Game Console)",
+    Default = false,
+    Callback = function(v)
+        CoinSuckerEnabled = v
+
+        if v then
+            -- เริ่มระบบดูด
+            CoinSuckerConnection = RunService.Heartbeat:Connect(function()
+                local char = player.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    -- เช็คว่าเป็น Model ชื่อ Game Console หรือไม่
+                    if obj:IsA("Model") and obj.Name == "Game Console" then
+                        local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            -- หยุดแรงเหวี่ยงเดิมแล้วดูดเข้าหาตัวผู้เล่น
+                            part.AssemblyLinearVelocity = Vector3.zero
+                            part.CanCollide = false -- ปิดกันชนเพื่อให้มันทะลุมาหาเราได้ง่ายๆ
+                            
+                            part.CFrame = part.CFrame:Lerp(
+                                root.CFrame * CFrame.new(0, 0, -1), -- ดูดมาจ่อหน้าตัวเรา
+                                0.2 -- ความเร็วในการดูด (ปรับเพิ่มได้)
+                            )
+                        end
+                    end
+                end
+            end)
+            
+            Fluent:Notify({ Title = "U-HUB", Content = "เปิดเครื่องดูดแล้วคัฟน้องหนึ่ง! 🧲", Duration = 2 })
+            warn("Coin sucker ON 🧲")
+        else
+            -- ปิดระบบดูด
+            if CoinSuckerConnection then
+                CoinSuckerConnection:Disconnect()
+                CoinSuckerConnection = nil
+            end
+            
+            Fluent:Notify({ Title = "U-HUB", Content = "ปิดเครื่องดูดแล้วจ้า", Duration = 2 })
+            warn("Coin sucker OFF")
+        end
+    end
+})
