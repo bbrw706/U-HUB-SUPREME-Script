@@ -81,14 +81,11 @@ UserInputService.InputChanged:Connect(function(input) if dragging and (input.Use
 
 -- [[ 4. TABS ]]
 local Tabs = { 
-    home = Window:AddTab({ Title = "home", Icon = "layout-grid" }), 
     Combat = Window:AddTab({ Title = "Combat", Icon = "target" }), 
     Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
     ESP = Window:AddTab({ Title = "ESP", Icon = "ghost" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
--- [[ home ]]
-local Fluent=loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))();local Window=Fluent:CreateWindow({Title="U-HUB",SubTitle="BY Neung",TabWidth=160,Size=UDim2.fromOffset(580,460),Theme="Dark"});local Tabs={home=Window:AddTab({Title="home",Icon="layout-grid"})};Tabs.home:AddButton({Title="รีเซ็ตไปล๊อบบี้ (ด่วนสัด)",Callback=function()pcall(function()local p=game.Players.LocalPlayer;if p.Character then p.Character:BreakJoints()end;p.CharacterAdded:Wait();local hrp=p.Character:WaitForChild("HumanoidRootPart",5);if hrp then hrp.CFrame=CFrame.new(594.70,-303.59,-959.30)end end)end});Window:SelectTab(1)
 
 -- [[ COMBAT ]]
 Tabs.Combat:AddToggle("AutoLock", {Title = "ล็อคเป้า", Default = false}):OnChanged(function(Value) _G.U_HUB_CORE.AutoLockNoClick = Value end)
