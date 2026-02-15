@@ -6,8 +6,8 @@ local scripts = {
         PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/U-HUB-SUPREME",
         FARM = ""
     },
-    [994732206] = { 
-        PVP  = "",
+    [131623223084840] = { 
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/taut",
         FARM = ""
     }
 }
