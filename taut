@@ -825,6 +825,152 @@ ZoneWarp:OnChanged(function(Value)
     ZoneWarp:SetValue("ปิด")
 end)
 
+-- [[ --------------------------------------------------------- ]]
+-- [[ ส่วนที่ 1: ฟังชั่นและตัวแปรสำหรับปุ่มลอย (Black Warp UI) ]]
+-- [[ --------------------------------------------------------- ]]
+
+local StartPos = CFrame.new(151.816, -2.5, -139.729)
+local Locations = {
+    [1] = CFrame.new(197.34, -2.51, -94.93), [2] = CFrame.new(286.41, -2.51, 21.26),
+    [3] = CFrame.new(399.71, -2.51, 118.11), [4] = CFrame.new(540.42, -2.51, 15.88),
+    [5] = CFrame.new(756.99, -2.51, 2.76), [6] = CFrame.new(1074.24, -2.51, -10.50),
+    [7] = CFrame.new(1553.90, -2.51, -106.57), [8] = CFrame.new(2245.50, -2.51, -19.42),
+    [9] = CFrame.new(2984.003, -2.511, -129.281), [10] = CFrame.new(3339.000, -2.511, -129.404),
+    [11] = CFrame.new(3693.999, -2.511, -129.393), [12] = CFrame.new(4048.976, -2.511, -129.403)
+}
+
+local CurrentZone = 1
+local lp = game:GetService("Players").LocalPlayer
+
+-- ฟังก์ชันวาร์ป (เพิ่มเช็ค FlySpeed ป้องกัน Error)
+local function WarpTo(target)
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart", 5)
+    local speed = _G.FlySpeed or 400 -- ถ้าไม่มีค่า ให้ใช้ 400 ไปก่อน
+    
+    if hrp then
+        for _, v in pairs(char:GetChildren()) do if v:IsA("BasePart") then v.CanCollide = false end end
+        local dist = (hrp.Position - target.Position).Magnitude
+        local tween = game:GetService("TweenService"):Create(hrp, TweenInfo.new(dist / speed, Enum.EasingStyle.Linear), {CFrame = target})
+        tween:Play()
+        tween.Completed:Wait()
+        for _, v in pairs(char:GetChildren()) do if v:IsA("BasePart") then v.CanCollide = true end end
+    end
+end
+
+-- สร้าง UI
+local PlayerGui = lp:WaitForChild("PlayerGui")
+if PlayerGui:FindFirstChild("BlackWarpUI") then PlayerGui.BlackWarpUI:Destroy() end
+
+local sg = Instance.new("ScreenGui", PlayerGui)
+sg.Name = "BlackWarpUI"
+sg.ResetOnSpawn = false
+sg.Enabled = false 
+
+local Frame = Instance.new("ScrollingFrame", sg)
+Frame.Size = UDim2.new(0, 250, 0, 450)
+Frame.Position = UDim2.new(0.05, 0, 0.2, 0)
+Frame.BackgroundColor3 = Color3.new(0, 0, 0)
+Frame.BorderSizePixel = 1
+Frame.BorderColor3 = Color3.new(1, 1, 1)
+Frame.CanvasSize = UDim2.new(0, 0, 0, 800)
+Frame.ScrollBarThickness = 13
+Frame.Active = true
+
+-- [[ 🧠 ใส่สมองส่วนลากลื่นๆ (แทน Draggable แบบเก่า) ]]
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+Frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+Frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+end)
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragging then update(input) end
+end)
+
+local layout = Instance.new("UIListLayout", Frame)
+layout.Padding = UDim.new(0, 5)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local ZoneDisplay = Instance.new("TextLabel", Frame)
+ZoneDisplay.Size = UDim2.new(1, 0, 0, 50)
+ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone
+ZoneDisplay.TextColor3 = Color3.new(1, 1, 1)
+ZoneDisplay.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+ZoneDisplay.Font = Enum.Font.Code
+ZoneDisplay.TextSize = 18
+
+local function createBtn(parent, txt, bg, tc, func)
+    local b = Instance.new("TextButton", parent)
+    b.Size = UDim2.new(0.95, 0, 0, 40)
+    b.Text = txt
+    b.BackgroundColor3 = bg
+    b.TextColor3 = tc
+    b.Font = Enum.Font.Code
+    b.TextSize = 14
+    b.BorderSizePixel = 1
+    b.BorderColor3 = Color3.new(0.3, 0.3, 0.3)
+    b.MouseButton1Click:Connect(func)
+    return b
+end
+
+createBtn(Frame, "เดินหน้า", Color3.new(0.15, 0.15, 0.15), Color3.new(1, 1, 1), function()
+    CurrentZone = math.clamp(CurrentZone + 1, 1, 12)
+    ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone
+    WarpTo(Locations[CurrentZone])
+end)
+
+createBtn(Frame, "ถอยหลัง", Color3.new(0.15, 0.15, 0.15), Color3.new(1, 1, 1), function()
+    CurrentZone = math.clamp(CurrentZone - 1, 1, 12)
+    ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone
+    WarpTo(Locations[CurrentZone])
+end)
+
+local divider = Instance.new("TextLabel", Frame)
+divider.Size = UDim2.new(1, 0, 0, 30)
+divider.Text = "บักคอปเตอร์บักจ่อย"
+divider.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+divider.BackgroundTransparency = 1
+
+for i = 1, 12 do
+    createBtn(Frame, "2-IN-1: ZONE " .. i, Color3.new(0.05, 0.05, 0.05), Color3.new(1, 1, 1), function()
+        WarpTo(StartPos)
+        task.wait(0.2)
+        WarpTo(Locations[i])
+    end)
+end
+
+-- [[ --------------------------------------------------------- ]]
+-- [[ ส่วนที่ 2: สวิตช์เปิด/ปิดปุ่มลอย ]]
+-- [[ --------------------------------------------------------- ]]
+
+if WarpTab then
+    WarpTab:AddToggle("ShowBlackUI", {
+        Title = "ปุ่มลอยพิกัดแบบตึงๆ",
+        Default = false,
+        Callback = function(Value)
+            sg.Enabled = Value
+            if Value then
+                Fluent:Notify({ Title = "U-HUB", Content = "เปิดเมนูปุ่มลอยแล้วคัฟ", Duration = 3 })
+            end
+        end
+    })
+else
+    warn("WarpTab is nil! วางโค้ดชุดนี้ไว้ล่างสุดของสคริปต์นะคัฟ")
+end
+
 -- [[ 5. ส่วน UI ปุ่มกดแยกโซน ]]
 local ZoneSection = WarpTab:AddSection("วาร์ปด่วน (พุ่งตรง 3 จังหวะ)")
 
@@ -1002,3 +1148,4 @@ EventSection:AddToggle("CoinSuckerToggle", {
         end
     end
 })
+
