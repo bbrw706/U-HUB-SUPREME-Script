@@ -7,7 +7,7 @@ local scripts = {
         FARM = ""
     },
     [131623223084840] = { 
-        PVP  = "https://gist.githubusercontent.com/bbrw706/174188821c13d271e1b94e53b518ab8a/raw/fcf5755dcc1966bcb03c50fefead64f6b0b52eea/gistfile1.txt",
+        PVP  = "https://gist.githubusercontent.com/bbrw706/09f75480bbefbdd86afcef02b9364ad4/raw/a6d9223116e400a65e8d597449837e9e8e295057/gistfile1.txt",
         FARM = ""
     }
 }
