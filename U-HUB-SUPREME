@@ -3,7 +3,7 @@ local script_mode = "PVP" -- หรือ "FARM" ตามใจมึง
 
 local scripts = {
     [136801880565837] = { 
-        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/U-HUB-SUPREME-TEST",
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script--/refs/heads/main/U-HUB-SUPREME2-gun",
         FARM = ""
     },
     [131623223084840] = { 
