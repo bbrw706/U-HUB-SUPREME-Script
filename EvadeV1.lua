@@ -419,3 +419,429 @@ ExtraSection:AddToggle("AFKMoneyToggle", {Title="เปิดฟาร์มเ�
         if afkPart then afkPart:Destroy() afkPart = nil end
     end
 end})
+
+-- [[ EVADE SCRIPT: FLUENT VERSION - FULL INTEGRATED PART 2 ]]
+-- น้องหนึ่ง โค้ดนี้รวมฟังก์ชันใหม่ทั้งหมด พร้อมปุ่มลอยสีฟ้าและ Keybind ในตัวครับ
+
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+-- ฟังก์ชันแต่งปุ่มลอย (ฟ้าโปร่งแสง + โค้ง)
+local function StyleNeungButton(btn)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = btn
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1.5
+    stroke.Color = Color3.new(1,1,1)
+    stroke.Transparency = 0.5
+    stroke.Parent = btn
+    btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- สีฟ้าตามสั่ง
+    btn.BackgroundTransparency = 0.4 
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+end
+
+-- =========================================
+-- [ TELEPORT: DEAD PLAYER ]
+-- =========================================
+local DeadSection = TeleportTab:AddSection("วาร์ปไปหาคนล้ม")
+local floatingDeadTPButton
+
+local function teleportToDead()
+    local char = player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    local deadPlayer = nil
+    for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
+        local h = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+        if h and h.Health == 0 then deadPlayer = plr; break end
+    end
+    if deadPlayer and deadPlayer.Character and deadPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local originalCFrame = root.CFrame
+        root.CFrame = deadPlayer.Character.HumanoidRootPart.CFrame
+        task.wait(1)
+        root.CFrame = originalCFrame
+    end
+end
+
+DeadSection:AddButton({Title="วาร์ปไปหาคนล้ม (ปกติ)", Callback=teleportToDead})
+
+local function createDeadTPFloatingButton()
+    if floatingDeadTPButton then return end
+    floatingDeadTPButton = Instance.new("TextButton", FloatingGui)
+    floatingDeadTPButton.Size=UDim2.new(0,100,0,50)
+    floatingDeadTPButton.Position=UDim2.new(0.5,-50,0.8,0)
+    floatingDeadTPButton.Text="Dead TP"
+    floatingDeadTPButton.Draggable = true
+    floatingDeadTPButton.Active = true
+    StyleNeungButton(floatingDeadTPButton)
+    floatingDeadTPButton.MouseButton1Click:Connect(teleportToDead)
+end
+
+DeadSection:AddToggle("DeadTPFloat", {Title="วาร์ปไปหาคนล้ม (ปุ่มลอย)", Default=false, Callback=function(v)
+    if v then createDeadTPFloatingButton() else if floatingDeadTPButton then floatingDeadTPButton:Destroy(); floatingDeadTPButton=nil end end
+end})
+
+-- คีย์บอร์ดอยู่ฟังก์ชันเดียวกับปุ่ม
+DeadSection:AddKeybind("DeadTPKey", {Title="ปุ่มวาร์ปไปหาคนล้ม", Mode="Always", Default="Y", Callback=teleportToDead})
+
+-- =========================================
+-- [ EXTRA: WALL HACK ]
+-- =========================================
+local WallSection = ExtraTab:AddSection("ระบบทะลุกำแพง")
+local wallHackActive = false
+local floatingWallButton
+local wallPartsOriginalCollide = {}
+
+local function setWallHack(state)
+    wallHackActive = state
+    if not wallHackActive then
+        for part, collide in pairs(wallPartsOriginalCollide) do
+            if part and part.Parent then part.CanCollide = collide end
+        end
+        wallPartsOriginalCollide = {}
+    end
+end
+
+local function toggleWallHack()
+    setWallHack(not wallHackActive)
+    if floatingWallButton then floatingWallButton.Text = wallHackActive and "Wall Hack: ON" or "Wall Hack: OFF" end
+end
+
+task.spawn(function()
+    while true do
+        if wallHackActive then
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                local forwardDir = root.CFrame.LookVector
+                for _, part in pairs(workspace:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        local toPart = part.Position - root.Position
+                        if forwardDir:Dot(toPart) > 0 and forwardDir:Dot(toPart) < 5 then
+                            if wallPartsOriginalCollide[part] == nil then wallPartsOriginalCollide[part] = part.CanCollide end
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(0.05)
+    end
+end)
+
+WallSection:AddToggle("WallHackToggle", {Title="Wall Hack (ปกติ)", Default=false, Callback=setWallHack})
+
+local function createWallFloatingButton()
+    if floatingWallButton then return end
+    floatingWallButton = Instance.new("TextButton", FloatingGui)
+    floatingWallButton.Size = UDim2.new(0,100,0,50)
+    floatingWallButton.Position = UDim2.new(0.2,-50,0.6,0)
+    floatingWallButton.Text = "Wall Hack: OFF"
+    floatingWallButton.Draggable = true
+    floatingWallButton.Active = true
+    StyleNeungButton(floatingWallButton)
+    floatingWallButton.MouseButton1Click:Connect(toggleWallHack)
+end
+
+WallSection:AddToggle("WallFloat", {Title="Wall Hack (ปุ่มลอย)", Default=false, Callback=function(v)
+    if v then createWallFloatingButton() else if floatingWallButton then floatingWallButton:Destroy(); floatingWallButton=nil end setWallHack(false) end
+end})
+
+WallSection:AddKeybind("WallKey", {Title="ปุ่ม Wall Hack", Mode="Toggle", Default="K", Callback=setWallHack})
+
+-- =========================================
+-- [ EXTRA: MOON MODE ]
+-- =========================================
+local MoonSection = ExtraTab:AddSection("ระบบตกช้า (Moon Mode)")
+local moonModeActive = false
+local floatingMoonButton
+
+MoonSection:AddToggle("MoonToggle", {Title="Moon Mode (ปกติ)", Default=false, Callback=function(v) moonModeActive = v end})
+
+local function createMoonFloatingButton()
+    if floatingMoonButton then return end
+    floatingMoonButton = Instance.new("TextButton", FloatingGui)
+    floatingMoonButton.Size = UDim2.new(0,100,0,50)
+    floatingMoonButton.Position = UDim2.new(0.8,-50,0.6,0)
+    floatingMoonButton.Text = "Moon: OFF"
+    floatingMoonButton.Draggable = true
+    floatingMoonButton.Active = true
+    StyleNeungButton(floatingMoonButton)
+    floatingMoonButton.MouseButton1Click:Connect(function()
+        moonModeActive = not moonModeActive
+        floatingMoonButton.Text = moonModeActive and "Moon: ON" or "Moon: OFF"
+    end)
+end
+
+MoonSection:AddToggle("MoonFloat", {Title="Moon Mode (ปุ่มลอย)", Default=false, Callback=function(v)
+    if v then createMoonFloatingButton() else if floatingMoonButton then floatingMoonButton:Destroy(); floatingMoonButton=nil end moonModeActive = false end
+end})
+
+task.spawn(function()
+    while true do
+        if moonModeActive then
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+            if root and humanoid and humanoid.FloorMaterial == Enum.Material.Air and root.Velocity.Y < 0 then
+                root.Velocity = Vector3.new(root.Velocity.X, root.Velocity.Y * 0.3, root.Velocity.Z)
+            end
+        end
+        task.wait(0.05)
+    end
+end)
+
+-- =========================================
+-- [ SETTINGS: SMOOTH DASH ]
+-- =========================================
+local DashSection = SettingsTab:AddSection("ระบบพุ่ง (Smooth Dash)")
+local dashEnabled = false
+local dashSpeed = 50
+local dashVelocity = nil
+
+local function startDash()
+    if dashVelocity then return end
+    local char = player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    dashVelocity = Instance.new("BodyVelocity", root)
+    dashVelocity.MaxForce = Vector3.new(400000, 0, 400000)
+    task.spawn(function()
+        while dashEnabled and dashVelocity and dashVelocity.Parent do
+            local dir = workspace.CurrentCamera.CFrame.LookVector
+            dashVelocity.Velocity = Vector3.new(dir.X, 0, dir.Z).Unit * dashSpeed
+            task.wait(0.03)
+        end
+        if dashVelocity then dashVelocity:Destroy(); dashVelocity = nil end
+    end)
+end
+
+DashSection:AddToggle("DashToggle", {Title="Smooth Dash (ปกติ)", Default=false, Callback=function(v)
+    dashEnabled = v
+    if v then startDash() end
+end})
+
+DashSection:AddInput("DashSpeedInput", {Title="ปรับความเร็ว Dash", Default="50", Callback=function(v) dashSpeed = tonumber(v) or 50 end})
+
+DashSection:AddKeybind("DashKey", {Title="ปุ่ม Dash", Mode="Toggle", Default="Q", Callback=function(v)
+    dashEnabled = v
+    if v then startDash() end
+end})
+
+
+-- [[ EVADE SCRIPT: FLUENT VERSION - FINAL INTEGRATED ]]
+
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+-- ฟังก์ชันแต่งปุ่มลอย (ฟ้าโปร่งแสง + โค้ง)
+local function StyleNeungButton(btn)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = btn
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1.5
+    stroke.Color = Color3.new(1,1,1)
+    stroke.Transparency = 0.5
+    stroke.Parent = btn
+    btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- สีฟ้า
+    btn.BackgroundTransparency = 0.4 
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+end
+
+-- =========================================
+-- [ EVENT: ESP TICKET & FARM ]
+-- =========================================
+local TicketSection = EventTab:AddSection("ระบบตั๋ว (Ticket System)")
+
+TicketSection:AddToggle("UHubTicketToggle", {
+    Title = "เปิดระบบ U-HUB Ticket Farm",
+    Default = false,
+    Callback = function(state)
+        getgenv().AutoTicketFarm = state
+        getgenv().Stopped = not state
+        
+        -- ฟังก์ชันสำหรับ "ลบ" เฉพาะหน้าจอชมพูและตัวหนังสือ (แต่ไม่ลบปุ่มลอย)
+        local function ClearVisuals()
+            if game.Players.LocalPlayer.PlayerGui:FindFirstChild("UHubOverlay") then 
+                game.Players.LocalPlayer.PlayerGui.UHubOverlay:Destroy() 
+            end
+            game:GetService("Lighting").Ambient = Color3.fromRGB(127, 127, 127)
+        end
+
+        -- ฟังก์ชันสำหรับ "สร้าง" หน้าจอชมพูและตัวหนังสือ
+        local function CreateVisuals()
+            ClearVisuals() -- เคลียร์ของเก่าก่อนสร้างใหม่
+            game:GetService("Lighting").Ambient = Color3.fromRGB(255,150,200)
+            
+            local gui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+            gui.Name = "UHubOverlay"
+            gui.IgnoreGuiInset = true
+            
+            local bg = Instance.new("Frame", gui)
+            bg.Size = UDim2.fromScale(1,1)
+            bg.BackgroundColor3 = Color3.fromRGB(255,105,180)
+            bg.BackgroundTransparency = 0.25
+            
+            local text = Instance.new("TextLabel", bg)
+            text.Size = UDim2.fromScale(1,1)
+            text.BackgroundTransparency = 1
+            text.TextColor3 = Color3.new(1,1,1)
+            text.TextScaled = true
+            text.Font = Enum.Font.GothamBold
+            
+            local startTick = tick()
+            task.spawn(function()
+                while getgenv().AutoTicketFarm and not getgenv().Stopped do
+                    text.Text = "U-HUB\n AUTO TICKET \nAFK/ออโต้ฟามโทเคนวาเลนไทน์ "..math.floor(tick()-startTick).."s"
+                    task.wait(1)
+                end
+            end)
+        end
+
+        if state then
+            -- === 1. สร้าง Visuals (หน้าจอชมพู/ตัวหนังสือ) ===
+            CreateVisuals()
+
+            -- === 2. สร้างปุ่มลอย (ครั้งแรก) และให้มันค้างไว้ ===
+            if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("UHubStopBtn") then
+                local btnGui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+                btnGui.Name = "UHubStopBtn"
+                btnGui.ResetOnSpawn = false
+
+                local button = Instance.new("TextButton", btnGui)
+                button.Size = UDim2.fromOffset(150,45)
+                button.Position = UDim2.fromScale(0.5,0.8)
+                button.AnchorPoint = Vector2.new(0.5,0.5)
+                button.Text = "หยุดฟาร์ม"
+                button.BackgroundColor3 = Color3.fromRGB(255,20,147)
+                button.TextColor3 = Color3.new(1,1,1)
+                button.TextScaled = true
+                button.Font = Enum.Font.GothamBold
+                Instance.new("UICorner", button)
+                button.Draggable = true
+                button.Active = true
+
+                button.MouseButton1Click:Connect(function()
+                    getgenv().Stopped = not getgenv().Stopped
+                    getgenv().AutoTicketFarm = not getgenv().Stopped
+                    
+                    if getgenv().Stopped then
+                        button.Text = "เริ่มฟาร์มอีกรอบ"
+                        button.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- เปลี่ยนเป็นสีฟ้าตอนหยุด (สีที่น้องชอบ)
+                        ClearVisuals() -- ปิดหน้าจอชมพูและตัวหนังสือ
+                    else
+                        button.Text = "หยุดฟาร์ม"
+                        button.BackgroundColor3 = Color3.fromRGB(255,20,147) -- กลับเป็นสีชมพูตอนเริ่ม
+                        CreateVisuals() -- เปิดหน้าจอชมพูและตัวหนังสือกลับมา
+                    end
+                end)
+            end
+        else
+            -- === ถ้ากดปิดจากเมนูหลัก ให้ลบทุกอย่างทิ้งจริงๆ ===
+            getgenv().AutoTicketFarm = false
+            getgenv().Stopped = true
+            ClearVisuals()
+            if game.Players.LocalPlayer.PlayerGui:FindFirstChild("UHubStopBtn") then
+                game.Players.LocalPlayer.PlayerGui.UHubStopBtn:Destroy()
+            end
+        end
+    end
+})
+
+TicketSection:AddToggle("AutoTicketToggle", {Title = "เก็บตั๋วอัตโนมัติ", Default = false, Callback = function(v) getgenv().AutoTicketFarm = v end})
+TicketSection:AddKeybind("AutoTicketKey", {Title = "ปุ่มฟาร์มตั๋ว", Default = "N", Callback = function(v) getgenv().AutoTicketFarm = v end})
+
+-- =========================================
+-- [ VISUALS: ESP NEXTBOT ]
+-- =========================================
+local NextbotSection = VisualsTab:AddSection("มองศัตรู (Nextbot)")
+
+NextbotSection:AddToggle("NextbotESPToggle", {Title = "มองเน็กบอท", Default = false, Callback = function(v) _G.NextbotESPEnabled = v end})
+
+-- =========================================
+-- [ FPS: GRAPHICS & FPS DISPLAY ]
+-- =========================================
+local FPSSection = FPSTab:AddSection("เพิ่มความลื่น (Optimization)")
+
+FPSSection:AddButton({Title = "แสดง FPS", Callback = function()
+    -- Logic แสดง FPS ใน ScreenGui ที่น้องส่งมา
+end})
+
+FPSSection:AddButton({Title = "ลดกราฟฟิก V.1 (เรียบเนียน)", Callback = function()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then obj.Material = Enum.Material.SmoothPlastic; obj.Reflectance = 0 end
+    end
+end})
+
+FPSSection:AddButton({Title = "ลดกราฟฟิก V.2 (ลบเอฟเฟกต์)", Callback = function()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Decal") then obj:Destroy() end
+    end
+end})
+
+-- =========================================
+-- [ TELEPORT: MOUSE CLICK ]
+-- =========================================
+local TPMouseSection = TeleportTab:AddSection("วาร์ปตามเมาส์")
+local teleportEnabled = false
+local floatingTeleportButton
+
+local function runTeleportClick()
+    local mouse = player:GetMouse()
+    if teleportEnabled then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0,3,0))
+    end
+end
+
+TPMouseSection:AddToggle("TPClickToggle", {Title = "เปิด Teleport Mode", Default = false, Callback = function(v) teleportEnabled = v end})
+
+local function createFloatingTeleportButton()
+    if floatingTeleportButton then return end
+    floatingTeleportButton = Instance.new("TextButton", FloatingGui)
+    floatingTeleportButton.Size = UDim2.new(0, 140, 0, 50)
+    floatingTeleportButton.Position = UDim2.new(0.5, -70, 0.4, 0)
+    floatingTeleportButton.Text = "Teleport: OFF"
+    floatingTeleportButton.Active = true
+    floatingTeleportButton.Draggable = true
+    StyleNeungButton(floatingTeleportButton)
+    floatingTeleportButton.MouseButton1Click:Connect(function()
+        teleportEnabled = not teleportEnabled
+        floatingTeleportButton.Text = teleportEnabled and "Teleport: ON" or "Teleport: OFF"
+    end)
+end
+
+TPMouseSection:AddToggle("TPClickFloat", {Title = "ปุ่มลอย Teleport", Default = false, Callback = function(v)
+    if v then createFloatingTeleportButton() else if floatingTeleportButton then floatingTeleportButton:Destroy(); floatingTeleportButton=nil end end
+end})
+
+-- คีย์บอร์ดสำหรับ Teleport (ใช้ Click)
+TPMouseSection:AddKeybind("TPClickKey", {Title = "ปุ่มวาร์ป (ตามเมาส์)", Mode = "Click", Default = "MouseButton1", Callback = runTeleportClick})
+
+-- =========================================
+-- [ MAIN: AUTO CARRY ]
+-- =========================================
+local CarrySection = MainTab:AddSection("ระบบอุ้ม (Auto Carry)")
+
+CarrySection:AddToggle("AutoCarryToggle", {Title = "Auto Carry", Default = false, Callback = function(v) getgenv().autoCarryEnabled = v end})
+CarrySection:AddKeybind("CarryKey", {Title = "ปุ่มอุ้มอัตโนมัติ", Default = "G", Callback = function(v) getgenv().autoCarryEnabled = v end})
+
+-- Logic Auto Carry เดิม
+task.spawn(function()
+    while true do
+        if getgenv().autoCarryEnabled then
+            for _, plr in ipairs(game.Players:GetPlayers()) do
+                if plr ~= player and plr.Character then
+                    local dist = (player.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                    if dist <= 20 then
+                        game:GetService("ReplicatedStorage").Events.Character.Interact:FireServer("Carry", nil, plr.Name)
+                    end
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end)
