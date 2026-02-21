@@ -1,26 +1,18 @@
 -- =========================
--- Load UI Fluent
+-- Load UI Library ตอนนี้ถึง ปุ่มลอย Floating Button
 -- =========================
-local  Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-
-local TweenService = game:GetService("TweenService")
-
-local UserInputService = game:GetService("UserInputService")
-
-math.randomseed(tick())
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/x2zu/OPEN-SOURCE-UI-ROBLOX/refs/heads/main/X2ZU%20UI%20ROBLOX%20OPEN%20SOURCE/DummyUi-leak-by-x2zu/fetching-main/Tools/Framework.luau"))()
 
 -- =========================
 -- Main Window
 -- =========================
-local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME",    -- ชื่อเมนูใหญ่
-    Description = "by Nong Nueng", -- ชื่อแบรนด์มึง (ตัวเล็กด้านล่าง)
-    Icon = 105059922903197,
-    TabWidth = 160,             -- ความกว้างแถบเมนูข้างๆ
-    Size = UDim2.fromOffset(580, 460), -- ขนาดหน้าต่าง
-    Acrylic = true,             -- เอฟเฟกต์ใสๆ (true = เปิด / false = ปิด)
-    Theme = "Dark",             -- โทนสี (Dark, Light, Rose, etc.)
-    MinimizeKey = Enum.KeyCode.LeftControl -- ปุ่มพับเมนู
+local Window = Library:Window({
+Title = "U-Hub",
+Desc = "by neung",
+Icon = 105059922903197,
+Theme = "Dark",
+Config = { Keybind = Enum.KeyCode.LeftControl, Size = UDim2.new(0,500,0,400) },
+CloseUIButton = { Enabled=true, Text="KOMAT Unity Hub" }
 })
 
 -- Sidebar line
@@ -33,13 +25,13 @@ SidebarLine.ZIndex = 5
 SidebarLine.Parent = game:GetService("CoreGui")
 
 -- Tabs
-local SettingsTab = Window:AddTab({Title="ตั้งค่า", Icon="wrench"})
-local MainTab     = Window:AddTab({Title="เมนูหลัก", Icon="star"})
-local TeleportTab = Window:AddTab({Title="เทเลพอร์ต", Icon="navigation"})
-local VisualsTab  = Window:AddTab({Title="มองต่างๆ", Icon="eye"})
-local ExtraTab    = Window:AddTab({Title="ของเสริม", Icon="tag"})
-local FPSTab      = Window:AddTab({Title="FPS", Icon="speedometer"})
-local EventTab    = Window:AddTab({Title="เกี่ยวกับอีเว้น", Icon="calendar"})
+local MainTab     = Window:Tab({Title="เมนูหลัก", Icon="star"})
+local TeleportTab = Window:Tab({Title="เทเลพอร์ต", Icon="navigation"})
+local VisualsTab  = Window:Tab({Title="มองต่างๆ", Icon="eye"})
+local ExtraTab    = Window:Tab({Title="ของเสริม", Icon="tag"})
+local FPSTab      = Window:Tab({Title="FPS", Icon="speedometer"})
+local EventTab    = Window:Tab({Title="เกี่ยวกับอีเว้น", Icon="calendar"})
+local SettingsTab = Window:Tab({Title="ตั้งค่า", Icon="wrench"})
 
 -- Player & GUI
 local Players = game:GetService("Players")
@@ -60,51 +52,51 @@ end
 -- Auto Bhop (No Ground Touch)
 -- =========================
 local autoBhop = false
-local floatingBhopAddButton
+local floatingBhopButton
 
 -- ปุ่มลอย
-local function createBhopFloatingAddButton()
-    if floatingBhopAddButton then return end
-    floatingBhopAddButton = Instance.new("TextButton")
-    floatingBhopAddButton.Size = UDim2.new(0,120,0,50)
-    floatingBhopAddButton.Position = UDim2.new(0.3,-60,0.8,0)
-    floatingBhopAddButton.AnchorPoint = Vector2.new(0.5,0)
-    floatingBhopAddButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-    floatingBhopAddButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingBhopAddButton.Text = "Auto Bhop: OFF"
-    floatingBhopAddButton.Parent = FloatingGui
-    floatingBhopAddButton.Active = true
-    floatingBhopAddButton.Draggable = true
-    floatingBhopAddButton.MouseButton1Click:Connect(function()
+local function createBhopFloatingButton()
+    if floatingBhopButton then return end
+    floatingBhopButton = Instance.new("TextButton")
+    floatingBhopButton.Size = UDim2.new(0,120,0,50)
+    floatingBhopButton.Position = UDim2.new(0.3,-60,0.8,0)
+    floatingBhopButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingBhopButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    floatingBhopButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingBhopButton.Text = "Auto Bhop: OFF"
+    floatingBhopButton.Parent = FloatingGui
+    floatingBhopButton.Active = true
+    floatingBhopButton.Draggable = true
+    floatingBhopButton.MouseButton1Click:Connect(function()
         autoBhop = not autoBhop
-        floatingBhopAddButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
+        floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
     end)
 end
 
-local function removeBhopFloatingAddButton()
-    if floatingBhopAddButton then
-        floatingBhopAddButton:Destroy()
-        floatingBhopAddButton=nil
+local function removeBhopFloatingButton()
+    if floatingBhopButton then
+        floatingBhopButton:Destroy()
+        floatingBhopButton=nil
     end
 end
 
--- AddToggle ปกติใน MainTab
-MainTab:AddToggle("001",{
+-- Toggle ปกติใน MainTab
+MainTab:Toggle({
     Title="ออโต้กระโดด (ปกติ)",
-    Description="เด้งขึ้นอัตโนมัติแบบไม่แตะพื้น",
-    Default=false,
+    Desc="เด้งขึ้นอัตโนมัติแบบไม่แตะพื้น",
+    Value=false,
     Callback=function(state)
         autoBhop = state
     end
 })
 
--- AddToggle ปุ่มลอย
-MainTab:AddToggle("002",{
+-- Toggle ปุ่มลอย
+MainTab:Toggle({
     Title="ออโต้กระโดด (ปุ่มลอย)",
-    Description="แสดงปุ่มลอยสำหรับ Auto Bhop",
-    Default=false,
+    Desc="แสดงปุ่มลอยสำหรับ Auto Bhop",
+    Value=false,
     Callback=function(state)
-        if state then createBhopFloatingAddButton() else removeBhopFloatingAddButton(); autoBhop=false end
+        if state then createBhopFloatingButton() else removeBhopFloatingButton(); autoBhop=false end
     end
 })
 
@@ -139,7 +131,7 @@ end)
 -- =========================
 -- Lag Switch
 -- =========================
-local floatingLagAddButton
+local floatingLagButton
 local function lagSwitch(duration)
 local start = tick()
 while tick()-start < duration do
@@ -147,40 +139,40 @@ for i=1,1e7 do local a=math.random() end
 end
 end
 
-MainTab:AddButton("a",{
+MainTab:Button({
 Title="Lag Switch (ปกติ)",
-Description="กดแล้วค้างกระตุก 0.5 วินาที",
+Desc="กดแล้วค้างกระตุก 0.5 วินาที",
 Callback=function() lagSwitch(0.5) end
 })
 
-local function createLagFloatingAddButton()
-if floatingLagAddButton then return end
-floatingLagAddButton = Instance.new("TextButton")
-floatingLagAddButton.Size=UDim2.new(0,100,0,50)
-floatingLagAddButton.Position=UDim2.new(0.7,-50,0.8,0)
-floatingLagAddButton.AnchorPoint=Vector2.new(0.5,0)
-floatingLagAddButton.BackgroundColor3=Color3.fromRGB(255,100,0)
-floatingLagAddButton.TextColor3=Color3.fromRGB(255,255,255)
-floatingLagAddButton.Text="Lag Switch"
-floatingLagAddButton.Parent=FloatingGui
-floatingLagAddButton.Active=true
-floatingLagAddButton.Draggable=true
-floatingLagAddButton.MouseButton1Click:Connect(function() lagSwitch(0.5) end)
+local function createLagFloatingButton()
+if floatingLagButton then return end
+floatingLagButton = Instance.new("TextButton")
+floatingLagButton.Size=UDim2.new(0,100,0,50)
+floatingLagButton.Position=UDim2.new(0.7,-50,0.8,0)
+floatingLagButton.AnchorPoint=Vector2.new(0.5,0)
+floatingLagButton.BackgroundColor3=Color3.fromRGB(255,100,0)
+floatingLagButton.TextColor3=Color3.fromRGB(255,255,255)
+floatingLagButton.Text="Lag Switch"
+floatingLagButton.Parent=FloatingGui
+floatingLagButton.Active=true
+floatingLagButton.Draggable=true
+floatingLagButton.MouseButton1Click:Connect(function() lagSwitch(0.5) end)
 end
 
-local function removeLagFloatingAddButton()
-if floatingLagAddButton then
-floatingLagAddButton:Destroy()
-floatingLagAddButton=nil
+local function removeLagFloatingButton()
+if floatingLagButton then
+floatingLagButton:Destroy()
+floatingLagButton=nil
 end
 end
 
-MainTab:AddToggle("003",{
+MainTab:Toggle({
 Title="Lag Switch (ปุ่มลอย)",
-Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Lag Switch",
-Default=false,
+Desc="แสดงปุ่มลอยบนหน้าจอสำหรับ Lag Switch",
+Value=false,
 Callback=function(state)
-if state then createLagFloatingAddButton() else removeLagFloatingAddButton() end
+if state then createLagFloatingButton() else removeLagFloatingButton() end
 end
 })
 
@@ -188,7 +180,7 @@ end
 -- Auto Bounce (แม่นยำสูง)
 -- =========================
 local autoBounce = false
-local floatingBounceAddButton
+local floatingBounceButton
 local bouncePower = 100 -- ความแรงการเด้ง
 local groundCheckDistance = 6 -- ระยะเช็คใกล้พื้น (studs)
 
@@ -205,7 +197,7 @@ task.spawn(function()
                     local rayOrigin = root.Position
                     local rayDirection = Vector3.new(0, -groundCheckDistance, 0)
                     local raycastParams = RaycastParams.new()
-                    raycastParams.FilterDescriptionendantsInstances = {char}
+                    raycastParams.FilterDescendantsInstances = {char}
                     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 
                     local ray = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
@@ -223,39 +215,39 @@ task.spawn(function()
 end)
 
 -- ปุ่มปกติ
-MainTab:AddToggle("004",{
+MainTab:Toggle({
     Title="ออโต้เด้ง (ปกติ)",
-    Description="เด้งอัตโนมัติเมื่อกำลังตกและใกล้พื้น (แม่นยำกว่าเดิม)",
-    Default=false,
+    Desc="เด้งอัตโนมัติเมื่อกำลังตกและใกล้พื้น (แม่นยำกว่าเดิม)",
+    Value=false,
     Callback=function(state) autoBounce = state end
 })
 
 -- ปุ่มลอย
-local function createBounceFloatingAddButton()
-    if floatingBounceAddButton then return end
-    floatingBounceAddButton = Instance.new("TextButton")
-    floatingBounceAddButton.Size = UDim2.new(0,100,0,50)
-    floatingBounceAddButton.Position = UDim2.new(0.5,-50,0.85,0)
-    floatingBounceAddButton.AnchorPoint = Vector2.new(0.5,0)
-    floatingBounceAddButton.BackgroundColor3 = Color3.fromRGB(255,0,150)
-    floatingBounceAddButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingBounceAddButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
-    floatingBounceAddButton.Parent = FloatingGui
-    floatingBounceAddButton.Active = true
-    floatingBounceAddButton.Draggable = true
-    floatingBounceAddButton.MouseButton1Click:Connect(function()
+local function createBounceFloatingButton()
+    if floatingBounceButton then return end
+    floatingBounceButton = Instance.new("TextButton")
+    floatingBounceButton.Size = UDim2.new(0,100,0,50)
+    floatingBounceButton.Position = UDim2.new(0.5,-50,0.85,0)
+    floatingBounceButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingBounceButton.BackgroundColor3 = Color3.fromRGB(255,0,150)
+    floatingBounceButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingBounceButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+    floatingBounceButton.Parent = FloatingGui
+    floatingBounceButton.Active = true
+    floatingBounceButton.Draggable = true
+    floatingBounceButton.MouseButton1Click:Connect(function()
         autoBounce = not autoBounce
-        floatingBounceAddButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+        floatingBounceButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
     end)
 end
 
-MainTab:AddToggle("005",{
+MainTab:Toggle({
     Title="ออโต้เด้ง (ปุ่มลอย)",
-    Description="แสดงปุ่มลอยสำหรับ Auto Bounce (แม่นยำกว่าเดิม)",
-    Default=false,
+    Desc="แสดงปุ่มลอยสำหรับ Auto Bounce (แม่นยำกว่าเดิม)",
+    Value=false,
     Callback=function(state)
-        if state then createBounceFloatingAddButton() else
-            if floatingBounceAddButton then floatingBounceAddButton:Destroy(); floatingBounceAddButton=nil end
+        if state then createBounceFloatingButton() else
+            if floatingBounceButton then floatingBounceButton:Destroy(); floatingBounceButton=nil end
             autoBounce=false
         end
     end
@@ -268,32 +260,32 @@ getgenv().AutoRespawnEnabled = false
 local autoRespawnMethod = "Fake Revive"
 local respawnConnection
 local lastSavedPosition
-local floatingRespawnAddButton
+local floatingRespawnButton
 
 -- ฟังก์ชันสร้างปุ่มลอย
-local function createRespawnFloatingAddButton()
-    if floatingRespawnAddButton then return end
-    floatingRespawnAddButton = Instance.new("TextButton")
-    floatingRespawnAddButton.Size = UDim2.new(0,120,0,50)
-    floatingRespawnAddButton.Position = UDim2.new(0.8,0,0.8,0)
-    floatingRespawnAddButton.BackgroundColor3 = Color3.fromRGB(255,80,80)
-    floatingRespawnAddButton.TextColor3 = Color3.new(1,1,1)
-    floatingRespawnAddButton.Font = Enum.Font.GothamBold
-    floatingRespawnAddButton.Text = "Auto Respawn"
-    floatingRespawnAddButton.Parent = FloatingGui -- ต้องมี FloatingGui ในเกม
-    floatingRespawnAddButton.ZIndex = 10
-    floatingRespawnAddButton.Active = true
-    floatingRespawnAddButton.Draggable = true
-    floatingRespawnAddButton.MouseButton1Click:Connect(function()
+local function createRespawnFloatingButton()
+    if floatingRespawnButton then return end
+    floatingRespawnButton = Instance.new("TextButton")
+    floatingRespawnButton.Size = UDim2.new(0,120,0,50)
+    floatingRespawnButton.Position = UDim2.new(0.8,0,0.8,0)
+    floatingRespawnButton.BackgroundColor3 = Color3.fromRGB(255,80,80)
+    floatingRespawnButton.TextColor3 = Color3.new(1,1,1)
+    floatingRespawnButton.Font = Enum.Font.GothamBold
+    floatingRespawnButton.Text = "Auto Respawn"
+    floatingRespawnButton.Parent = FloatingGui -- ต้องมี FloatingGui ในเกม
+    floatingRespawnButton.ZIndex = 10
+    floatingRespawnButton.Active = true
+    floatingRespawnButton.Draggable = true
+    floatingRespawnButton.MouseButton1Click:Connect(function()
         getgenv().AutoRespawnEnabled = not getgenv().AutoRespawnEnabled
-        floatingRespawnAddButton.BackgroundColor3 = getgenv().AutoRespawnEnabled and Color3.fromRGB(80,255,80) or Color3.fromRGB(255,80,80)
+        floatingRespawnButton.BackgroundColor3 = getgenv().AutoRespawnEnabled and Color3.fromRGB(80,255,80) or Color3.fromRGB(255,80,80)
     end)
 end
 
-local function removeRespawnFloatingAddButton()
-    if floatingRespawnAddButton then
-        floatingRespawnAddButton:Destroy()
-        floatingRespawnAddButton = nil
+local function removeRespawnFloatingButton()
+    if floatingRespawnButton then
+        floatingRespawnButton:Destroy()
+        floatingRespawnButton = nil
     end
 end
 
@@ -357,10 +349,10 @@ player.CharacterAdded:Connect(setupAutoRevive)
 -- =========================
 -- ปุ่มปกติใน MainTab
 -- =========================
-MainTab:AddToggle("006",{
+MainTab:Toggle({
     Title="ออโต้รีสปอน (ปกติ)",
-    Description="Respawn อัตโนมัติจนกว่าจะปิด",
-    Default=false,
+    Desc="Respawn อัตโนมัติจนกว่าจะปิด",
+    Value=false,
     Callback=function(state)
         getgenv().AutoRespawnEnabled = state
 
@@ -379,7 +371,7 @@ MainTab:AddToggle("006",{
 -- =========================
 -- Dropdown: วิธีรีสปอน
 -- =========================
-MainTab:AddDropdown({
+MainTab:Dropdown({
     Title="วิธีรีสปอน",
     Options={"Random","Fake Revive"},
     CurrentOption={autoRespawnMethod},
@@ -392,13 +384,13 @@ MainTab:AddDropdown({
 -- =========================
 -- ปุ่มลอย
 -- =========================
-MainTab:AddToggle("007",{
+MainTab:Toggle({
     Title="ออโต้รีสปอน (ปุ่มลอย)",
-    Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Auto Respawn",
-    Default=false,
+    Desc="แสดงปุ่มลอยบนหน้าจอสำหรับ Auto Respawn",
+    Value=false,
     Callback=function(state)
-        if state then createRespawnFloatingAddButton() else
-            removeRespawnFloatingAddButton()
+        if state then createRespawnFloatingButton() else
+            removeRespawnFloatingButton()
             getgenv().AutoRespawnEnabled = false
         end
     end
@@ -407,40 +399,40 @@ MainTab:AddToggle("007",{
 -- =========================
 -- Teleport Roof
 -- =========================
-local floatingTPAddButton
+local floatingTPButton
 local function teleportRoof()
 local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 if root then root.CFrame += Vector3.new(0,500,0) end
 end
 
-TeleportTab:AddButton("b",{
+TeleportTab:Button({
 Title="เทเลพอร์ตขึ้นหลังคา (ปกติ)",
-Description="กดเพื่อขึ้นหลังคา",
+Desc="กดเพื่อขึ้นหลังคา",
 Callback=teleportRoof
 })
 
-local function createTPFloatingAddButton()
-if floatingTPAddButton then return end
-floatingTPAddButton = Instance.new("TextButton")
-floatingTPAddButton.Size=UDim2.new(0,100,0,50)
-floatingTPAddButton.Position=UDim2.new(0.5,-50,0.6,0)
-floatingTPAddButton.AnchorPoint=Vector2.new(0.5,0)
-floatingTPAddButton.BackgroundColor3=Color3.fromRGB(0,255,100)
-floatingTPAddButton.TextColor3=Color3.fromRGB(0,0,0)
-floatingTPAddButton.Text="TP Roof"
-floatingTPAddButton.Parent=FloatingGui
-floatingTPAddButton.Active=true
-floatingTPAddButton.Draggable=true
-floatingTPAddButton.MouseButton1Click:Connect(teleportRoof)
+local function createTPFloatingButton()
+if floatingTPButton then return end
+floatingTPButton = Instance.new("TextButton")
+floatingTPButton.Size=UDim2.new(0,100,0,50)
+floatingTPButton.Position=UDim2.new(0.5,-50,0.6,0)
+floatingTPButton.AnchorPoint=Vector2.new(0.5,0)
+floatingTPButton.BackgroundColor3=Color3.fromRGB(0,255,100)
+floatingTPButton.TextColor3=Color3.fromRGB(0,0,0)
+floatingTPButton.Text="TP Roof"
+floatingTPButton.Parent=FloatingGui
+floatingTPButton.Active=true
+floatingTPButton.Draggable=true
+floatingTPButton.MouseButton1Click:Connect(teleportRoof)
 end
 
-TeleportTab:AddToggle("c",{
+TeleportTab:Toggle({
 Title="เทเลพอร์ตขึ้นหลังคา (ปุ่มลอย)",
-Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Teleport Roof",
-Default=false,
+Desc="แสดงปุ่มลอยบนหน้าจอสำหรับ Teleport Roof",
+Value=false,
 Callback=function(state)
-if state then createTPFloatingAddButton() else
-if floatingTPAddButton then floatingTPAddButton:Destroy(); floatingTPAddButton=nil end
+if state then createTPFloatingButton() else
+if floatingTPButton then floatingTPButton:Destroy(); floatingTPButton=nil end
 end
 end
 })
@@ -469,7 +461,7 @@ local afkActive = false
 local afkPart
 local afkLoop
 
-local function AddToggleAFKMoney()
+local function toggleAFKMoney()
 	afkActive = not afkActive
 
 	if afkActive then
@@ -505,18 +497,18 @@ end
 -- =========================
 -- ปุ่มเปิดระบบ
 -- =========================
-TeleportTab:AddButton("d",{
+TeleportTab:Button({
 	Title = "AFK Money (ของเดิม)",
-	Description = "ยืนบนฟ้า กันตาย/กันหลุดแมพ",
+	Desc = "ยืนบนฟ้า กันตาย/กันหลุดแมพ",
 	Callback = function()
-		AddToggleAFKMoney()
+		toggleAFKMoney()
 	end
 })
 
 -- =========================
 -- Teleport to Dead Player 1s
 -- =========================
-local floatingDeadTPAddButton
+local floatingDeadTPButton
 local function teleportToDead()
 local char = player.Character
 if not char then return end
@@ -538,34 +530,34 @@ root.CFrame=originalCFrame
 end
 end
 
-TeleportTab:AddButton("e",{
+TeleportTab:Button({
 Title="ไปหาผู้เล่นที่ล้ม (ปกติ)",
-Description="วาร์ปไปผู้เล่นที่ล้ม 1 วินาที",
+Desc="วาร์ปไปผู้เล่นที่ล้ม 1 วินาที",
 Callback=teleportToDead
 })
 
-local function createDeadTPFloatingAddButton()
-if floatingDeadTPAddButton then return end
-floatingDeadTPAddButton = Instance.new("TextButton")
-floatingDeadTPAddButton.Size=UDim2.new(0,100,0,50)
-floatingDeadTPAddButton.Position=UDim2.new(0.5,-50,0.8,0)
-floatingDeadTPAddButton.AnchorPoint=Vector2.new(0.5,0)
-floatingDeadTPAddButton.BackgroundColor3=Color3.fromRGB(0,255,255)
-floatingDeadTPAddButton.TextColor3=Color3.fromRGB(0,0,0)
-floatingDeadTPAddButton.Text="Dead TP"
-floatingDeadTPAddButton.Parent=FloatingGui
-floatingDeadTPAddButton.Active=true
-floatingDeadTPAddButton.Draggable=true
-floatingDeadTPAddButton.MouseButton1Click:Connect(teleportToDead)
+local function createDeadTPFloatingButton()
+if floatingDeadTPButton then return end
+floatingDeadTPButton = Instance.new("TextButton")
+floatingDeadTPButton.Size=UDim2.new(0,100,0,50)
+floatingDeadTPButton.Position=UDim2.new(0.5,-50,0.8,0)
+floatingDeadTPButton.AnchorPoint=Vector2.new(0.5,0)
+floatingDeadTPButton.BackgroundColor3=Color3.fromRGB(0,255,255)
+floatingDeadTPButton.TextColor3=Color3.fromRGB(0,0,0)
+floatingDeadTPButton.Text="Dead TP"
+floatingDeadTPButton.Parent=FloatingGui
+floatingDeadTPButton.Active=true
+floatingDeadTPButton.Draggable=true
+floatingDeadTPButton.MouseButton1Click:Connect(teleportToDead)
 end
 
-TeleportTab:AddToggle("f",{
+TeleportTab:Toggle({
 Title="ไปหาผู้เล่นที่ล้ม (ปุ่มลอย)",
-Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Dead TP",
-Default=false,
+Desc="แสดงปุ่มลอยบนหน้าจอสำหรับ Dead TP",
+Value=false,
 Callback=function(state)
-if state then createDeadTPFloatingAddButton() else
-if floatingDeadTPAddButton then floatingDeadTPAddButton:Destroy(); floatingDeadTPAddButton=nil end
+if state then createDeadTPFloatingButton() else
+if floatingDeadTPButton then floatingDeadTPButton:Destroy(); floatingDeadTPButton=nil end
 end
 end
 })
@@ -576,7 +568,7 @@ end
 -- Wall Hack (ทะลุกำแพงด้านหน้า/ด้านข้างจริง)
 -- =========================
 local wallHackActive = false
-local floatingWallAddButton
+local floatingWallButton
 local wallPartsOriginalCollide = {} -- เก็บค่า CanCollide เดิม
 
 local function setWallHack(state)
@@ -592,10 +584,10 @@ local function setWallHack(state)
     end
 end
 
-local function AddToggleWallHack()
+local function toggleWallHack()
     setWallHack(not wallHackActive)
-    if floatingWallAddButton then
-        floatingWallAddButton.Text = wallHackActive and "Wall Hack: ON" or "Wall Hack: OFF"
+    if floatingWallButton then
+        floatingWallButton.Text = wallHackActive and "Wall Hack: ON" or "Wall Hack: OFF"
     end
 end
 
@@ -608,7 +600,7 @@ task.spawn(function()
                 if root then
                     local origin = root.Position
                     local forwardDir = root.CFrame.LookVector -- ด้านหน้าตัวละคร
-                    for _, part in pairs(workspace:GetDescriptionendants()) do
+                    for _, part in pairs(workspace:GetDescendants()) do
                         if part:IsA("BasePart") then
                             local toPart = part.Position - origin
                             local forwardDist = forwardDir:Dot(toPart)
@@ -631,40 +623,40 @@ task.spawn(function()
 end)
 
 -- ปุ่มลอย Wall Hack
-local function createWallFloatingAddButton()
-    if floatingWallAddButton then return end
-    floatingWallAddButton = Instance.new("TextButton")
-    floatingWallAddButton.Size = UDim2.new(0,100,0,50)
-    floatingWallAddButton.Position = UDim2.new(0.2,-50,0.6,0)
-    floatingWallAddButton.AnchorPoint = Vector2.new(0.5,0)
-    floatingWallAddButton.BackgroundColor3 = Color3.fromRGB(100,255,100)
-    floatingWallAddButton.TextColor3 = Color3.fromRGB(0,0,0)
-    floatingWallAddButton.Text = wallHackActive and "Wall Hack: ON" or "Wall Hack: OFF"
-    floatingWallAddButton.Parent = FloatingGui
-    floatingWallAddButton.Active = true
-    floatingWallAddButton.Draggable = true
-    floatingWallAddButton.MouseButton1Click:Connect(AddToggleWallHack)
+local function createWallFloatingButton()
+    if floatingWallButton then return end
+    floatingWallButton = Instance.new("TextButton")
+    floatingWallButton.Size = UDim2.new(0,100,0,50)
+    floatingWallButton.Position = UDim2.new(0.2,-50,0.6,0)
+    floatingWallButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingWallButton.BackgroundColor3 = Color3.fromRGB(100,255,100)
+    floatingWallButton.TextColor3 = Color3.fromRGB(0,0,0)
+    floatingWallButton.Text = wallHackActive and "Wall Hack: ON" or "Wall Hack: OFF"
+    floatingWallButton.Parent = FloatingGui
+    floatingWallButton.Active = true
+    floatingWallButton.Draggable = true
+    floatingWallButton.MouseButton1Click:Connect(toggleWallHack)
 end
 
 -- ปุ่มปกติ
-ExtraTab:AddButton("g",{
+ExtraTab:Button({
     Title="Wall Hack (ปกติ)",
-    Description="ทะลุกำแพงด้านหน้า/ด้านข้างจริง",
-    Callback=AddToggleWallHack
+    Desc="ทะลุกำแพงด้านหน้า/ด้านข้างจริง",
+    Callback=toggleWallHack
 })
 
 -- ปุ่มลอย
-ExtraTab:AddToggle("h",{
+ExtraTab:Toggle({
     Title="Wall Hack (ปุ่มลอย)",
-    Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Wall Hack",
-    Default=false,
+    Desc="แสดงปุ่มลอยบนหน้าจอสำหรับ Wall Hack",
+    Value=false,
     Callback=function(state)
         if state then
-            createWallFloatingAddButton()
+            createWallFloatingButton()
         else
-            if floatingWallAddButton then
-                floatingWallAddButton:Destroy()
-                floatingWallAddButton = nil
+            if floatingWallButton then
+                floatingWallButton:Destroy()
+                floatingWallButton = nil
             end
             setWallHack(false)
         end
@@ -674,7 +666,7 @@ ExtraTab:AddToggle("h",{
 -- =========================
 -- Teleport To Player (ปกติ + ลอย)
 -- =========================
-local floatingTPPlayerAddButton
+local floatingTPPlayerButton
 local function teleportToPlayer(targetPlayer)
 local char = player.Character
 if not char then return end
@@ -724,35 +716,35 @@ end
 end
 
 -- ปุ่มปกติ
-TeleportTab:AddButton("i",{
+TeleportTab:Button({
 Title="TeleTo Player (ปกติ)",
-Description="เลือกผู้เล่นแล้วเทเลพอร์ตไปหา",
+Desc="เลือกผู้เล่นแล้วเทเลพอร์ตไปหา",
 Callback=createTPPlayerMenu
 })
 
 -- ปุ่มลอย
-local function createFloatingTPPlayerAddButton()
-if floatingTPPlayerAddButton then return end
-floatingTPPlayerAddButton = Instance.new("TextButton")
-floatingTPPlayerAddButton.Size = UDim2.new(0,120,0,50)
-floatingTPPlayerAddButton.Position = UDim2.new(0.5,-60,0.75,0)
-floatingTPPlayerAddButton.AnchorPoint = Vector2.new(0.5,0)
-floatingTPPlayerAddButton.BackgroundColor3 = Color3.fromRGB(150,0,255)
-floatingTPPlayerAddButton.TextColor3 = Color3.fromRGB(255,255,255)
-floatingTPPlayerAddButton.Text = "TeleTo Player"
-floatingTPPlayerAddButton.Parent = FloatingGui
-floatingTPPlayerAddButton.Active = true
-floatingTPPlayerAddButton.Draggable = true
-floatingTPPlayerAddButton.MouseButton1Click:Connect(createTPPlayerMenu)
+local function createFloatingTPPlayerButton()
+if floatingTPPlayerButton then return end
+floatingTPPlayerButton = Instance.new("TextButton")
+floatingTPPlayerButton.Size = UDim2.new(0,120,0,50)
+floatingTPPlayerButton.Position = UDim2.new(0.5,-60,0.75,0)
+floatingTPPlayerButton.AnchorPoint = Vector2.new(0.5,0)
+floatingTPPlayerButton.BackgroundColor3 = Color3.fromRGB(150,0,255)
+floatingTPPlayerButton.TextColor3 = Color3.fromRGB(255,255,255)
+floatingTPPlayerButton.Text = "TeleTo Player"
+floatingTPPlayerButton.Parent = FloatingGui
+floatingTPPlayerButton.Active = true
+floatingTPPlayerButton.Draggable = true
+floatingTPPlayerButton.MouseButton1Click:Connect(createTPPlayerMenu)
 end
 
-TeleportTab:AddToggle("j",{
+TeleportTab:Toggle({
 Title="TeleTo Player (ปุ่มลอย)",
-Description="แสดงปุ่มลอยบนหน้าจอสำหรับ TeleTo Player",
-Default=false,
+Desc="แสดงปุ่มลอยบนหน้าจอสำหรับ TeleTo Player",
+Value=false,
 Callback=function(state)
-if state then createFloatingTPPlayerAddButton() else
-if floatingTPPlayerAddButton then floatingTPPlayerAddButton:Destroy(); floatingTPPlayerAddButton=nil end
+if state then createFloatingTPPlayerButton() else
+if floatingTPPlayerButton then floatingTPPlayerButton:Destroy(); floatingTPPlayerButton=nil end
 end
 end
 })
@@ -761,12 +753,12 @@ end
 -- Moon Mode (ปุ่มปกติ + ปุ่มลอย)
 -- =========================
 local moonModeActive = false
-local floatingMoonAddButton
+local floatingMoonButton
 
-local function AddToggleMoonMode()
+local function toggleMoonMode()
 moonModeActive = not moonModeActive
-if floatingMoonAddButton then
-floatingMoonAddButton.Text = moonModeActive and "Moon Mode: ON" or "Moon Mode: OFF"
+if floatingMoonButton then
+floatingMoonButton.Text = moonModeActive and "Moon Mode: ON" or "Moon Mode: OFF"
 end
 end
 
@@ -788,34 +780,34 @@ task.wait(0.05)
 end
 end)
 
-local function createMoonFloatingAddButton()
-if floatingMoonAddButton then return end
-floatingMoonAddButton = Instance.new("TextButton")
-floatingMoonAddButton.Size = UDim2.new(0,100,0,50)
-floatingMoonAddButton.Position = UDim2.new(0.8,-50,0.6,0)
-floatingMoonAddButton.AnchorPoint = Vector2.new(0.5,0)
-floatingMoonAddButton.BackgroundColor3 = Color3.fromRGB(100,100,255)
-floatingMoonAddButton.TextColor3 = Color3.fromRGB(255,255,255)
-floatingMoonAddButton.Text = moonModeActive and "Moon Mode: ON" or "Moon Mode: OFF"
-floatingMoonAddButton.Parent = FloatingGui
-floatingMoonAddButton.Active = true
-floatingMoonAddButton.Draggable = true
-floatingMoonAddButton.MouseButton1Click:Connect(AddToggleMoonMode)
+local function createMoonFloatingButton()
+if floatingMoonButton then return end
+floatingMoonButton = Instance.new("TextButton")
+floatingMoonButton.Size = UDim2.new(0,100,0,50)
+floatingMoonButton.Position = UDim2.new(0.8,-50,0.6,0)
+floatingMoonButton.AnchorPoint = Vector2.new(0.5,0)
+floatingMoonButton.BackgroundColor3 = Color3.fromRGB(100,100,255)
+floatingMoonButton.TextColor3 = Color3.fromRGB(255,255,255)
+floatingMoonButton.Text = moonModeActive and "Moon Mode: ON" or "Moon Mode: OFF"
+floatingMoonButton.Parent = FloatingGui
+floatingMoonButton.Active = true
+floatingMoonButton.Draggable = true
+floatingMoonButton.MouseButton1Click:Connect(toggleMoonMode)
 end
 
-ExtraTab:AddButton("k",{
+ExtraTab:Button({
 Title="Moon Mode (ปกติ)",
-Description="ตกช้าๆจากที่สูง โดยไม่แข็งตัว",
-Callback=AddToggleMoonMode
+Desc="ตกช้าๆจากที่สูง โดยไม่แข็งตัว",
+Callback=toggleMoonMode
 })
 
-ExtraTab:AddToggle("l",{
+ExtraTab:Toggle({
 Title="Moon Mode (ปุ่มลอย)",
-Description="แสดงปุ่มลอยบนหน้าจอสำหรับ Moon Mode",
-Default=false,
+Desc="แสดงปุ่มลอยบนหน้าจอสำหรับ Moon Mode",
+Value=false,
 Callback=function(state)
-if state then createMoonFloatingAddButton() else
-if floatingMoonAddButton then floatingMoonAddButton:Destroy(); floatingMoonAddButton=nil end
+if state then createMoonFloatingButton() else
+if floatingMoonButton then floatingMoonButton:Destroy(); floatingMoonButton=nil end
 moonModeActive=false
 end
 end
@@ -824,9 +816,9 @@ end
 -- =========================
 -- Extra Tab - Run External Script
 -- =========================
-ExtraTab:AddButton("m",{
+ExtraTab:Button({
 Title = "Run External Script",
-Description = "กดเพื่อรันสคริปต์จาก Pastebin",
+Desc = "กดเพื่อรันสคริปต์จาก Pastebin",
 Callback = function()
 local success, err = pcall(function()
 loadstring(game:HttpGet("https://pastebin.com/raw/GHDdPh2c"))()
@@ -891,7 +883,7 @@ local function removeESPForPlayer(targetPlayer)
     end
 end
 
-local function AddTogglePlayerESP(state)
+local function togglePlayerESP(state)
     playerESPActive = state
     if state then
         for _, plr in pairs(Players:GetPlayers()) do
@@ -920,11 +912,11 @@ end)
 -- =========================
 -- ปุ่มใน VisualsTab
 -- =========================
-VisualsTab:AddToggle("n",{
+VisualsTab:Toggle({
     Title="มองผู้เล่น",
-    Description="แสดงชื่อบนหัวและกรอบรอบลำตัว",
-    Default=false,
-    Callback=AddTogglePlayerESP
+    Desc="แสดงชื่อบนหัวและกรอบรอบลำตัว",
+    Value=false,
+    Callback=togglePlayerESP
 })
 
 -- =========================
@@ -932,7 +924,7 @@ VisualsTab:AddToggle("n",{
 -- =========================
 local dashEnabled = false
 local dashSpeed = 50 -- ความเร็วเริ่มต้น
-local floatingDashAddButton
+local floatingDashButton
 local dashVelocity = nil
 
 -- ฟังก์ชันเปิด Dash
@@ -968,11 +960,11 @@ local function startDash()
 end
 
 -- =========================
--- GUI AddToggle
-SettingsTab:AddToggle("o",{
+-- GUI Toggle
+SettingsTab:Toggle({
     Title="Smooth Dash (ปกติ)",
-    Description="พุ่งตามมุมมองแบบลื่น ไม่กระตุก",
-    Default=false,
+    Desc="พุ่งตามมุมมองแบบลื่น ไม่กระตุก",
+    Value=false,
     Callback=function(state)
         dashEnabled = state
         if state then
@@ -984,10 +976,10 @@ SettingsTab:AddToggle("o",{
     end
 })
 
--- AddInput ปรับความเร็ว
-SettingsTab:AddInput("p",{
+-- TextBox ปรับความเร็ว
+SettingsTab:Textbox({
     Title="Dash Speed",
-    Description="ปรับความเร็ว Dash",
+    Desc="ปรับความเร็ว Dash",
     Placeholder=tostring(dashSpeed),
     Callback=function(txt)
         local num = tonumber(txt)
@@ -997,22 +989,22 @@ SettingsTab:AddInput("p",{
 
 -- =========================
 -- ปุ่มลอย
-local function createFloatingDashAddButton()
-    if floatingDashAddButton then return end
-    floatingDashAddButton = Instance.new("TextButton")
-    floatingDashAddButton.Size = UDim2.new(0,120,0,50)
-    floatingDashAddButton.Position = UDim2.new(0.5,-60,0.3,0)
-    floatingDashAddButton.AnchorPoint = Vector2.new(0.5,0)
-    floatingDashAddButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-    floatingDashAddButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingDashAddButton.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
-    floatingDashAddButton.Parent = FloatingGui
-    floatingDashAddButton.Active = true
-    floatingDashAddButton.Draggable = true
+local function createFloatingDashButton()
+    if floatingDashButton then return end
+    floatingDashButton = Instance.new("TextButton")
+    floatingDashButton.Size = UDim2.new(0,120,0,50)
+    floatingDashButton.Position = UDim2.new(0.5,-60,0.3,0)
+    floatingDashButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingDashButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    floatingDashButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingDashButton.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+    floatingDashButton.Parent = FloatingGui
+    floatingDashButton.Active = true
+    floatingDashButton.Draggable = true
 
-    floatingDashAddButton.MouseButton1Click:Connect(function()
+    floatingDashButton.MouseButton1Click:Connect(function()
         dashEnabled = not dashEnabled
-        floatingDashAddButton.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+        floatingDashButton.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
         if dashEnabled then
             startDash()
         elseif dashVelocity then
@@ -1022,17 +1014,17 @@ local function createFloatingDashAddButton()
     end)
 end
 
-SettingsTab:AddToggle("q",{
+SettingsTab:Toggle({
     Title="Smooth Dash (ปุ่มลอย)",
-    Description="แสดงปุ่มลอยสำหรับ Smooth Dash",
-    Default=false,
+    Desc="แสดงปุ่มลอยสำหรับ Smooth Dash",
+    Value=false,
     Callback=function(state)
         if state then
-            createFloatingDashAddButton()
+            createFloatingDashButton()
         else
-            if floatingDashAddButton then
-                floatingDashAddButton:Destroy()
-                floatingDashAddButton = nil
+            if floatingDashButton then
+                floatingDashButton:Destroy()
+                floatingDashButton = nil
             end
             dashEnabled = false
             if dashVelocity then
@@ -1046,10 +1038,10 @@ SettingsTab:AddToggle("q",{
 -- =========================
 -- ปุ่ม มองตั๋ว (ESP Ticket)
 -- =========================
-EventTab:AddToggle("r",{
+EventTab:Toggle({
     Title = "มองตั๋ว (ESP Ticket)",
-    Description = "แสดงตำแหน่งตั๋วทั้งหมดในแมพ",
-    Default = false,
+    Desc = "แสดงตำแหน่งตั๋วทั้งหมดในแมพ",
+    Value = false,
     Callback = function(state)
         local Players = game:GetService("Players")
         local LocalPlayer = Players.LocalPlayer
@@ -1141,9 +1133,9 @@ EventTab:AddToggle("r",{
 -- =========================
 -- ปุ่ม มองเน็กบอท (ESP Nextbot)
 -- =========================
-VisualsTab:AddButton("s",{
+VisualsTab:Button({
     Title = "มองเน็กบอท",
-    Description = "เปิด/ปิด ESP Nextbot",
+    Desc = "เปิด/ปิด ESP Nextbot",
     Callback = function()
         local LocalPlayer = game:GetService("Players").LocalPlayer
 
@@ -1239,9 +1231,9 @@ VisualsTab:AddButton("s",{
 -- =========================
 -- ปุ่มแสดง FPS
 -- =========================
-FPSTab:AddButton("t",{
+FPSTab:Button({
     Title = "แสดง FPS",
-    Description = "กดเพื่อเปิด/ปิดการแสดง FPS",
+    Desc = "กดเพื่อเปิด/ปิดการแสดง FPS",
     Callback = function()
         local player = game.Players.LocalPlayer
         local playerGui = player:WaitForChild("PlayerGui")
@@ -1322,7 +1314,7 @@ FPSTab:AddButton("t",{
 -- ปุ่ม Teleport
 -- =========================
 local teleportEnabled = false
-local floatingTeleportAddButton
+local floatingTeleportButton
 
 -- ฟังก์ชันเปิด Teleport Mode
 local function startTeleport()
@@ -1344,7 +1336,7 @@ local function startTeleport()
     end
 
     -- เชื่อม Event
-    local clickConnection = mouse.AddButton1Down:Connect(onClick)
+    local clickConnection = mouse.Button1Down:Connect(onClick)
     
     -- คืนค่าปิด
     return clickConnection
@@ -1354,10 +1346,10 @@ local teleportConnection
 
 -- =========================
 -- ปุ่มปกติในหมวด Teleport
-TeleportTab:AddToggle("u",{
+TeleportTab:Toggle({
     Title = "คริป Teleport",
-    Description  = "กดเพื่อเปิด/ปิด Teleport Mode",
-    Default = false,
+    Desc  = "กดเพื่อเปิด/ปิด Teleport Mode",
+    Value = false,
     Callback = function(state)
         teleportEnabled = state
         if state then
@@ -1371,23 +1363,23 @@ TeleportTab:AddToggle("u",{
 
 -- =========================
 -- ปุ่มลอย
-local function createFloatingTeleportAddButton()
-    if floatingTeleportAddButton then return end
+local function createFloatingTeleportButton()
+    if floatingTeleportButton then return end
 
-    floatingTeleportAddButton = Instance.new("TextButton")
-    floatingTeleportAddButton.Size = UDim2.new(0, 140, 0, 50)
-    floatingTeleportAddButton.Position = UDim2.new(0.5, -70, 0.4, 0)
-    floatingTeleportAddButton.AnchorPoint = Vector2.new(0.5, 0)
-    floatingTeleportAddButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    floatingTeleportAddButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingTeleportAddButton.Text = teleportEnabled and "Teleport: ON" or "Teleport: OFF"
-    floatingTeleportAddButton.Parent = FloatingGui
-    floatingTeleportAddButton.Active = true
-    floatingTeleportAddButton.Draggable = true
+    floatingTeleportButton = Instance.new("TextButton")
+    floatingTeleportButton.Size = UDim2.new(0, 140, 0, 50)
+    floatingTeleportButton.Position = UDim2.new(0.5, -70, 0.4, 0)
+    floatingTeleportButton.AnchorPoint = Vector2.new(0.5, 0)
+    floatingTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    floatingTeleportButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingTeleportButton.Text = teleportEnabled and "Teleport: ON" or "Teleport: OFF"
+    floatingTeleportButton.Parent = FloatingGui
+    floatingTeleportButton.Active = true
+    floatingTeleportButton.Draggable = true
 
-    floatingTeleportAddButton.MouseButton1Click:Connect(function()
+    floatingTeleportButton.MouseButton1Click:Connect(function()
         teleportEnabled = not teleportEnabled
-        floatingTeleportAddButton.Text = teleportEnabled and "Teleport: ON" or "Teleport: OFF"
+        floatingTeleportButton.Text = teleportEnabled and "Teleport: ON" or "Teleport: OFF"
         if teleportEnabled then
             teleportConnection = startTeleport()
         elseif teleportConnection then
@@ -1397,18 +1389,18 @@ local function createFloatingTeleportAddButton()
     end)
 end
 
--- ปุ่ม AddToggle สำหรับลอย
-TeleportTab:AddToggle("v",{
+-- ปุ่ม Toggle สำหรับลอย
+TeleportTab:Toggle({
     Title = "คริป Teleport (ปุ่มลอย)",
-    Description  = "แสดงปุ่มลอยสำหรับ Teleport",
-    Default = false,
+    Desc  = "แสดงปุ่มลอยสำหรับ Teleport",
+    Value = false,
     Callback = function(state)
         if state then
-            createFloatingTeleportAddButton()
+            createFloatingTeleportButton()
         else
-            if floatingTeleportAddButton then
-                floatingTeleportAddButton:Destroy()
-                floatingTeleportAddButton = nil
+            if floatingTeleportButton then
+                floatingTeleportButton:Destroy()
+                floatingTeleportButton = nil
             end
             teleportEnabled = false
             if teleportConnection then
@@ -1422,11 +1414,11 @@ TeleportTab:AddToggle("v",{
 -- =========================
 -- ปุ่ม Reduce Graphics V.1
 -- =========================
-FPSTab:AddButton("v",{
+FPSTab:Button({
     Title = "ลดกราฟฟิก V.1",
-    Description  = "ทุก Part เรียบเนียน",
+    Desc  = "ทุก Part เรียบเนียน",
     Callback = function()
-        for _, obj in ipairs(workspace:GetDescriptionendants()) do
+        for _, obj in ipairs(workspace:GetDescendants()) do
             if obj:IsA("BasePart") then
                 obj.Material = Enum.Material.SmoothPlastic
                 obj.Reflectance = 0
@@ -1441,12 +1433,12 @@ FPSTab:AddButton("v",{
 -- =========================
 -- ปุ่ม Reduce Graphics V.2
 -- =========================
-FPSTab:AddButton("x",{
+FPSTab:Button({
     Title = "ลดกราฟฟิก V.2",
-    Description  = "เรียบเนียน + ลบหมอกและเอฟเฟกต์",
+    Desc  = "เรียบเนียน + ลบหมอกและเอฟเฟกต์",
     Callback = function()
         -- เรียบเนียนเหมือน V.1
-        for _, obj in ipairs(workspace:GetDescriptionendants()) do
+        for _, obj in ipairs(workspace:GetDescendants()) do
             if obj:IsA("BasePart") then
                 obj.Material = Enum.Material.SmoothPlastic
                 obj.Reflectance = 0
@@ -1469,9 +1461,9 @@ FPSTab:AddButton("x",{
 -- =========================
 -- ปุ่ม เพิ่มแสงหน้าจอ
 -- =========================
-FPSTab:AddButton("w",{
+FPSTab:Button({
     Title = "เพิ่มแสงหน้าจอ",
-    Description  = "หน้าจอสว่างขึ้นเล็กน้อย",
+    Desc  = "หน้าจอสว่างขึ้นเล็กน้อย",
     Callback = function()
         local Lighting = game:GetService("Lighting")
         Lighting.Brightness = (Lighting.Brightness or 2) + 1 -- เพิ่มทีละ 1
@@ -1482,10 +1474,10 @@ FPSTab:AddButton("w",{
 -- =========================
 -- AUTO TICKET FARM (EventTab)
 -- =========================
-EventTab:AddToggle("y",{
+EventTab:Toggle({
 Title = "Auto Ticket Farm",
-Description = "เก็บตั๋วอัตโนมัติทั้งเซิร์ฟ",
-Default = false,
+Desc = "เก็บตั๋วอัตโนมัติทั้งเซิร์ฟ",
+Value = false,
 Callback = function(state)
 getgenv().AutoTicketFarm = state
 if state then
@@ -1591,10 +1583,10 @@ end
 -- =========================
 -- ปุ่มในเมนู MainTab
 -- =========================
-MainTab:AddToggle("008",{
+MainTab:Toggle({
     Title="Auto Carry",
-    Description="เปิด/ปิดการอุ้มผู้เล่นอัตโนมัติ",
-    Default=false,
+    Desc="เปิด/ปิดการอุ้มผู้เล่นอัตโนมัติ",
+    Value=false,
     Callback=function(state)
         getgenv().autoCarryEnabled = state
 
@@ -1605,9 +1597,9 @@ MainTab:AddToggle("008",{
         end
 
         -- อัปเดตปุ่มลอยถ้ามี
-        if getgenv().floatingCarryAddButton then
-            getgenv().floatingCarryAddButton.Text = state and "Auto Carry: ON" or "Auto Carry: OFF"
-            getgenv().floatingCarryAddButton.BackgroundColor3 =
+        if getgenv().floatingCarryButton then
+            getgenv().floatingCarryButton.Text = state and "Auto Carry: ON" or "Auto Carry: OFF"
+            getgenv().floatingCarryButton.BackgroundColor3 =
                 state and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
         end
     end
@@ -1615,7 +1607,7 @@ MainTab:AddToggle("008",{
 
 
 -- =========================
--- ปุ่มลอย Floating AddButton
+-- ปุ่มลอย Floating Button                                                                    ถึงตรงนี้
 -- =========================
 local PlayerGui = localPlayer:WaitForChild("PlayerGui")
 
@@ -1628,10 +1620,10 @@ if not FloatingGui then
 end
 
 
-local function createCarryFloatingAddButton()
-    if getgenv().floatingCarryAddButton then
-        getgenv().floatingCarryAddButton:Destroy()
-        getgenv().floatingCarryAddButton = nil
+local function createCarryFloatingButton()
+    if getgenv().floatingCarryButton then
+        getgenv().floatingCarryButton:Destroy()
+        getgenv().floatingCarryButton = nil
         return
     end
 
@@ -1651,7 +1643,7 @@ local function createCarryFloatingAddButton()
     stroke.Thickness = 3
     stroke.Color = Color3.new(1,1,1)
 
-    getgenv().floatingCarryAddButton = btn
+    getgenv().floatingCarryButton = btn
 
     btn.MouseButton1Click:Connect(function()
         getgenv().autoCarryEnabled = not getgenv().autoCarryEnabled
@@ -1669,10 +1661,10 @@ local function createCarryFloatingAddButton()
 end
 
 
-MainTab:AddButton("z",{
+MainTab:Button({
     Title="ดึงปุ่ม Auto Carry",
-    Description="สร้าง/ลบปุ่มลอยอุ้มผู้เล่น",
-    Callback=createCarryFloatingAddButton
+    Desc="สร้าง/ลบปุ่มลอยอุ้มผู้เล่น",
+    Callback=createCarryFloatingButton
 })
 
 -- =========================
@@ -1683,11 +1675,11 @@ local player = game:GetService("Players").LocalPlayer
 
 -- ตัวแปรเก็บสถานะ
 local infiniteSlideEnabled = false
-local slideFrictionDefault = -8
+local slideFrictionValue = -8
 local cachedTables
 local plrModel
 local slideConnection
-local floatingSlideAddButton
+local floatingSlideButton
 
 -- ฟังก์ชันช่วย
 local keys = {
@@ -1702,10 +1694,10 @@ local function hasAll(tbl)
     return true
 end
 
-local function setFriction(Default)
+local function setFriction(value)
     if not cachedTables then return end
     for _, t in ipairs(cachedTables) do
-        pcall(function() t.Friction = Default end)
+        pcall(function() t.Friction = value end)
     end
 end
 
@@ -1726,7 +1718,7 @@ local function onHeartbeat()
         if currentState == "Slide" then
             pcall(function() plrModel:SetAttribute("State", "EmotingSlide") end)
         elseif currentState == "EmotingSlide" then
-            setFriction(slideFrictionDefault)
+            setFriction(slideFrictionValue)
         else
             setFriction(5)
         end
@@ -1736,7 +1728,7 @@ local function onHeartbeat()
 end
 
 -- ฟังก์ชันเปิด/ปิด Infinite Slide
-local function AddToggleInfiniteSlide()
+local function toggleInfiniteSlide()
     infiniteSlideEnabled = not infiniteSlideEnabled
 
     if slideConnection then slideConnection:Disconnect(); slideConnection=nil end
@@ -1757,33 +1749,33 @@ local function AddToggleInfiniteSlide()
     end
 
     -- อัปเดตปุ่มลอย
-    if floatingSlideAddButton then
-        floatingSlideAddButton.BackgroundColor3 = infiniteSlideEnabled and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
-        floatingSlideAddButton.Text = infiniteSlideEnabled and "Infinite Slide: ON" or "Infinite Slide: OFF"
+    if floatingSlideButton then
+        floatingSlideButton.BackgroundColor3 = infiniteSlideEnabled and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+        floatingSlideButton.Text = infiniteSlideEnabled and "Infinite Slide: ON" or "Infinite Slide: OFF"
     end
 end
 
 -- =========================
 -- ปุ่มปกติใน MainTab
-MainTab:AddToggle("009",{
+MainTab:Toggle({
     Title="Infinite Slide",
-    Description="เปิด/ปิด Infinite Slide",
-    Default=false,
+    Desc="เปิด/ปิด Infinite Slide",
+    Value=false,
     Callback=function(state)
-        AddToggleInfiniteSlide()
+        toggleInfiniteSlide()
     end
 })
 
 -- =========================
 -- Slider ปรับค่า Slide Friction ใน MainTab
-SettingsTab:Slider("a1",{
+SettingsTab:Slider({
     Title="Slide Friction",
-    Description="ปรับค่าแรงสไลด์ (ต่ำ=เร็วกว่า)",
+    Desc="ปรับค่าแรงสไลด์ (ต่ำ=เร็วกว่า)",
     Min=-500,
     Max=-1,
-    Default=slideFrictionDefault,
+    Value=slideFrictionValue,
     Callback=function(val)
-        slideFrictionDefault = val
+        slideFrictionValue = val
     end
 })
 
@@ -1798,31 +1790,31 @@ if not FloatingGui then
     FloatingGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 end
 
-local function createSlideFloatingAddButton()
-    if floatingSlideAddButton then return end
-    floatingSlideAddButton = Instance.new("TextButton")
-    floatingSlideAddButton.Size = UDim2.new(0,150,0,50)
-    floatingSlideAddButton.Position = UDim2.new(0.8,0,0.3,0)
-    floatingSlideAddButton.AnchorPoint = Vector2.new(0.5,0.5)
-    floatingSlideAddButton.BackgroundColor3 = infiniteSlideEnabled and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
-    floatingSlideAddButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingSlideAddButton.Text = infiniteSlideEnabled and "Infinite Slide: ON" or "Infinite Slide: OFF"
-    floatingSlideAddButton.TextScaled = true
-    floatingSlideAddButton.Parent = FloatingGui
-    floatingSlideAddButton.Active = true
-    floatingSlideAddButton.Draggable = true
-    Instance.new("UICorner", floatingSlideAddButton).CornerRadius = UDim.new(0,12)
-    local border = Instance.new("UIStroke", floatingSlideAddButton)
+local function createSlideFloatingButton()
+    if floatingSlideButton then return end
+    floatingSlideButton = Instance.new("TextButton")
+    floatingSlideButton.Size = UDim2.new(0,150,0,50)
+    floatingSlideButton.Position = UDim2.new(0.8,0,0.3,0)
+    floatingSlideButton.AnchorPoint = Vector2.new(0.5,0.5)
+    floatingSlideButton.BackgroundColor3 = infiniteSlideEnabled and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+    floatingSlideButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingSlideButton.Text = infiniteSlideEnabled and "Infinite Slide: ON" or "Infinite Slide: OFF"
+    floatingSlideButton.TextScaled = true
+    floatingSlideButton.Parent = FloatingGui
+    floatingSlideButton.Active = true
+    floatingSlideButton.Draggable = true
+    Instance.new("UICorner", floatingSlideButton).CornerRadius = UDim.new(0,12)
+    local border = Instance.new("UIStroke", floatingSlideButton)
     border.Thickness = 3
     border.Color = Color3.fromRGB(255,255,255)
 
-    floatingSlideAddButton.MouseButton1Click:Connect(AddToggleInfiniteSlide)
+    floatingSlideButton.MouseButton1Click:Connect(toggleInfiniteSlide)
 end
 
-MainTab:AddButton("a2",{
+MainTab:Button({
     Title="ดึงปุ่ม Infinite Slide",
-    Description="สร้างปุ่มลอยสำหรับ Infinite Slide",
-    Callback=createSlideFloatingAddButton
+    Desc="สร้างปุ่มลอยสำหรับ Infinite Slide",
+    Callback=createSlideFloatingButton
 })
 
 -- =========================
@@ -1878,7 +1870,7 @@ end
 -- =========================
 
 -- Speed
-SettingsTab:Slider("a3",{
+SettingsTab:Slider({
     Title = "Speed",
     Min = 1450,
     Max = 1000000,
@@ -1890,7 +1882,7 @@ SettingsTab:Slider("a3",{
 })
 
 -- JumpCap
-SettingsTab:Slider("a4",{
+SettingsTab:Slider({
     Title = "Jump Cap",
     Min = 0.1,
     Max = 5000,
@@ -1915,7 +1907,7 @@ SettingsTab:Slider({
 
 -- Dropdown Apply Method
 getgenv().ApplyMode = "Not Optimized"
-SettingsTab:Dropdown("a5",{
+SettingsTab:Dropdown({
     Title = "Apply Method",
     Options = {"Not Optimized", "Optimized"},
     Default = {getgenv().ApplyMode},
@@ -1992,19 +1984,19 @@ task.spawn(function()
     end
 end)
 
--- AddToggle ใน VisualsTab
-VisualsTab:AddToggle("a6",{
+-- Toggle ใน VisualsTab
+VisualsTab:Toggle({
     Title="มองผู้เล่นที่ล้ม",
-    Description="แสดงข้อความ 'ล้ม' สีแดงเหนือหัวผู้เล่นที่มีเลือด 0",
-    Default=false,
+    Desc="แสดงข้อความ 'ล้ม' สีแดงเหนือหัวผู้เล่นที่มีเลือด 0",
+    Value=false,
     Callback=function(state)
         downedESPEnabled = state
     end
 })
 
-EventTab:AddButton("a7",{
+EventTab:Button({
     Title = "เก็บตั๋วเรียบแมพ",
-    Description = "เทเลพอร์ตเก็บตั๋วทีละตัวจนหมด",
+    Desc = "เทเลพอร์ตเก็บตั๋วทีละตัวจนหมด",
     Callback = function()
         local Players = game:GetService("Players")
         local LocalPlayer = Players.LocalPlayer
@@ -2077,9 +2069,9 @@ end
 -- =========================
 -- ปุ่ม 1: Record
 -- =========================
-ExtraTab:AddButton("a8",{
+ExtraTab:Button({
     Title="เริ่มอัดการเคลื่อนไหว",
-    Description="กดเพื่อเริ่ม/หยุดอัดการเคลื่อนไหว",
+    Desc="กดเพื่อเริ่ม/หยุดอัดการเคลื่อนไหว",
     Callback=function()
         local char = player.Character
         if not char then return end
@@ -2110,9 +2102,9 @@ ExtraTab:AddButton("a8",{
 -- =========================
 -- ปุ่ม 2: Playback Smooth
 -- =========================
-ExtraTab:AddButton("a9",{
+ExtraTab:Button({
     Title="เล่นการเคลื่อนไหว (ลื่น)",
-    Description="กดเพื่อเริ่ม/หยุดเล่นการเคลื่อนไหวที่บันทึก",
+    Desc="กดเพื่อเริ่ม/หยุดเล่นการเคลื่อนไหวที่บันทึก",
     Callback=function()
         local char = player.Character
         if not char or #recordedFrames == 0 then return end
@@ -2138,9 +2130,9 @@ ExtraTab:AddButton("a9",{
 -- =========================
 -- ปุ่ม 3: Reset
 -- =========================
-ExtraTab:AddButton("a10",{
+ExtraTab:Button({
     Title="รีเซ็ตการเคลื่อนไหว",
-    Description="ล้างข้อมูลการอัดทั้งหมด",
+    Desc="ล้างข้อมูลการอัดทั้งหมด",
     Callback=function()
         recordedFrames = {}
         recording = false
@@ -2156,7 +2148,7 @@ ExtraTab:AddButton("a10",{
 local workspace = game:GetService("Workspace")
 
 local hiddenParts = {}  -- เก็บ Part ที่ถูกลบไว้เพื่อเอากลับคืน
-local deleteAddToggle = false
+local deleteToggle = false
 
 -- ฟังก์ชันค้นหา Part ทั้งแมพ
 local function findParts()
@@ -2204,13 +2196,13 @@ end
 -- =========================
 -- ปุ่มในหมวด ExtraTab
 -- =========================
-ExtraTab:AddToggle("67",{
+ExtraTab:Toggle({
     Title = "ลบ/คืนค่า Barrier & MapBarrier",
-    Description = "กดเพื่อสลับลบหรือคืนค่า Part ทั้งหมด",
-    Default = false,
+    Desc = "กดเพื่อสลับลบหรือคืนค่า Part ทั้งหมด",
+    Value = false,
     Callback = function(state)
-        deleteAddToggle = state
-        if deleteAddToggle then
+        deleteToggle = state
+        if deleteToggle then
             deleteAll()
         else
             restoreAll()
@@ -2224,10 +2216,10 @@ ExtraTab:AddToggle("67",{
 local autoTurkey = false
 local autoTurkeyThread
 
-EventTab:AddToggle("69",{
+EventTab:Toggle({
     Title = "ออโต้เก็บไก่งวง",
-    Description = "เทเลพอร์ตไป Nextbot ชื่อ Turkey อัตโนมัติ",
-    Default = false,
+    Desc = "เทเลพอร์ตไป Nextbot ชื่อ Turkey อัตโนมัติ",
+    Value = false,
     Callback = function(state)
         autoTurkey = state
 
@@ -2280,10 +2272,10 @@ EventTab:AddToggle("69",{
 local warpBotActive = false
 local warpBotCoroutine
 
-ExtraTab:AddToggle("61",{
+ExtraTab:Toggle({
     Title = "วาปหนีบอท",
-    Description = "เมื่อเน็กบอทใกล้ จะวาปไปผู้เล่นที่สูงที่สุด",
-    Default = false,
+    Desc = "เมื่อเน็กบอทใกล้ จะวาปไปผู้เล่นที่สูงที่สุด",
+    Value = false,
     Callback = function(state)
         warpBotActive = state
 
@@ -2345,9 +2337,9 @@ ExtraTab:AddToggle("61",{
 -- =========================
 -- ปุ่ม เปลี่ยนเป็นกลางวัน
 -- =========================
-ExtraTab:AddButton("123",{
+ExtraTab:Button({
     Title = "เปลี่ยนเป็นกลางวัน",
-    Description = "ตั้งเวลา Map เป็น 12:00",
+    Desc = "ตั้งเวลา Map เป็น 12:00",
     Callback = function()
         local Lighting = game:GetService("Lighting")
         Lighting.ClockTime = 12 -- ตั้งเวลาเที่ยงวัน
@@ -2358,9 +2350,9 @@ ExtraTab:AddButton("123",{
 -- =========================
 -- ปุ่ม เปลี่ยนเป็นกลางคืน
 -- =========================
-ExtraTab:AddButton("45",{
+ExtraTab:Button({
     Title = "เปลี่ยนเป็นกลางคืน",
-    Description = "ตั้งเวลา Map เป็น 22:00",
+    Desc = "ตั้งเวลา Map เป็น 22:00",
     Callback = function()
         local Lighting = game:GetService("Lighting")
         Lighting.ClockTime = 22 -- ตั้งเวลา 22:00
@@ -2371,10 +2363,10 @@ ExtraTab:AddButton("45",{
 local AutoCarryEnabled = false
 local CarryConnection
 
-TeleportTab:AddToggle("ggbro",{
+TeleportTab:Toggle({
     Title = "เก็บผู้เล่นที่ล้ม",
-    Description = "เทเลพอร์ตไปหาผู้เล่นที่ล้มและอุ้ม",
-    Default = false,
+    Desc = "เทเลพอร์ตไปหาผู้เล่นที่ล้มและอุ้ม",
+    Value = false,
     Callback = function(state)
         AutoCarryEnabled = state
 
@@ -2518,9 +2510,9 @@ end
 -- ปุ่มบินในหมวดเมนูหลัก
 -- =========================================
 
-MainTab:AddButton("pj",{
+MainTab:Button({
     Title = "บิน (Fly)",
-    Description = "เปิด/ปิดระบบบิน",
+    Desc = "เปิด/ปิดระบบบิน",
     Callback = function()
         flying = not flying
         if flying then
@@ -2535,7 +2527,7 @@ MainTab:AddButton("pj",{
 -- ช่องใส่ความเร็วอยู่ใต้ปุ่มบิน
 -- =========================================
 
-MainTab:AddInput("jj",{
+MainTab:Textbox({
     Title = "ความเร็วบิน (Speed)",
     Default = tostring(FlySpeed),
     Placeholder = "1.5",
@@ -2581,10 +2573,10 @@ end)
 -- =============================
 -- ปุ่ม Korblox
 -- =============================
-ExtraTab:AddToggle({
+ExtraTab:Toggle({
     Title = "ขากุด (Korblox)",
-    Description = "เปิด/ปิด ขากุด โดยใช้สคริปต์จากลิงก์",
-    Default = false,
+    Desc = "เปิด/ปิด ขากุด โดยใช้สคริปต์จากลิงก์",
+    Value = false,
     Callback = function(state)
         extraStatus.Korblox = state
         applyBodyMod()
@@ -2594,10 +2586,10 @@ ExtraTab:AddToggle({
 -- =============================
 -- ปุ่ม Headless
 -- =============================
-ExtraTab:AddToggle("neung",{
+ExtraTab:Toggle({
     Title = "หัวล่องหน (Headless)",
-    Description = "เปิด/ปิด หัวล่องหน โดยใช้สคริปต์จากลิงก์",
-    Default = false,
+    Desc = "เปิด/ปิด หัวล่องหน โดยใช้สคริปต์จากลิงก์",
+    Value = false,
     Callback = function(state)
         extraStatus.Headless = state
         applyBodyMod()
@@ -2607,9 +2599,9 @@ ExtraTab:AddToggle("neung",{
 -- =========================
 -- ลบความมืดออก / เพิ่มแสง
 -- =========================
-ExtraTab:AddButton("diaw",{
+ExtraTab:Button({
     Title = "ลบมืดออก",
-    Description = "ทำให้ Map สว่าง และตัดเงาออกทั้งหมด",
+    Desc = "ทำให้ Map สว่าง และตัดเงาออกทั้งหมด",
     Callback = function()
         local Lighting = game:GetService("Lighting")
 
@@ -2641,9 +2633,9 @@ local fakeEdashRunning = false
 local fakeEdashConnection
 
 -- ปุ่มในหมวด ของเสริม
-ExtraTab:AddButton("hhgd",{
+ExtraTab:Button({
     Title = "เสกท่าเวล100 ของปลอม❌(ของคนอื่น)",
-    Description = "กดเพื่อเปิด/ปิดสคริปต์ fake edash",
+    Desc = "กดเพื่อเปิด/ปิดสคริปต์ fake edash",
     Callback = function()
         if not fakeEdashRunning then
             -- ========== เริ่มรันสคริปต์ ==========
@@ -2671,7 +2663,7 @@ ExtraTab:AddButton("hhgd",{
 })
 
 -- =========================
--- Bounce AddButton (Auto Trimp Style)
+-- Bounce Button (Auto Trimp Style)
 -- =========================
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
@@ -2683,7 +2675,7 @@ local bounceDistance = 8
 local function isNearGround(hrp)
     local rayParams = RaycastParams.new()
     rayParams.FilterType = Enum.RaycastFilterType.Blacklist
-    rayParams.FilterDescriptionendantsInstances = {hrp.Parent}
+    rayParams.FilterDescendantsInstances = {hrp.Parent}
 
     local offsets = {
         Vector3.new(0,-bounceDistance,0),
@@ -2731,55 +2723,55 @@ task.spawn(function()
 end)
 
 -- ========= ปุ่มลอย =========
-local floatingBounceAddButton
+local floatingBounceButton
 local autoBounce = false
 
-local function createBounceFloatingAddButton()
-    if floatingBounceAddButton then return end
+local function createBounceFloatingButton()
+    if floatingBounceButton then return end
 
-    floatingBounceAddButton = Instance.new("TextButton")
-    floatingBounceAddButton.Size = UDim2.new(0,100,0,50)
-    floatingBounceAddButton.Position = UDim2.new(0.5,-50,0.85,0)
-    floatingBounceAddButton.AnchorPoint = Vector2.new(0.5,0)
-    floatingBounceAddButton.BackgroundColor3 = Color3.fromRGB(255,0,150)
-    floatingBounceAddButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingBounceAddButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
-    floatingBounceAddButton.Parent = FloatingGui
+    floatingBounceButton = Instance.new("TextButton")
+    floatingBounceButton.Size = UDim2.new(0,100,0,50)
+    floatingBounceButton.Position = UDim2.new(0.5,-50,0.85,0)
+    floatingBounceButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingBounceButton.BackgroundColor3 = Color3.fromRGB(255,0,150)
+    floatingBounceButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingBounceButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+    floatingBounceButton.Parent = FloatingGui
 
-    floatingBounceAddButton.Active = true
-    floatingBounceAddButton.Draggable = true
+    floatingBounceButton.Active = true
+    floatingBounceButton.Draggable = true
 
-    floatingBounceAddButton.MouseButton1Click:Connect(function()
+    floatingBounceButton.MouseButton1Click:Connect(function()
         autoBounce = not autoBounce
         bounceEnabled = autoBounce
-        floatingBounceAddButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+        floatingBounceButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
     end)
 end
 
 
 
 -- ========= ปุ่มในเมนูหลัก =========
-MainTab:AddToggle("010",{
+MainTab:Toggle({
     Title = "ออโต้ทริป",
-    Description = "เด้งอัตโนมัติแบบตรวจพื้นแม่นยำ",
-    Default = false,
+    Desc = "เด้งอัตโนมัติแบบตรวจพื้นแม่นยำ",
+    Value = false,
     Callback = function(v)
         bounceEnabled = v
     end
 })
 
 -- ========= ปุ่มลอยในเมนูหลัก =========
-MainTab:AddToggle("011",{
+MainTab:Toggle({
     Title="ออโต้เด้ง (ปุ่มลอย)",
-    Description="แสดงปุ่มลอยสำหรับ Auto Bounce (แม่นยำกว่าเดิม)",
-    Default=false,
+    Desc="แสดงปุ่มลอยสำหรับ Auto Bounce (แม่นยำกว่าเดิม)",
+    Value=false,
     Callback=function(state)
         if state then 
-            createBounceFloatingAddButton()
+            createBounceFloatingButton()
         else
-            if floatingBounceAddButton then
-                floatingBounceAddButton:Destroy()
-                floatingBounceAddButton=nil
+            if floatingBounceButton then
+                floatingBounceButton:Destroy()
+                floatingBounceButton=nil
             end
             autoBounce=false
             bounceEnabled=false
@@ -2791,13 +2783,13 @@ MainTab:AddToggle("011",{
 
 
 -- =========================
--- AddToggle ปิดข้อความตรงจอ (อยู่ในหมวด ของเสริม)
+-- TOGGLE ปิดข้อความตรงจอ (อยู่ในหมวด ของเสริม)
 -- =========================
 local infoVisible = true
 
-ExtraTab:AddToggle("ffds",{
+ExtraTab:Toggle({
     Title = "เปิดแฟ้มอีโมท(เสกท่า)",
-    Description = "รันสคริปต์ Emote จาก Pastebin",
+    Desc = "รันสคริปต์ Emote จาก Pastebin",
     Callback = function()
         local url = "https://pastebin.com/raw/DSZCMGqh" -- ใช้ raw link ของ Pastebin
         local success, err = pcall(function()
@@ -2820,10 +2812,10 @@ getgenv().Resolution = { [".gg/scripters"] = 0.65 }
 local Camera = workspace.CurrentCamera
 local ScreenStretchConn
 
-ExtraTab:AddToggle("wasd",{
+ExtraTab:Toggle({
     Title = "หน้าจอยืด",
-    Description = "เปิด/ปิด ปรับแกน Y ของกล้อง",
-    Default = false,
+    Desc = "เปิด/ปิด ปรับแกน Y ของกล้อง",
+    Value = false,
     Callback = function(state)
         if state then
             if not ScreenStretchConn then
@@ -2906,12 +2898,12 @@ local function stopAutoRevive()
 end
 
 -- =========================
--- AddToggle (อยู่ในหมวด ของเสริม)
+-- TOGGLE (อยู่ในหมวด ของเสริม)
 -- =========================
 
-MainTab:AddToggle("012",{
+MainTab:Toggle({
     Title = "ออโต้ชุบเพื่อน",
-    Description = "ชุบผู้เล่นที่ล้มอัตโนมัติเมื่ออยู่ใกล้",
+    Desc = "ชุบผู้เล่นที่ล้มอัตโนมัติเมื่ออยู่ใกล้",
     Callback = function(state)
         autoReviveEnabled = state
         if state then
@@ -3116,11 +3108,11 @@ end)
 end)
 
 -- =========================
--- UI AddToggleS
+-- UI TOGGLES
 -- =========================
-TeleportTab:AddToggle("dnaj",{
+TeleportTab:Toggle({
 Title = "Auto Revive",
-Description = "ชุบเพื่อนที่ล้มใกล้ตัว",
+Desc = "ชุบเพื่อนที่ล้มใกล้ตัว",
 Callback = function(state)
 autoReviveEnabled = state
 if state then
@@ -3131,9 +3123,9 @@ end
 end
 })
 
-TeleportTab:AddToggle("483",{
+TeleportTab:Toggle({
 Title = "AFK Money (New)",
-Description = "เสก Part + วาร์ปชุบอัตโนมัติ",
+Desc = "เสก Part + วาร์ปชุบอัตโนมัติ",
 Callback = function(state)
 afkMoneyEnabled = state
 if state then
@@ -3219,9 +3211,9 @@ local function createCameraPart()
 end
 
 -- ปุ่ม 1: สร้าง / ลบ Part กล้อง
-SettingsTab:AddButton("232243",{
+SettingsTab:Button({
 	Title = "สร้าง / ลบ กล้อง",
-	Description = "สร้าง Part กล้องไว้ตรงหน้า (กดซ้ำเพื่อลบ)",
+	Desc = "สร้าง Part กล้องไว้ตรงหน้า (กดซ้ำเพื่อลบ)",
 	Callback = function()
 		if not partEnabled then
 			createCameraPart()
@@ -3245,9 +3237,9 @@ SettingsTab:AddButton("232243",{
 })
 
 -- ปุ่ม 2: สลับมุมมอง
-SettingsTab:AddButton("lkoeii",{
+SettingsTab:Button({
 	Title = "สลับมุมมองกล้อง",
-	Description = "กล้อง ↔ ตัวละคร",
+	Desc = "กล้อง ↔ ตัวละคร",
 	Callback = function()
 		if not camPart then return end
 
@@ -3281,26 +3273,25 @@ player.CharacterAdded:Connect(function(char)
 end)
 
 -- =========================
--- พื้นใส (Reflectance AddToggle)
+-- พื้นใส (Reflectance Toggle)
 -- =========================
 local floorReflectOn = false
 local originalParts = {}
 
 local function enableFloorReflect()
-    for _, obj in pairs(workspace:GetDescendants()) do -- เปลี่ยนตรงนี้เป็น obj
-        if obj:IsA("BasePart") then
-            -- เก็บค่าเดิม
-            if not originalParts[obj] then
-                originalParts[obj] = {
-                    Material = obj.Material,
-                    Reflectance = obj.Reflectance
-                }
-            end
-            -- ตั้งค่าใหม่ให้สะท้อนแสง
-            obj.Material = Enum.Material.Glass
-            obj.Reflectance = 1
-        end
-    end
+	for _, obj in pairs(workspace:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			-- เก็บค่าเดิม
+			if not originalParts[obj] then
+				originalParts[obj] = {
+					Material = obj.Material,
+					Reflectance = obj.Reflectance
+				}
+			end
+			obj.Material = Enum.Material.SmoothPlastic
+			obj.Reflectance = 0.3
+		end
+	end
 end
 
 local function disableFloorReflect()
@@ -3313,10 +3304,10 @@ local function disableFloorReflect()
 	originalParts = {}
 end
 
-ExtraTab:AddToggle("may",{
+ExtraTab:Toggle({
 	Title = "พื้นใส",
-	Description = "ทำให้ Part ทั้งแมพสะท้อนแสง",
-	Default = false,
+	Desc = "ทำให้ Part ทั้งแมพสะท้อนแสง",
+	Value = false,
 	Callback = function(state)
 		floorReflectOn = state
 		if state then
@@ -3331,8 +3322,8 @@ ExtraTab:AddToggle("may",{
 -- =========================
 -- Notify
 -- =========================
-Window:Notify("nlwokws",{
+Window:Notify({
 Title="Evade Hub",
-Description="เมนูทั้งหมดโหลดเรียบร้อยแล้ว! เปิด/ปิดเมนูได้ทั้ง Desktop และ มือถือ",
+Desc="เมนูทั้งหมดโหลดเรียบร้อยแล้ว! เปิด/ปิดเมนูได้ทั้ง Desktop และ มือถือ",
 Time=4
 })
