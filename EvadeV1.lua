@@ -1,3 +1,11 @@
+-- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]
+local VirtualUser = game:GetService("VirtualUser")
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+    print("U-HUB: กันโดนเตะให้แล้วนะคัฟ")
+end)
+
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -131,7 +139,7 @@ local MainTab     = Window:AddTab({Title="เมนูหลัก", Icon="star"
 local TeleportTab = Window:AddTab({Title="เทเลพอร์ต", Icon="navigation"})
 local VisualsTab  = Window:AddTab({Title="มองต่างๆ", Icon="eye"})
 local ExtraTab    = Window:AddTab({Title="ของเสริม", Icon="tag"})
-local FPSTab      = Window:AddTab({Title="FPS", Icon="speedometer"})
+local FPSTab = Window:AddTab({Title = "fps", Icon = "accessibility"})
 local EventTab    = Window:AddTab({Title="เกี่ยวกับอีเว้น", Icon="calendar"})
 local SettingsTab = Window:AddTab({Title="ตั้งค่า", Icon="wrench"})
 
@@ -881,7 +889,6 @@ TPMouseSection:AddToggle("TPClickFloat", {Title = "ปุ่มลอย Telepor
 end})
 
 -- คีย์บอร์ดสำหรับ Teleport (ใช้ Click)
-TPMouseSection:AddKeybind("TPClickKey", {Title = "ปุ่มวาร์ป (ตามเมาส์)", Mode = "Click", Default = "MouseButton1", Callback = runTeleportClick})
 
 -- =========================================
 -- [ MAIN: AUTO CARRY ]
@@ -1087,3 +1094,642 @@ TicketESPToggle:OnChanged(function()
         end)
     end
 end)
+
+
+-- =============================
+-- ของเสริม : Korblox / Headless (เวอร์ชันแก้ตายแล้วหาย)
+-- =============================
+
+local player = game.Players.LocalPlayer
+
+-- เก็บสถานะปุ่ม
+local extraStatus = {
+    Korblox = false,
+    Headless = false,
+}
+
+-- ฟังก์ชันเอาไว้รันสคริปต์ทุกครั้งที่ต้องการ
+local function applyBodyMod()
+    getgenv().Setting = {
+        ["Body"] = {
+            ["Korblox"] = extraStatus.Korblox,
+            ["Headless"] = extraStatus.Headless,
+        },
+    }
+
+    -- โหลดสคริปต์ลิงก์ (ชุด headless/korblox)
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/khen791/script-khen/refs/heads/main/KorbloxAndHeadless.txt", true))()
+end
+
+-- ฟังก์ชันรอเกิดใหม่ แล้วใช้ของเสริมให้อัตโนมัติ
+player.CharacterAdded:Connect(function()
+    task.wait(1) -- รอให้ตัวโหลดครบ
+    applyBodyMod()
+end)
+
+-- =============================
+-- ปุ่ม Korblox
+-- =============================
+ExtraTab:AddToggle("KorbloxToggle", {
+    Title = "ขากุด (Korblox)",
+    Description = "เปิด/ปิด ขากุด โดยใช้สคริปต์จากลิงก์",
+    Default = false,
+    Callback = function(state)
+        extraStatus.Korblox = state
+        applyBodyMod()
+    end
+})
+
+-- =============================
+-- ปุ่ม Headless
+-- =============================
+ExtraTab:AddToggle("HeadlessToggle", {
+    Title = "หัวล่องหน (Headless)",
+    Description = "เปิด/ปิด หัวล่องหน โดยใช้สคริปต์จากลิงก์",
+    Default = false,
+    Callback = function(state)
+        extraStatus.Headless = state
+        applyBodyMod()
+    end
+})
+
+-- =========================
+-- ลบความมืดออก / เพิ่มแสง
+-- =========================
+ExtraTab:AddButton({
+    Title = "ลบมืดออก",
+    Description = "ทำให้ Map สว่าง และตัดเงาออกทั้งหมด",
+    Callback = function()
+        local Lighting = game:GetService("Lighting")
+
+        -- ปรับแสงให้สว่าง
+        Lighting.Ambient = Color3.new(1,1,1)
+        Lighting.OutdoorAmbient = Color3.new(1,1,1)
+        Lighting.Brightness = 3
+        Lighting.ExposureCompensation = 1
+
+        -- ปิด Shadow
+        Lighting.GlobalShadows = false
+
+        -- ลบเอฟเฟกต์มืดทั้งหมด เช่น ColorCorrection, DepthOfField, Bloom, SunRays
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("ColorCorrectionEffect")
+            or v:IsA("DepthOfFieldEffect")
+            or v:IsA("BloomEffect")
+            or v:IsA("SunRaysEffect")
+            or v:IsA("Atmosphere")
+            or v:IsA("Sky") then
+                v:Destroy()
+            end
+        end
+    end
+})
+
+-- ตัวแปรสถานะรันสคริปต์
+local fakeEdashRunning = false
+local fakeEdashConnection
+
+-- ปุ่มในหมวด ของเสริม
+ExtraTab:AddButton({
+    Title = "เสกท่าเวล100 ของปลอม❌(ของคนอื่น)",
+    Description = "กดเพื่อเปิด/ปิดสคริปต์ fake edash",
+    Callback = function()
+        if not fakeEdashRunning then
+            -- ========== เริ่มรันสคริปต์ ==========
+            fakeEdashRunning = true
+            print("Fake Edash เริ่มทำงาน!")
+
+            -- โหลดสคริปต์จากลิ้ง
+            local source = game:HttpGet("https://raw.githubusercontent.com/G4V3S/S/refs/heads/main/fake%20edash.lua")
+            fakeEdashConnection = loadstring(source)
+
+            -- รัน
+            task.spawn(function()
+                pcall(fakeEdashConnection)
+            end)
+
+        else
+            -- ========== ปิดสคริปต์ ==========
+            fakeEdashRunning = false
+            print("Fake Edash ถูกปิดแล้ว!")
+
+            -- พยายามหยุดสคริปต์โดยรีโหลด environment
+            fakeEdashConnection = nil
+        end
+    end
+})
+
+
+-- =========================
+-- Bounce Button (Auto Trimp Style)
+-- =========================
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+
+local bounceEnabled = false
+local bounceHeight = 100
+local bounceDistance = 8
+
+-- ฟังก์ชันเช็คพื้น (Raycast)
+local function isNearGround(hrp)
+    local rayParams = RaycastParams.new()
+    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+    rayParams.FilterDescendantsInstances = {hrp.Parent}
+
+    local offsets = {
+        Vector3.new(0,-bounceDistance,0),
+        Vector3.new(2,-bounceDistance,0),
+        Vector3.new(-2,-bounceDistance,0),
+        Vector3.new(0,-bounceDistance,2),
+        Vector3.new(0,-bounceDistance,-2)
+    }
+
+    for _,offset in ipairs(offsets) do
+        local r = workspace:Raycast(hrp.Position, offset, rayParams)
+        if r and r.Instance and r.Instance.CanCollide then
+            return true
+        end
+    end
+    return false
+end
+
+-- ทำงานตลอดจนกว่าจะปิด
+task.spawn(function()
+    while true do
+        if bounceEnabled then
+            local char = player.Character
+            if char then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local vel = hrp.Velocity
+                    if vel.Y < -35 and isNearGround(hrp) then
+                        hrp.Velocity = Vector3.new(vel.X, bounceHeight, vel.Z)
+
+                        local fx = Instance.new("ParticleEmitter")
+                        fx.Texture = "rbxassetid://241594180"
+                        fx.Lifetime = NumberRange.new(0.3)
+                        fx.Speed = NumberRange.new(40)
+                        fx.Rate = 200
+                        fx.Parent = hrp
+                        Debris:AddItem(fx,0.3)
+                    end
+                end
+            end
+        end
+        task.wait()
+    end
+end)
+
+-- ========= ปุ่มลอย (ดึง GUI มาจากที่น้องสร้างไว้) =========
+local floatingBounceButton
+local autoBounce = false
+
+local function createBounceFloatingButton()
+    if floatingBounceButton then return end
+
+    -- ตรวจสอบว่ามี FloatingGui หรือยัง (ถ้าไม่มีให้สร้างเผื่อไว้)
+    local targetGui = player:WaitForChild("PlayerGui"):FindFirstChild("FloatingGui") or Instance.new("ScreenGui", player.PlayerGui)
+    targetGui.Name = "FloatingGui"
+
+    floatingBounceButton = Instance.new("TextButton")
+    floatingBounceButton.Size = UDim2.new(0,100,0,50)
+    floatingBounceButton.Position = UDim2.new(0.5,-50,0.85,0)
+    floatingBounceButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingBounceButton.BackgroundColor3 = Color3.fromRGB(255,0,150)
+    floatingBounceButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingBounceButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+    floatingBounceButton.Parent = targetGui
+
+    floatingBounceButton.Active = true
+    floatingBounceButton.Draggable = true
+
+    floatingBounceButton.MouseButton1Click:Connect(function()
+        autoBounce = not autoBounce
+        bounceEnabled = autoBounce
+        floatingBounceButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+    end)
+end
+
+-- ========= ปุ่มในเมนูหลัก Fluent UI =========
+MainTab:AddToggle("AutoTrimpToggle", {
+    Title = "ออโต้ทริป (Auto Bounce)",
+    Description = "เด้งอัตโนมัติเมื่อตกถึงพื้น (จะสร้างปุ่มลอยด้วย)",
+    Default = false,
+    Callback = function(v)
+        bounceEnabled = v
+        autoBounce = v
+        if v then
+            createBounceFloatingButton()
+            if floatingBounceButton then 
+                floatingBounceButton.Visible = true 
+                floatingBounceButton.Text = "Auto Bounce: ON"
+            end
+        else
+            if floatingBounceButton then 
+                floatingBounceButton.Visible = false 
+            end
+        end
+    end
+})
+
+-- =========================
+-- ปุ่มหน้าจอยืด (Stretch Screen) ในหมวดของเสริม
+-- =========================
+getgenv().ScreenStretchActive = false
+getgenv().Resolution = { [".gg/scripters"] = 0.65 }
+local Camera = workspace.CurrentCamera
+local ScreenStretchConn
+
+-- ใช้ชื่อตัวแปร ExtraTab ให้ตรงกับที่น้องสร้างไว้นะครับ
+ExtraTab:AddToggle("ScreenStretchToggle", {
+    Title = "หน้าจอยืด (Stretch Screen)",
+    Description = "เปิด/ปิด การปรับแกน Y ของกล้อง (ช่วยให้มุมมองกว้างขึ้น)",
+    Default = false,
+    Callback = function(state)
+        if state then
+            -- ถ้าเปิดสวิตช์
+            if not ScreenStretchConn then
+                getgenv().ScreenStretchActive = true
+                ScreenStretchConn = game:GetService("RunService").RenderStepped:Connect(function()
+                    if Camera and getgenv().ScreenStretchActive then
+                        -- แก้ไขการคำนวณ Matrix ของกล้องให้ยืดตามค่าที่ตั้งไว้
+                        Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[".gg/scripters"], 0, 0, 0, 1)
+                    end
+                end)
+            end
+            print("U-HUB: หน้าจอยืด เปิดแล้ว")
+        else
+            -- ถ้าปิดสวิตช์
+            getgenv().ScreenStretchActive = false
+            if ScreenStretchConn then
+                ScreenStretchConn:Disconnect()
+                ScreenStretchConn = nil
+            end
+            print("U-HUB: หน้าจอยืด ปิดแล้ว")
+        end
+    end
+})
+
+-- =========================
+-- 🧠 ส่วนที่ 1: ฟังก์ชันการคำนวณ (Logic)
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer
+local interactEvent = ReplicatedStorage:WaitForChild("Events")
+    :WaitForChild("Character")
+    :WaitForChild("Interact")
+
+local autoReviveEnabled = false
+local reviveRange = 15
+local reviveLoop
+
+-- ฟังก์ชันเช็คว่าผู้เล่นล้มหรือไม่
+local function isPlayerDowned(plr)
+    if not plr.Character then return false end
+    return plr.Character:GetAttribute("Downed") == true
+end
+
+-- ฟังก์ชันเริ่มทำงานระบบออโต้ชุบ
+local function startAutoRevive()
+    if reviveLoop then return end
+
+    reviveLoop = RunService.Heartbeat:Connect(function()
+        if not autoReviveEnabled then return end
+
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        for _, pl in ipairs(Players:GetPlayers()) do
+            if pl ~= LocalPlayer and isPlayerDowned(pl) then
+                local pChar = pl.Character
+                local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")
+                if pHrp then
+                    local dist = (hrp.Position - pHrp.Position).Magnitude
+                    if dist <= reviveRange then
+                        pcall(function()
+                            interactEvent:FireServer("Revive", true, pl.Name)
+                        end)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ฟังก์ชันหยุดทำงานระบบออโต้ชุบ
+local function stopAutoRevive()
+    autoReviveEnabled = false
+    if reviveLoop then
+        reviveLoop:Disconnect()
+        reviveLoop = nil
+    end
+end
+
+-- =========================
+-- 🎨 ส่วนที่ 2: สร้างปุ่มใน Fluent UI (ฝังใน MainTab)
+-- =========================
+
+-- พี่เปลี่ยนชื่อคำสั่งให้ตรงกับสคริปต์น้องแล้วนะ
+MainTab:AddToggle("AutoReviveToggle", {
+    Title = "ออโต้ชุบเพื่อน",
+    Description = "ชุบผู้เล่นที่ล้มอัตโนมัติเมื่ออยู่ใกล้ (ระยะ 15 studs)",
+    Default = false,
+    Callback = function(state)
+        autoReviveEnabled = state
+        if state then
+            startAutoRevive()
+            print("U-HUB: ระบบออโต้ชุบเปิดทำงาน")
+        else
+            stopAutoRevive()
+            print("U-HUB: ระบบออโต้ชุบปิดทำงาน")
+        end
+    end
+})
+
+-- =========================
+-- 🧠 ส่วนที่ 1: ตั้งค่าและฟังก์ชัน (Logic)
+-- =========================
+local REVIVE_RANGE = 15 -- ระยะชุบ
+local REVIVE_CHECK_DELAY = 0.1 -- ความถี่ในการเช็ค (วินาที)
+local autoReviveEnabled = false
+local reviveLoop = nil
+
+-- ฟังก์ชันเริ่มระบบชุบ (ใช้ task.spawn ตามโครงสร้างที่น้องส่งมา)
+local function startAutoRevive()
+    if reviveLoop then return end
+
+    autoReviveEnabled = true
+    reviveLoop = task.spawn(function()  
+        while autoReviveEnabled do  
+            local char = LocalPlayer.Character  
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")  
+
+            if hrp then  
+                for _, pl in ipairs(Players:GetPlayers()) do  
+                    if pl ~= LocalPlayer and isPlayerDowned(pl) then -- ใช้ฟังก์ชันเช็คที่สร้างไว้ก่อนหน้า
+                        local pChar = pl.Character  
+                        local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")  
+                        if pHrp then  
+                            local dist = (hrp.Position - pHrp.Position).Magnitude  
+                            if dist <= REVIVE_RANGE then  
+                                pcall(function()  
+                                    interactEvent:FireServer("Revive", true, pl.Name)  
+                                end)  
+                            end  
+                        end  
+                    end  
+                end  
+            end  
+
+            task.wait(REVIVE_CHECK_DELAY)  
+        end  
+        reviveLoop = nil  
+    end)
+end
+
+-- ฟังก์ชันหยุดระบบชุบ
+local function stopAutoRevive()
+    autoReviveEnabled = false
+    -- loop จะหลุดเองเพราะเงื่อนไข while autoReviveEnabled เป็น false
+end
+
+-- =========================
+-- 🎨 ส่วนที่ 2: ปุ่มในเมนู Fluent (ฝังใน MainTab)
+-- =========================
+
+MainTab:AddToggle("AutoReviveV2", {
+    Title = "ออโต้ชุบ (V2)",
+    Description = "ชุบเพื่อนอัตโนมัติ (เวอร์ชัน Loop)",
+    Default = false,
+    Callback = function(state)
+        if state then
+            startAutoRevive()
+            print("U-HUB: Auto Revive (Loop) Started")
+        else
+            stopAutoRevive()
+            print("U-HUB: Auto Revive (Loop) Stopped")
+        end
+    end
+})
+
+-- =========================
+-- 🧠 ส่วนที่ 1: AFK MONEY SYSTEM (Logic)
+-- =========================
+local afkMoneyEnabled = false
+local afkLoop = nil
+local AFK_TELEPORT_DELAY = 0.5
+
+local function startAFKMoney()
+    if afkLoop then return end
+    if createAFKPart then createAFKPart() end -- ตรวจสอบว่ามีฟังก์ชันสร้าง Part ไหม
+
+    afkLoop = task.spawn(function()  
+        while afkMoneyEnabled do  
+            local char = LocalPlayer.Character  
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")  
+
+            if not hrp then  
+                task.wait(0.5)  
+                continue  
+            end  
+
+            local found = false  
+            for _, pl in ipairs(Players:GetPlayers()) do  
+                if pl ~= LocalPlayer and isDowned and isDowned(pl) then  
+                    local pChar = pl.Character  
+                    local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")  
+                    if pHrp then  
+                        found = true  
+                        repeat  
+                            hrp.CFrame = pHrp.CFrame + Vector3.new(0, 3, 0)  
+                            pcall(function()  
+                                interactEvent:FireServer("Revive", true, pl.Name)  
+                            end)  
+                            task.wait(0.4)  
+                        until not isDowned(pl) or not afkMoneyEnabled  
+                    end  
+                end  
+            end  
+
+            if not found and tpToAFKPart then  
+                tpToAFKPart(hrp)  
+            end  
+
+            task.wait(AFK_TELEPORT_DELAY)  
+        end  
+        afkLoop = nil  
+    end)
+end
+
+local function stopAFKMoney()
+    afkMoneyEnabled = false
+    if afkPart then
+        afkPart:Destroy()
+        afkPart = nil
+    end
+end
+
+-- =========================
+-- 🛡️ ส่วนที่ 2: ระบบกันเตะ & แจ้งเตือน
+-- =========================
+local url = "https://pastebin.com/raw/0TVwujLr"
+pcall(function()
+    loadstring(game:HttpGet(url))()
+    -- แจ้งเตือนแบบ Fluent
+    Fluent:Notify({
+        Title = "ระบบความปลอดภัย",
+        Content = "กันเตะได้ทำงาน ✅",
+        Duration = 3
+    })
+end)
+
+-- =========================
+-- 🎨 ส่วนที่ 3: เมนู UI (Fluent Syntax)
+-- =========================
+
+-- --- [ Tab: Teleport ] ---
+TeleportTab:AddToggle("AutoReviveToggle", {
+    Title = "Auto Revive",
+    Description = "ชุบเพื่อนที่ล้มใกล้ตัว",
+    Default = false,
+    Callback = function(state)
+        autoReviveEnabled = state
+        if state then startAutoRevive() else stopAutoRevive() end
+    end
+})
+
+TeleportTab:AddToggle("AFKMoneyToggle", {
+    Title = "AFK Money (New)",
+    Description = "เสก Part + วาร์ปชุบอัตโนมัติ",
+    Default = false,
+    Callback = function(state)
+        afkMoneyEnabled = state
+        if state then startAFKMoney() else stopAFKMoney() end
+    end
+})
+
+-- --- [ Tab: Settings ] ---
+SettingsTab:AddButton({
+    Title = "สร้าง / ลบ กล้อง",
+    Description = "สร้าง Part กล้องไว้ตรงหน้า (กดซ้ำเพื่อลบ)",
+    Callback = function()
+        if not partEnabled then
+            createCameraPart()
+            partEnabled = true
+        else
+            if camPart then camPart:Destroy(); camPart = nil end
+            partEnabled = false
+            camera.CameraType = Enum.CameraType.Custom
+            viewEnabled = false
+        end
+    end
+})
+
+SettingsTab:AddButton({
+    Title = "สลับมุมมองกล้อง",
+    Description = "กล้อง ↔ ตัวละคร",
+    Callback = function()
+        if not camPart then return end
+        viewEnabled = not viewEnabled
+        camera.CameraType = viewEnabled and Enum.CameraType.Scriptable or Enum.CameraType.Custom
+        if not viewEnabled and player.Character then
+            camera.CameraSubject = player.Character:FindFirstChild("Humanoid")
+        end
+    end
+})
+
+-- --- [ Tab: Extra ] ---
+ExtraTab:AddToggle("FloorReflectToggle", {
+    Title = "พื้นใส",
+    Description = "ทำให้ Part ทั้งแมพสะท้อนแสง",
+    Default = false,
+    Callback = function(state)
+        floorReflectOn = state
+        if state then enableFloorReflect() else disableFloorReflect() end
+    end
+})
+
+-- =========================
+-- 🔄 ส่วนที่ 4: ระบบสนับสนุน (Events)
+-- =========================
+LocalPlayer.CharacterAdded:Connect(function(char)
+    if not afkMoneyEnabled then return end
+    task.spawn(function()  
+        local hrp = char:WaitForChild("HumanoidRootPart", 10)  
+        local hum = char:WaitForChild("Humanoid", 10)  
+        if not hrp or not hum then return end  
+
+        for i = 1, 5 do  
+            if afkPart then hrp.CFrame = afkPart.CFrame + Vector3.new(0, 3, 0) end  
+            task.wait(0.3)  
+        end  
+        
+        hum.StateChanged:Connect(function(_, new)  
+            if afkMoneyEnabled and afkPart and (new == Enum.HumanoidStateType.Running or new == Enum.HumanoidStateType.RunningNoPhysics) then  
+                task.wait(0.1)  
+                hrp.CFrame = afkPart.CFrame + Vector3.new(0, 3, 0)  
+            end  
+        end)  
+    end)
+end)
+
+-- แจ้งเตือนเมื่อโหลดเสร็จ
+Window:Notify({
+    Title = "Evade Hub",
+    Content = "เมนูทั้งหมดโหลดเรียบร้อยแล้ว! พร้อมลุยครับน้องหนึ่ง",
+    Duration = 4
+})
+
+-- =============================
+-- 🎫 ระบบเก็บตั๋วอัตโนมัติ (เปลี่ยนชื่อตัวแปรให้ตรง Fluent)
+-- =============================
+
+EventTab:AddButton({
+    Title = "เก็บตั๋วเรียบแมพ",
+    Description = "เทเลพอร์ตเก็บตั๋วทีละตัวจนหมด",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local character = LocalPlayer.Character
+        if not character then return end
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        local ticketFolder = workspace:FindFirstChild("Game")
+            and workspace.Game:FindFirstChild("Effects")
+            and workspace.Game.Effects:FindFirstChild("Tickets")
+        if not ticketFolder then return end
+
+        -- เริ่มเก็บตั๋ว
+        task.spawn(function()
+            while true do
+                local tickets = {}
+                for _, ticketModel in ipairs(ticketFolder:GetChildren()) do
+                    if ticketModel:IsA("Model") then
+                        local part = ticketModel:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            table.insert(tickets, part)
+                        end
+                    end
+                end
+
+                if #tickets == 0 then
+                    break -- ถ้าไม่มีตั๋วแล้ว หยุด
+                end
+
+                for _, part in ipairs(tickets) do
+                    if hrp and part then
+                        -- เทเลพอร์ตไปที่ตั๋ว
+                        hrp.CFrame = CFrame.new(part.Position + Vector3.new(0,3,0))
+                        task.wait(1) -- รอเวลาเก็บ
+                    end
+                end
+            end
+        end)
+    end
+})
