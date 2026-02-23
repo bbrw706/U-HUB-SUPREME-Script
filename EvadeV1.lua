@@ -1,4 +1,4 @@
--- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]
+-- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]       ตอนนี้ถึงบรรทัด 1895
 local VirtualUser = game:GetService("VirtualUser")
 game:GetService("Players").LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
@@ -123,7 +123,7 @@ end)
 
 
 -- [[ EVADE SCRIPT: FLUENT VERSION - NO DELETIONS & ORGANIZED ]]
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
 
 -- Sidebar line
 local SidebarLine = Instance.new("Frame")
@@ -134,14 +134,169 @@ SidebarLine.BorderSizePixel = 0
 SidebarLine.ZIndex = 5
 SidebarLine.Parent = game:GetService("CoreGui")
 
--- Tabs
+-- =================================================
+-- 📑 ส่วนของแถบหน้าจอ (Tabs)
+-- =================================================
 local MainTab     = Window:AddTab({Title="เมนูหลัก", Icon="star"})
 local TeleportTab = Window:AddTab({Title="เทเลพอร์ต", Icon="navigation"})
 local VisualsTab  = Window:AddTab({Title="มองต่างๆ", Icon="eye"})
 local ExtraTab    = Window:AddTab({Title="ของเสริม", Icon="tag"})
-local FPSTab = Window:AddTab({Title = "fps", Icon = "accessibility"})
-local EventTab    = Window:AddTab({Title="เกี่ยวกับอีเว้น", Icon="calendar"})
+local FPSTab      = Window:AddTab({Title = "fps", Icon = "accessibility"})
+local EventTab    = Window:AddTab({Title="เกี่ยวกับอีเว้น", Icon="calendar"}) -- แถบนี้แหละ!
 local SettingsTab = Window:AddTab({Title="ตั้งค่า", Icon="wrench"})
+
+-- =================================================
+-- 🎫 สวิตช์ออโต้เก็บตั๋ว (ใส่เข้าไปใน EventTab ทันที)
+-- =================================================
+local collectTicketsActive = false 
+
+EventTab:AddToggle("CollectTicketToggle", {
+    Title = "ออโต้เก็บตั๋ว (Auto Collect)",
+    Description = "เปิดสวิตช์เพื่อเริ่มวาร์ปเก็บตั๋วอัตโนมัติ",
+    Default = false,
+    Callback = function(state)
+        collectTicketsActive = state
+        
+        if state then
+            task.spawn(function()
+                local Players = game:GetService("Players")
+                local LocalPlayer = Players.LocalPlayer
+                
+                while collectTicketsActive do
+                    local char = LocalPlayer.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    
+                    -- เช็คตำแหน่งตั๋วใน Evade
+                    local ticketFolder = workspace:FindFirstChild("Game")
+                        and workspace.Game:FindFirstChild("Effects")
+                        and workspace.Game.Effects:FindFirstChild("Tickets")
+
+                    if hrp and ticketFolder then
+                        local tickets = {}
+                        for _, ticketModel in ipairs(ticketFolder:GetChildren()) do
+                            if ticketModel:IsA("Model") then
+                                local part = ticketModel:FindFirstChildWhichIsA("BasePart")
+                                if part then table.insert(tickets, part) end
+                            end
+                        end
+
+                        for _, part in ipairs(tickets) do
+                            if not collectTicketsActive then break end 
+                            if hrp and part and part.Parent then
+                                -- วาร์ปไปตำแหน่งตั๋ว
+                                hrp.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
+                                task.wait(1) 
+                            end
+                        end
+                    end
+                    task.wait(0.5) 
+                end
+            end)
+
+            Fluent:Notify({
+                Title = "U-HUB Notify",
+                Content = "เริ่มระบบออโต้เก็บตั๋ว ✅",
+                Duration = 2
+            })
+        else
+            Fluent:Notify({
+                Title = "U-HUB Notify",
+                Content = "ปิดระบบออโต้เก็บตั๋ว ❌",
+                Duration = 2
+            })
+        end
+    end
+})
+
+-- =================================================
+-- 🎫 ระบบ U-HUB Ticket Farm (มีที่ยืน | ไม่มี UI บังหน้าจอ)
+-- =================================================
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- ตัวแปรสถานะ
+getgenv().AutoTicketFarm = false
+local platform = nil
+
+-- [[ 🧠 1. ฟังก์ชันสร้างที่ยืนกันตก ]]
+local function ManagePlatform(state)
+    if state then
+        if not platform or not platform.Parent then
+            platform = Instance.new("Part")
+            platform.Name = "UHubPlatform"
+            platform.Size = Vector3.new(10, 1, 10)
+            platform.Anchored = true
+            platform.CanCollide = true
+            platform.Transparency = 1 -- ปรับให้ล่องหนสนิท (0.5 ถ้าอยากเห็นที่ยืน)
+            platform.Parent = workspace
+        end
+    else
+        if platform then
+            platform:Destroy()
+            platform = nil
+        end
+    end
+end
+
+-- [[ 🎡 2. สร้างปุ่ม Toggle ใน EventTab ]]
+EventTab:AddToggle("UHubTicketToggle", {
+    Title = "เปิดระบบ U-HUB Ticket Farm",
+    Description = "วาร์ปเก็บตั๋วอัตโนมัติ + ที่ยืนล่องหนกันตกแมพ",
+    Default = false,
+    Callback = function(state)
+        getgenv().AutoTicketFarm = state
+        ManagePlatform(state) -- สร้างหรือลบที่ยืน
+        
+        if state then
+            -- เริ่มทำงานเบื้องหลัง
+            task.spawn(function()
+                while getgenv().AutoTicketFarm do
+                    local char = LocalPlayer.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    
+                    -- ค้นหาตั๋วในแมพ
+                    local ticketFolder = workspace:FindFirstChild("Game") 
+                        and workspace.Game:FindFirstChild("Effects") 
+                        and workspace.Game.Effects:FindFirstChild("Tickets")
+
+                    if hrp and ticketFolder then
+                        local tickets = ticketFolder:GetChildren()
+                        for _, ticket in ipairs(tickets) do
+                            if not getgenv().AutoTicketFarm then break end
+                            local part = ticket:FindFirstChildWhichIsA("BasePart")
+                            
+                            if part and part.Parent then
+                                -- ย้ายที่ยืนไปรองรับใต้ตั๋ว
+                                if platform then 
+                                    platform.CFrame = CFrame.new(part.Position + Vector3.new(0, 1, 0)) 
+                                end
+                                -- วาร์ปตัวเราไปเก็บ
+                                hrp.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
+                                task.wait(1) -- รอให้ Server บันทึกว่าเก็บแล้ว
+                            end
+                        end
+                    end
+                    task.wait(0.5) -- พักเครื่องนิดนึงก่อนเช็คตั๋วใหม่
+                end
+            end)
+
+            Fluent:Notify({
+                Title = "U-HUB",
+                Content = "เริ่มฟาร์มตั๋วแบบคลีนๆ แล้วครับน้องหนึ่ง ✅",
+                Duration = 2
+            })
+        else
+            -- ปิดระบบ
+            ManagePlatform(false)
+            Fluent:Notify({
+                Title = "U-HUB",
+                Content = "ปิดระบบฟาร์มแล้วครับ ❌",
+                Duration = 2
+            })
+        end
+    end
+})
 
 -- Player & GUI
 local Players = game:GetService("Players")
@@ -431,7 +586,7 @@ end})
 -- [[ EVADE SCRIPT: FLUENT VERSION - FULL INTEGRATED PART 2 ]]
 -- น้องหนึ่ง โค้ดนี้รวมฟังก์ชันใหม่ทั้งหมด พร้อมปุ่มลอยสีฟ้าและ Keybind ในตัวครับ
 
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
 
 -- ฟังก์ชันแต่งปุ่มลอย (ฟ้าโปร่งแสง + โค้ง)
 local function StyleNeungButton(btn)
@@ -641,7 +796,6 @@ end})
 
 -- [[ EVADE SCRIPT: FLUENT VERSION - FINAL INTEGRATED ]]
 
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 -- ฟังก์ชันแต่งปุ่มลอย (ฟ้าโปร่งแสง + โค้ง)
 local function StyleNeungButton(btn)
@@ -663,14 +817,22 @@ end
 -- =========================================
 -- [ EVENT: ESP TICKET & FARM ]
 -- =========================================
--- [[ 🧠 1. เตรียมสมองและตัวแปร ]]
+-- =================================================
+-- 🎫 ระบบ U-HUB Ticket Farm (Score + Platform + HH:MM:SS)
+-- =================================================
+
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local TotalFarmSeconds = 0
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- [[ 🧠 1. เตรียมตัวแปรสถานะ ]]
+getgenv().AutoTicketFarm = false
+if _G.TotalFarmSeconds == nil then _G.TotalFarmSeconds = 0 end
+if _G.TicketScore == nil then _G.TicketScore = 0 end -- ตัวแปรนับคะแนน
 local LastTimeTick = tick()
 local Platform = nil 
-local TicketToggleUI 
 
+-- ฟังก์ชันแปลงเวลา
 local function FormatUHubTime(seconds)
     local hours = math.floor(seconds / 3600)
     local mins = math.floor((seconds % 3600) / 60)
@@ -678,151 +840,129 @@ local function FormatUHubTime(seconds)
     return string.format("%02d:%02d:%02d", hours, mins, secs)
 end
 
--- 🧠 ฟังก์ชันสร้างฐานที่ยืน (Platform)
-local function CreatePlatform(pos)
+-- ฟังก์ชันจัดการที่ยืน
+local function ManagePlatform(state, pos)
+    if state then
+        if not Platform or not Platform.Parent then
+            Platform = Instance.new("Part")
+            Platform.Name = "UHubPlatform"
+            Platform.Size = Vector3.new(15, 1, 15)
+            Platform.Anchored = true
+            Platform.Transparency = 0.5
+            Platform.Color = Color3.fromRGB(255, 105, 180)
+            Platform.Material = Enum.Material.Glass
+            Platform.Parent = workspace
+        end
+        if pos then Platform.CFrame = CFrame.new(pos.X, pos.Y - 3.5, pos.Z) end
+    else
+        if Platform then Platform:Destroy(); Platform = nil end
+    end
+end
+
+-- [[ 🎨 2. ฟังก์ชันจัดการ UI ]]
+local function CreateUHubUI()
     if not getgenv().AutoTicketFarm then return end
-    if not Platform or not Platform.Parent then
-        Platform = Instance.new("Part")
-        Platform.Name = "UHubPlatform"
-        Platform.Size = Vector3.new(15, 1, 15)
-        Platform.Anchored = true
-        Platform.Transparency = 0.5
-        Platform.Color = Color3.fromRGB(255, 105, 180) -- สีชมพู
-        Platform.Material = Enum.Material.Glass
-        Platform.Parent = workspace
-    end
-    Platform.CFrame = CFrame.new(pos.X, pos.Y - 3.5, pos.Z)
+    if LocalPlayer.PlayerGui:FindFirstChild("UHubOverlay") then LocalPlayer.PlayerGui.UHubOverlay:Destroy() end
+    
+    local gui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+    gui.Name = "UHubOverlay"; gui.IgnoreGuiInset = true; gui.ResetOnSpawn = false 
+
+    local bg = Instance.new("Frame", gui)
+    bg.Size = UDim2.fromScale(1,1); bg.BackgroundColor3 = Color3.fromRGB(255, 105, 180); bg.BackgroundTransparency = 0.25
+    
+    local text = Instance.new("TextLabel", bg)
+    text.Name = "InfoText"; text.Size = UDim2.fromScale(1,1); text.BackgroundTransparency = 1; text.TextColor3 = Color3.new(1,1,1)
+    text.TextScaled = true; text.Font = Enum.Font.GothamBold
+    text.Text = "U-HUB\nกำลังเตรียมตัว..."
+
+    local heartL = Instance.new("TextLabel", bg)
+    heartL.Text = "💖"; heartL.Size = UDim2.fromScale(0.1, 0.1); heartL.Position = UDim2.fromScale(0.1, 0.5); heartL.BackgroundTransparency = 1; heartL.TextScaled = true
+    local heartR = heartL:Clone(); heartR.Parent = bg; heartR.Position = UDim2.fromScale(0.8, 0.5)
+    
+    return gui
 end
 
-local function RemovePlatform()
-    if Platform then Platform:Destroy(); Platform = nil end
-end
-
--- [[ 🧠 2. ระบบฟาร์มและวาร์ป (สมองหลัก) ]]
-task.spawn(function()
-    while task.wait(0.2) do
-        -- ถ้าปิดสวิตช์หลัก ให้หยุดทุกอย่าง
-        if not getgenv().AutoTicketFarm then 
-            RemovePlatform()
-            continue 
-        end
-
-        local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then continue end
-
-        -- 🛑 กรณีกด "หยุดชั่วคราว"
-        if getgenv().Stopped then 
-            hrp.CFrame = CFrame.new(hrp.Position.X, 1250, hrp.Position.Z)
-            CreatePlatform(hrp.Position) -- สร้างที่ยืน
-            continue 
-        end
-
-        local ticketsFolder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Effects") and workspace.Game.Effects:FindFirstChild("Tickets")
-        local foundTicket = false
-        
-        if ticketsFolder then
-            local allTickets = ticketsFolder:GetChildren()
-            if #allTickets > 0 then
-                for _, ticket in pairs(allTickets) do
-                    if not getgenv().AutoTicketFarm or getgenv().Stopped then break end
-                    local root = ticket:FindFirstChild("HumanoidRootPart")
-                    if root and ticket.Parent then
-                        foundTicket = true
-                        RemovePlatform() -- ลบที่ยืนก่อนวาร์ปไปเก็บ
-                        hrp.CFrame = root.CFrame * CFrame.new(0, 2, 0)
-                        pcall(function() game:GetService("ReplicatedStorage").Events.CollectTicket:FireServer(ticket) end)
-                        break
-                    end
-                end
-            end
-        end
-
-        -- 🛑 กรณีไม่มีตั๋ว ให้วาร์ปขึ้นที่สูง + สร้างที่ยืน
-        if not foundTicket and getgenv().AutoTicketFarm and not getgenv().Stopped then
-            hrp.CFrame = CFrame.new(hrp.Position.X, 1250, hrp.Position.Z)
-            CreatePlatform(hrp.Position)
-        end
-    end
-end)
-
--- [[ 🧠 3. ระบบ UI และ Toggle ]]
+-- [[ 🎡 3. สร้างระบบ Toggle ]]
 local TicketSection = EventTab:AddSection("ระบบตั๋ว (Ticket System)")
 
-TicketToggleUI = TicketSection:AddToggle("UHubTicketToggle", {
+local TicketToggleUI = TicketSection:AddToggle("UHubTicketToggle", {
     Title = "เปิดระบบ U-HUB Ticket Farm",
-    Description = "กด [N] เพื่อปิด/เปิดฟาร์ม",
+    Description = "ฟาร์มตั๋ว + นับคะแนน + ที่ยืน [N] ปิด/เปิด",
     Default = false,
     Callback = function(state)
         getgenv().AutoTicketFarm = state
+        ManagePlatform(state)
         
-        if not state then
-            getgenv().Stopped = true
-            if game.Players.LocalPlayer.PlayerGui:FindFirstChild("UHubOverlay") then game.Players.LocalPlayer.PlayerGui.UHubOverlay:Destroy() end
-            if game.Players.LocalPlayer.PlayerGui:FindFirstChild("UHubStopBtn") then game.Players.LocalPlayer.PlayerGui.UHubStopBtn:Destroy() end
-            RemovePlatform()
+        if state then
+            LastTimeTick = tick()
+            local ui = CreateUHubUI()
+            game:GetService("Lighting").Ambient = Color3.fromRGB(255, 150, 200)
+
+            task.spawn(function()
+                while getgenv().AutoTicketFarm do
+                    -- เช็ค UI
+                    if not LocalPlayer.PlayerGui:FindFirstChild("UHubOverlay") then ui = CreateUHubUI() end
+                    
+                    -- อัปเดตข้อมูล UI (เวลา + คะแนน)
+                    if ui and ui:FindFirstChild("InfoText", true) then
+                        local currentTick = tick()
+                        _G.TotalFarmSeconds = _G.TotalFarmSeconds + (currentTick - LastTimeTick)
+                        LastTimeTick = currentTick
+                        ui:FindFirstChild("InfoText", true).Text = string.format(
+                            "U-HUB\nAUTO TICKET\nคะแนนที่เก็บได้: %d ใบ\nเวลาสะสม: %s",
+                            _G.TicketScore, FormatUHubTime(_G.TotalFarmSeconds)
+                        )
+                    end
+
+                    local char = LocalPlayer.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    local ticketFolder = workspace:FindFirstChild("Game") 
+                        and workspace.Game:FindFirstChild("Effects") 
+                        and workspace.Game.Effects:FindFirstChild("Tickets")
+
+                    if hrp and ticketFolder then
+                        local allTickets = ticketFolder:GetChildren()
+                        if #allTickets > 0 then
+                            for _, ticket in ipairs(allTickets) do
+                                if not getgenv().AutoTicketFarm then break end
+                                local part = ticket:FindFirstChildWhichIsA("BasePart")
+                                if part and part.Parent then
+                                    -- วาร์ปเก็บตั๋ว
+                                    hrp.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
+                                    ManagePlatform(true, part.Position) -- ย้ายที่ยืนไปรอง
+                                    
+                                    _G.TicketScore = _G.TicketScore + 1 -- บวกคะแนน
+                                    task.wait(1) -- เวลารอเก็บ
+                                end
+                            end
+                        else
+                            -- ถ้าไม่มีตั๋ว ให้วาร์ปขึ้นที่สูงไปรอ
+                            hrp.CFrame = CFrame.new(hrp.Position.X, 1250, hrp.Position.Z)
+                            ManagePlatform(true, hrp.Position)
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+
+            Fluent:Notify({Title = "U-HUB", Content = "เริ่มฟาร์มแล้ว! เก็บให้เรียบนะน้องหนึ่ง", Duration = 2})
+        else
+            -- ปิดระบบ
+            if LocalPlayer.PlayerGui:FindFirstChild("UHubOverlay") then LocalPlayer.PlayerGui.UHubOverlay:Destroy() end
             game:GetService("Lighting").Ambient = Color3.fromRGB(127, 127, 127)
-            
-            -- วาร์ปลงพื้น
-            local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then hrp.CFrame = CFrame.new(hrp.Position.X, 10, hrp.Position.Z) end
-            return
+            ManagePlatform(false)
+            Fluent:Notify({Title = "U-HUB", Content = "หยุดฟาร์มแล้วครับ", Duration = 2})
         end
-
-        getgenv().Stopped = false
-        LastTimeTick = tick()
-        game:GetService("Lighting").Ambient = Color3.fromRGB(255,150,200)
-
-        -- สร้าง UI Overlay สวยๆ
-        local gui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
-        gui.Name = "UHubOverlay"; gui.IgnoreGuiInset = true
-        local bg = Instance.new("Frame", gui)
-        bg.Size = UDim2.fromScale(1,1); bg.BackgroundColor3 = Color3.fromRGB(255,105,180); bg.BackgroundTransparency = 0.25
-        local text = Instance.new("TextLabel", bg)
-        text.Size = UDim2.fromScale(1,1); text.BackgroundTransparency = 1; text.TextColor3 = Color3.new(1,1,1)
-        text.TextScaled = true; text.Font = Enum.Font.GothamBold
-
-        -- หัวใจกุ๊กกิ๊ก
-        local heartL = Instance.new("TextLabel", bg)
-        heartL.Text = "💖"; heartL.Size = UDim2.fromScale(0.1, 0.1); heartL.Position = UDim2.fromScale(0.1, 0.5); heartL.BackgroundTransparency = 1; heartL.TextScaled = true
-        local heartR = heartL:Clone(); heartR.Parent = bg; heartR.Position = UDim2.fromScale(0.8, 0.5)
-
-        task.spawn(function()
-            while getgenv().AutoTicketFarm and not getgenv().Stopped do
-                local currentTick = tick()
-                TotalFarmSeconds = TotalFarmSeconds + (currentTick - LastTimeTick)
-                LastTimeTick = currentTick
-                text.Text = "U-HUB\nAUTO TICKET\nฟาร์มตั๋ววาเลนไทน์\nเวลาสะสม: " .. FormatUHubTime(TotalFarmSeconds)
-                task.wait(1)
-            end
-        end)
-
-        -- ปุ่มลอย
-        local btnGui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
-        btnGui.Name = "UHubStopBtn"; btnGui.ResetOnSpawn = false
-        local button = Instance.new("TextButton", btnGui)
-        button.Size = UDim2.fromOffset(150,45); button.Position = UDim2.fromScale(0.5,0.8); button.AnchorPoint = Vector2.new(0.5,0.5)
-        button.Text = "หยุดฟาร์ม"; button.BackgroundColor3 = Color3.fromRGB(255,20,147); button.TextColor3 = Color3.new(1,1,1)
-        button.TextScaled = true; button.Font = Enum.Font.GothamBold; Instance.new("UICorner", button); button.Draggable = true; button.Active = true
-
-        button.MouseButton1Click:Connect(function()
-            getgenv().Stopped = not getgenv().Stopped
-            if getgenv().Stopped then
-                button.Text = "เริ่มฟาร์มต่อ"; button.BackgroundColor3 = Color3.fromRGB(0, 170, 255); bg.Visible = false
-            else
-                button.Text = "หยุดฟาร์ม"; button.BackgroundColor3 = Color3.fromRGB(255,20,147); bg.Visible = true; LastTimeTick = tick()
-            end
-        end)
     end
 })
 
--- [[ 🧠 4. ระบบปุ่ม N ]]
+-- ระบบปุ่ม N
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
     if input.KeyCode == Enum.KeyCode.N then
-        if TicketToggleUI then TicketToggleUI:SetValue(not getgenv().AutoTicketFarm) end
+        TicketToggleUI:SetValue(not getgenv().AutoTicketFarm)
     end
 end)
-
 TicketSection:AddKeybind("AutoTicketKey", {Title = "ปุ่มฟาร์มตั๋ว", Default = "N", Callback = function(v) getgenv().AutoTicketFarm = v end})
 
 -- =========================================
@@ -976,6 +1116,75 @@ task.spawn(function()
         task.wait(0.5)
     end
 end)
+
+-- [[ 🧠 1. ตัวแปรสถานะ ]]
+local playerESPEnabled = false
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- [[ 🧠 2. ฟังก์ชันสมอง ESP ]]
+local function updatePlayerESP()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local char = p.Character
+            local head = char:FindFirstChild("Head")
+            
+            if head then
+                local billboard = head:FindFirstChild("UHubESP")
+                local highlight = char:FindFirstChild("UHubHighlight")
+
+                if playerESPEnabled then
+                    -- สร้างชื่อบนหัว
+                    if not billboard then
+                        billboard = Instance.new("BillboardGui", head)
+                        billboard.Name = "UHubESP"
+                        billboard.AlwaysOnTop = true
+                        billboard.Size = UDim2.new(0, 100, 0, 50)
+                        billboard.ExtentsOffset = Vector3.new(0, 3, 0)
+                        
+                        local text = Instance.new("TextLabel", billboard)
+                        text.Size = UDim2.new(1, 0, 1, 0)
+                        text.BackgroundTransparency = 1
+                        text.Text = p.Name
+                        text.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        text.Font = Enum.Font.GothamBold
+                        text.TextScaled = true
+                    end
+                    -- สร้างกรอบตัว (Highlight)
+                    if not highlight then
+                        highlight = Instance.new("Highlight", char)
+                        highlight.Name = "UHubHighlight"
+                        highlight.FillColor = Color3.fromRGB(255, 0, 0) -- สีแดง
+                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    end
+                else
+                    -- ลบออกเมื่อปิด
+                    if billboard then billboard:Destroy() end
+                    if highlight then highlight:Destroy() end
+                end
+            end
+        end
+    end
+end
+
+-- [[ 🧠 3. ปุ่มกดในหน้า VisualsTab ]]
+VisualsTab:AddToggle("ESPToggle", {
+    Title = "มองผู้เล่น (ESP Player)",
+    Description = "แสดงชื่อและกรอบตัวละครผู้เล่นคนอื่น",
+    Default = false,
+    Callback = function(state)
+        playerESPEnabled = state
+        if not state then updatePlayerESP() end -- ล้างค่าทันทีที่ปิด
+    end
+})
+
+-- [[ 🧠 4. ลูปให้ทำงานตลอดเวลา ]]
+game:GetService("RunService").RenderStepped:Connect(function()
+    if playerESPEnabled then
+        updatePlayerESP()
+    end
+end)
+
 
 -- [[ 🧠 ส่วนที่ 2: ตัว Toggle ใน Fluent UI (ใส่ใน VisualsTab) ]]
 local DownedToggle = VisualsTab:AddToggle("DownedESP", {
@@ -1680,56 +1889,144 @@ end)
 
 -- แจ้งเตือนเมื่อโหลดเสร็จ
 Window:Notify({
-    Title = "Evade Hub",
-    Content = "เมนูทั้งหมดโหลดเรียบร้อยแล้ว! พร้อมลุยครับน้องหนึ่ง",
+    Title = "u Hub",
+    Content = "เมนูทั้งหมดโหลดเรียบร้อยแล้ว! พร้อมลุยครับ",
     Duration = 4
 })
 
--- =============================
--- 🎫 ระบบเก็บตั๋วอัตโนมัติ (เปลี่ยนชื่อตัวแปรให้ตรง Fluent)
--- =============================
+-- =================================================
+-- 🚀 U-HUB FULL SCRIPT + EMOTE SYSTEM (V.6)
+-- =================================================
 
-EventTab:AddButton({
-    Title = "เก็บตั๋วเรียบแมพ",
-    Description = "เทเลพอร์ตเก็บตั๋วทีละตัวจนหมด",
-    Callback = function()
-        local Players = game:GetService("Players")
-        local LocalPlayer = Players.LocalPlayer
-        local character = LocalPlayer.Character
-        if not character then return end
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
+-- SERVICES
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualUser = game:GetService("VirtualUser")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 
-        local ticketFolder = workspace:FindFirstChild("Game")
-            and workspace.Game:FindFirstChild("Effects")
-            and workspace.Game.Effects:FindFirstChild("Tickets")
-        if not ticketFolder then return end
+local player = Players.LocalPlayer
 
-        -- เริ่มเก็บตั๋ว
-        task.spawn(function()
-            while true do
-                local tickets = {}
-                for _, ticketModel in ipairs(ticketFolder:GetChildren()) do
-                    if ticketModel:IsA("Model") then
-                        local part = ticketModel:FindFirstChildWhichIsA("BasePart")
-                        if part then
-                            table.insert(tickets, part)
-                        end
-                    end
-                end
+-- [[ 🧠 ส่วนเพิ่ม: ระบบเลือกท่าทาง (Emotes) ]]
+local CurrentEmote = "" -- ท่าที่เลือกไว้
+local EmoteList = {"Default", "Dab", "Floss", "Dance1", "Dance2", "Sit"} -- รายชื่อท่าที่มี (แก้ตามที่มีในเกม)
 
-                if #tickets == 0 then
-                    break -- ถ้าไม่มีตั๋วแล้ว หยุด
-                end
+-- =================================================
+-- GLOBAL STATE
+-- =================================================
+getgenv().AutoTicketFarm = true
+getgenv().Stopped = false
+getgenv().AutoRespawnEnabled = true
 
-                for _, part in ipairs(tickets) do
-                    if hrp and part then
-                        -- เทเลพอร์ตไปที่ตั๋ว
-                        hrp.CFrame = CFrame.new(part.Position + Vector3.new(0,3,0))
-                        task.wait(1) -- รอเวลาเก็บ
-                    end
-                end
-            end
+local lastSavedPosition
+
+-- =================================================
+-- UI & TICKET SYSTEM (โค้ดเดิมน้องหนึ่ง)
+-- =================================================
+-- [ส่วนท้องฟ้าสีชมพูและ UI พี่ขออนุญาตย่อไว้เพื่อให้ดูง่ายนะครับ]
+
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+
+local bg = Instance.new("Frame", gui)
+bg.Size = UDim2.fromScale(1,1)
+bg.BackgroundColor3 = Color3.fromRGB(255,105,180)
+bg.BackgroundTransparency = 0.25
+
+local text = Instance.new("TextLabel", bg)
+text.Size = UDim2.fromScale(1,1)
+text.BackgroundTransparency = 1
+text.TextColor3 = Color3.new(1,1,1)
+text.TextScaled = true
+text.Font = Enum.Font.GothamBold
+
+-- [ส่วนปุ่มหยุด ⛔]
+local btnGui = Instance.new("ScreenGui", player.PlayerGui)
+btnGui.ResetOnSpawn = false
+local button = Instance.new("TextButton", btnGui)
+-- ... (โค้ดปุ่มเดิมของน้องหนึ่ง) ...
+
+-- =================================================
+-- 🎭 ส่วนเพิ่มใหม่: เมนูเลือกท่าทาง (6 ตัวเลือกย่อย)
+-- =================================================
+local EmoteMenu = Instance.new("Frame", btnGui)
+EmoteMenu.Size = UDim2.fromOffset(200, 250)
+EmoteMenu.Position = UDim2.new(0, 20, 0.5, -125)
+EmoteMenu.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
+EmoteMenu.BackgroundTransparency = 0.3
+
+local MenuTitle = Instance.new("TextLabel", EmoteMenu)
+MenuTitle.Size = UDim2.new(1, 0, 0.2, 0)
+MenuTitle.Text = "🎭 เมนูท่าทาง"
+MenuTitle.TextColor3 = Color3.new(1,1,1)
+MenuTitle.TextScaled = true
+MenuTitle.BackgroundTransparency = 1
+
+-- ฟังก์ชันทำท่าทาง
+local function DoEmote(emoteName)
+    if emoteName ~= "" then
+        pcall(function()
+            ReplicatedStorage.Events.Emote:FireServer(emoteName)
         end)
     end
-})
+end
+
+-- สร้าง 6 ปุ่มตัวเลือก
+for i = 1, 6 do
+    local emoteBtn = Instance.new("TextButton", EmoteMenu)
+    emoteBtn.Size = UDim2.new(0.9, 0, 0.12, 0)
+    emoteBtn.Position = UDim2.new(0.05, 0, 0.2 + (i-1)*0.13, 0)
+    emoteBtn.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
+    emoteBtn.TextColor3 = Color3.new(1,1,1)
+    emoteBtn.TextScaled = true
+    
+    if i == 1 then
+        emoteBtn.Text = "1. เลือกท่าที่มี"
+        emoteBtn.MouseButton1Click:Connect(function()
+            CurrentEmote = EmoteList[1] -- ตัวอย่าง: เลือกท่าแรกจากลิสต์
+            print("เลือกท่า: " .. CurrentEmote)
+        end)
+    elseif i == 2 then
+        emoteBtn.Text = "2. ตกลงทำท่า!"
+        emoteBtn.MouseButton1Click:Connect(function()
+            DoEmote(CurrentEmote)
+        end)
+    else
+        emoteBtn.Text = "ปุ่มสำรองที่ " .. i
+    end
+end
+
+-- =================================================
+-- AUTO TICKET FARM (โค้ดวาร์ปเดิมของน้องหนึ่ง)
+-- =================================================
+task.spawn(function()
+    while task.wait(0.2) do
+        if getgenv().Stopped or not getgenv().AutoTicketFarm then continue end
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then continue end
+
+        local hrp = player.Character.HumanoidRootPart  
+        local ticketsFolder = Workspace:FindFirstChild("Game") and Workspace.Game:FindFirstChild("Effects") and Workspace.Game.Effects:FindFirstChild("Tickets")  
+
+        local foundTicket = false  
+        if ticketsFolder then  
+            for _,ticket in pairs(ticketsFolder:GetChildren()) do  
+                if getgenv().Stopped then break end  
+                local root = ticket:FindFirstChild("HumanoidRootPart")  
+                if root and ticket.Parent then  
+                    foundTicket = true  
+                    hrp.CFrame = root.CFrame * CFrame.new(0,2,0)  
+                    pcall(function() ReplicatedStorage.Events.CollectTicket:FireServer(ticket) end)  
+                    break  
+                end  
+            end  
+        end  
+
+        if not foundTicket then  
+            hrp.CFrame = CFrame.new(hrp.Position.X,1250,hrp.Position.Z)
+            -- แอบแถม: ถ้าอยู่บนที่สูง ให้ทำท่าเต้นรอ
+            if CurrentEmote ~= "" then DoEmote(CurrentEmote) end
+        end  
+    end
+end)
