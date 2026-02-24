@@ -476,29 +476,45 @@ LagSection:AddKeybind("LagKey", {
         if v then lagSwitch(0.5) end 
     end
 })
--- =========================================
--- [ 4. เมนูหลัก: AUTO RESPAWN ]
--- =========================================
-local RespawnSection = MainTab:AddSection("ระบบคืนชีพ (Auto Respawn)")
-getgenv().AutoRespawnEnabled = false
-local autoRespawnMethod = "Fake Revive"
-local lastSavedPosition
-local floatingRespawnButton
+getgenv().AutoRespawnEnabled = false -- เปิด-ปิดระบบ
+local lastSavedPosition = nil -- เก็บตำแหน่งล่าสุด
 
-local function createRespawnFloatingButton()
-    if floatingRespawnButton then return end
-    floatingRespawnButton = Instance.new("TextButton", FloatingGui)
-    floatingRespawnButton.Size = UDim2.new(0,120,0,50)
-    floatingRespawnButton.Position = UDim2.new(0.8,0,0.8,0)
-    floatingRespawnButton.Text = "Auto Respawn"
-    floatingRespawnButton.Active = true
-    floatingRespawnButton.Draggable = true
-    StyleFloatingButton(floatingRespawnButton)
-    floatingRespawnButton.MouseButton1Click:Connect(function()
-        getgenv().AutoRespawnEnabled = not getgenv().AutoRespawnEnabled
-        floatingRespawnButton.BackgroundTransparency = getgenv().AutoRespawnEnabled and 0.1 or 0.4
+local function setupAutoRespawn(character)
+    task.spawn(function()
+        local hrp = character:WaitForChild("HumanoidRootPart", 5)
+        if not hrp then return end
+
+        -- เก็บตำแหน่งล่าสุดไว้ตลอดเวลา (เพื่อวาร์ปกลับที่เดิมหลังเกิด)
+        task.spawn(function()
+            while character and character.Parent do
+                if hrp and hrp.Parent then
+                    lastSavedPosition = hrp.Position
+                end
+                task.wait(0.5)
+            end
+        end)
+
+        -- ตรวจสอบเมื่อติดสถานะ Downed (ล้ม)
+        character:GetAttributeChangedSignal("Downed"):Connect(function()
+            if getgenv().AutoRespawnEnabled and character:GetAttribute("Downed") == true then
+                task.wait(3) -- รอ 3 วิค่อยกดเกิดใหม่
+                pcall(function()
+                    game:GetService("ReplicatedStorage").Events.Player.ChangePlayerMode:FireServer(true)
+                end)
+
+                -- รอจนกว่าตัวใหม่จะเกิดแล้ววาร์ปกลับจุดเดิมเป๊ะ
+                repeat task.wait() until game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if lastSavedPosition then
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(lastSavedPosition)
+                end
+            end
+        end)
     end)
 end
+
+-- รันระบบครั้งแรกและทุกครั้งที่เกิดใหม่
+if game.Players.LocalPlayer.Character then setupAutoRespawn(game.Players.LocalPlayer.Character) end
+game.Players.LocalPlayer.CharacterAdded:Connect(setupAutoRespawn)
 
 RespawnSection:AddToggle("RespawnToggle", {Title="ออโต้รีสปอน (ปกติ)", Default=false, Callback=function(v) getgenv().AutoRespawnEnabled = v end})
 RespawnSection:AddToggle("RespawnFloat", {Title="ออโต้รีสปอน (ปุ่มลอย)", Default=false, Callback=function(v)
@@ -1394,39 +1410,7 @@ ExtraTab:AddButton({
     end
 })
 
--- ตัวแปรสถานะรันสคริปต์
-local fakeEdashRunning = false
-local fakeEdashConnection
 
--- ปุ่มในหมวด ของเสริม
-ExtraTab:AddButton({
-    Title = "เสกท่าเวล100 ของปลอม❌(ของคนอื่น)",
-    Description = "กดเพื่อเปิด/ปิดสคริปต์ fake edash",
-    Callback = function()
-        if not fakeEdashRunning then
-            -- ========== เริ่มรันสคริปต์ ==========
-            fakeEdashRunning = true
-            print("Fake Edash เริ่มทำงาน!")
-
-            -- โหลดสคริปต์จากลิ้ง
-            local source = game:HttpGet("https://raw.githubusercontent.com/G4V3S/S/refs/heads/main/fake%20edash.lua")
-            fakeEdashConnection = loadstring(source)
-
-            -- รัน
-            task.spawn(function()
-                pcall(fakeEdashConnection)
-            end)
-
-        else
-            -- ========== ปิดสคริปต์ ==========
-            fakeEdashRunning = false
-            print("Fake Edash ถูกปิดแล้ว!")
-
-            -- พยายามหยุดสคริปต์โดยรีโหลด environment
-            fakeEdashConnection = nil
-        end
-    end
-})
 
 
 -- =========================
@@ -1894,139 +1878,3 @@ Window:Notify({
     Duration = 4
 })
 
--- =================================================
--- 🚀 U-HUB FULL SCRIPT + EMOTE SYSTEM (V.6)
--- =================================================
-
--- SERVICES
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualUser = game:GetService("VirtualUser")
-local RunService = game:GetService("RunService")
-local Lighting = game:GetService("Lighting")
-
-local player = Players.LocalPlayer
-
--- [[ 🧠 ส่วนเพิ่ม: ระบบเลือกท่าทาง (Emotes) ]]
-local CurrentEmote = "" -- ท่าที่เลือกไว้
-local EmoteList = {"Default", "Dab", "Floss", "Dance1", "Dance2", "Sit"} -- รายชื่อท่าที่มี (แก้ตามที่มีในเกม)
-
--- =================================================
--- GLOBAL STATE
--- =================================================
-getgenv().AutoTicketFarm = true
-getgenv().Stopped = false
-getgenv().AutoRespawnEnabled = true
-
-local lastSavedPosition
-
--- =================================================
--- UI & TICKET SYSTEM (โค้ดเดิมน้องหนึ่ง)
--- =================================================
--- [ส่วนท้องฟ้าสีชมพูและ UI พี่ขออนุญาตย่อไว้เพื่อให้ดูง่ายนะครับ]
-
-local gui = Instance.new("ScreenGui", player.PlayerGui)
-gui.IgnoreGuiInset = true
-gui.ResetOnSpawn = false
-
-local bg = Instance.new("Frame", gui)
-bg.Size = UDim2.fromScale(1,1)
-bg.BackgroundColor3 = Color3.fromRGB(255,105,180)
-bg.BackgroundTransparency = 0.25
-
-local text = Instance.new("TextLabel", bg)
-text.Size = UDim2.fromScale(1,1)
-text.BackgroundTransparency = 1
-text.TextColor3 = Color3.new(1,1,1)
-text.TextScaled = true
-text.Font = Enum.Font.GothamBold
-
--- [ส่วนปุ่มหยุด ⛔]
-local btnGui = Instance.new("ScreenGui", player.PlayerGui)
-btnGui.ResetOnSpawn = false
-local button = Instance.new("TextButton", btnGui)
--- ... (โค้ดปุ่มเดิมของน้องหนึ่ง) ...
-
--- =================================================
--- 🎭 ส่วนเพิ่มใหม่: เมนูเลือกท่าทาง (6 ตัวเลือกย่อย)
--- =================================================
-local EmoteMenu = Instance.new("Frame", btnGui)
-EmoteMenu.Size = UDim2.fromOffset(200, 250)
-EmoteMenu.Position = UDim2.new(0, 20, 0.5, -125)
-EmoteMenu.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
-EmoteMenu.BackgroundTransparency = 0.3
-
-local MenuTitle = Instance.new("TextLabel", EmoteMenu)
-MenuTitle.Size = UDim2.new(1, 0, 0.2, 0)
-MenuTitle.Text = "🎭 เมนูท่าทาง"
-MenuTitle.TextColor3 = Color3.new(1,1,1)
-MenuTitle.TextScaled = true
-MenuTitle.BackgroundTransparency = 1
-
--- ฟังก์ชันทำท่าทาง
-local function DoEmote(emoteName)
-    if emoteName ~= "" then
-        pcall(function()
-            ReplicatedStorage.Events.Emote:FireServer(emoteName)
-        end)
-    end
-end
-
--- สร้าง 6 ปุ่มตัวเลือก
-for i = 1, 6 do
-    local emoteBtn = Instance.new("TextButton", EmoteMenu)
-    emoteBtn.Size = UDim2.new(0.9, 0, 0.12, 0)
-    emoteBtn.Position = UDim2.new(0.05, 0, 0.2 + (i-1)*0.13, 0)
-    emoteBtn.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
-    emoteBtn.TextColor3 = Color3.new(1,1,1)
-    emoteBtn.TextScaled = true
-    
-    if i == 1 then
-        emoteBtn.Text = "1. เลือกท่าที่มี"
-        emoteBtn.MouseButton1Click:Connect(function()
-            CurrentEmote = EmoteList[1] -- ตัวอย่าง: เลือกท่าแรกจากลิสต์
-            print("เลือกท่า: " .. CurrentEmote)
-        end)
-    elseif i == 2 then
-        emoteBtn.Text = "2. ตกลงทำท่า!"
-        emoteBtn.MouseButton1Click:Connect(function()
-            DoEmote(CurrentEmote)
-        end)
-    else
-        emoteBtn.Text = "ปุ่มสำรองที่ " .. i
-    end
-end
-
--- =================================================
--- AUTO TICKET FARM (โค้ดวาร์ปเดิมของน้องหนึ่ง)
--- =================================================
-task.spawn(function()
-    while task.wait(0.2) do
-        if getgenv().Stopped or not getgenv().AutoTicketFarm then continue end
-        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then continue end
-
-        local hrp = player.Character.HumanoidRootPart  
-        local ticketsFolder = Workspace:FindFirstChild("Game") and Workspace.Game:FindFirstChild("Effects") and Workspace.Game.Effects:FindFirstChild("Tickets")  
-
-        local foundTicket = false  
-        if ticketsFolder then  
-            for _,ticket in pairs(ticketsFolder:GetChildren()) do  
-                if getgenv().Stopped then break end  
-                local root = ticket:FindFirstChild("HumanoidRootPart")  
-                if root and ticket.Parent then  
-                    foundTicket = true  
-                    hrp.CFrame = root.CFrame * CFrame.new(0,2,0)  
-                    pcall(function() ReplicatedStorage.Events.CollectTicket:FireServer(ticket) end)  
-                    break  
-                end  
-            end  
-        end  
-
-        if not foundTicket then  
-            hrp.CFrame = CFrame.new(hrp.Position.X,1250,hrp.Position.Z)
-            -- แอบแถม: ถ้าอยู่บนที่สูง ให้ทำท่าเต้นรอ
-            if CurrentEmote ~= "" then DoEmote(CurrentEmote) end
-        end  
-    end
-end)
