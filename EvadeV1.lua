@@ -1,4 +1,4 @@
--- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]       ตอนนี้ถึงบรรทัด 1895
+-- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]       ตอนนี้ถึงการทำชุบคน
 local VirtualUser = game:GetService("VirtualUser")
 game:GetService("Players").LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
@@ -298,6 +298,8 @@ EventTab:AddToggle("UHubTicketToggle", {
     end
 })
 
+
+
 -- Player & GUI
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -476,78 +478,74 @@ LagSection:AddKeybind("LagKey", {
         if v then lagSwitch(0.5) end 
     end
 })
-getgenv().AutoRespawnEnabled = false -- เปิด-ปิดระบบ
-local lastSavedPosition = nil -- เก็บตำแหน่งล่าสุด
 
-local function setupAutoRespawn(character)
-    task.spawn(function()
+-------------------------------------------------------------------------
+-- [[ ✅ แก้ไขส่วนที่ Error: สร้าง Section และรวมระบบเกิดใหม่ ]]
+-------------------------------------------------------------------------
+
+-- 1. สร้าง Section ใน MainTab ก่อนจะไปสร้างปุ่ม (ป้องกัน Error บรรทัด 519)
+local RespawnSection = MainTab:AddSection("ระบบจัดการตัวละคร")
+
+-- 2. ตัวแปรสำหรับระบบเกิดใหม่ (Auto Revive)
+getgenv().AutoRespawnEnabled = false 
+local lastSavedPosition = nil
+local autoRespawnMethod = "Fake Revive"
+
+-- 3. ปุ่ม Toggle สำหรับเปิด-ปิด (ในเมนู)
+RespawnSection:AddToggle("RespawnToggle", {
+    Title = "ออโต้รีสปอน (Auto Revive)", 
+    Default = false, 
+    Callback = function(v) 
+        getgenv().AutoRespawnEnabled = v 
+    end
+})
+
+-- 4. Dropdown เลือกวิธี (ตามโค้ดเดิมน้องหนึ่ง)
+RespawnSection:AddDropdown("RespawnMethod", {
+    Title = "วิธีรีสปอน", 
+    Values = {"Random", "Fake Revive"}, 
+    CurrentValue = "Fake Revive", 
+    Callback = function(v) 
+        autoRespawnMethod = v 
+    end
+})
+
+-- 5. สมองของระบบ (Auto Revive Logic)
+local function setupAutoRevive(character)
+    task.defer(function()
         local hrp = character:WaitForChild("HumanoidRootPart", 5)
         if not hrp then return end
 
-        -- เก็บตำแหน่งล่าสุดไว้ตลอดเวลา (เพื่อวาร์ปกลับที่เดิมหลังเกิด)
+        -- เก็บตำแหน่งล่าสุด
         task.spawn(function()
             while character and character.Parent do
-                if hrp and hrp.Parent then
-                    lastSavedPosition = hrp.Position
-                end
+                if hrp and hrp.Parent then lastSavedPosition = hrp.Position end
                 task.wait(0.5)
             end
         end)
 
-        -- ตรวจสอบเมื่อติดสถานะ Downed (ล้ม)
-        character:GetAttributeChangedSignal("Downed"):Connect(function()
-            if getgenv().AutoRespawnEnabled and character:GetAttribute("Downed") == true then
-                task.wait(3) -- รอ 3 วิค่อยกดเกิดใหม่
-                pcall(function()
-                    game:GetService("ReplicatedStorage").Events.Player.ChangePlayerMode:FireServer(true)
-                end)
-
-                -- รอจนกว่าตัวใหม่จะเกิดแล้ววาร์ปกลับจุดเดิมเป๊ะ
-                repeat task.wait() until game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if lastSavedPosition then
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(lastSavedPosition)
-                end
-            end
-        end)
-    end)
-end
-
--- รันระบบครั้งแรกและทุกครั้งที่เกิดใหม่
-if game.Players.LocalPlayer.Character then setupAutoRespawn(game.Players.LocalPlayer.Character) end
-game.Players.LocalPlayer.CharacterAdded:Connect(setupAutoRespawn)
-
-RespawnSection:AddToggle("RespawnToggle", {Title="ออโต้รีสปอน (ปกติ)", Default=false, Callback=function(v) getgenv().AutoRespawnEnabled = v end})
-RespawnSection:AddToggle("RespawnFloat", {Title="ออโต้รีสปอน (ปุ่มลอย)", Default=false, Callback=function(v)
-    if v then createRespawnFloatingButton() else if floatingRespawnButton then floatingRespawnButton:Destroy() floatingRespawnButton=nil end end
-end})
-RespawnSection:AddDropdown("RespawnMethod", {Title="วิธีรีสปอน", Values={"Random","Fake Revive"}, CurrentValue="Fake Revive", Callback=function(v) autoRespawnMethod = v end})
-
-local function setupAutoRevive(character)
-    task.defer(function()
-        character:WaitForChild("HumanoidRootPart",5)
-        task.spawn(function()
-            while character and character.Parent do
-                local hrp = character:FindFirstChild("HumanoidRootPart")
-                if hrp then character:SetAttribute("LastPosition", hrp.Position) end
-                task.wait(0.2)
-            end
-        end)
+        -- เช็คตอนล้ม
         character:GetAttributeChangedSignal("Downed"):Connect(function()
             if not getgenv().AutoRespawnEnabled or character:GetAttribute("Downed") ~= true then return end
-            if autoRespawnMethod ~= "Fake Revive" then return end
-            local hrp = character:FindFirstChild("HumanoidRootPart")
-            if hrp then lastSavedPosition = hrp.Position end
-            task.wait(3)
-            pcall(function() game:GetService("ReplicatedStorage").Events.Player.ChangePlayerMode:FireServer(true) end)
+            
+            task.wait(3) -- รอ 3 วิ
+            pcall(function() 
+                game:GetService("ReplicatedStorage").Events.Player.ChangePlayerMode:FireServer(true) 
+            end)
+
+            -- วาร์ปกลับจุดเดิม
             local newChar = player.CharacterAdded:Wait()
             local newHRP = newChar:WaitForChild("HumanoidRootPart", 5)
-            if lastSavedPosition and newHRP then newHRP.CFrame = CFrame.new(lastSavedPosition) end
+            if lastSavedPosition and newHRP then 
+                newHRP.CFrame = CFrame.new(lastSavedPosition) 
+            end
         end)
     end)
 end
+
+-- รันระบบ
 player.CharacterAdded:Connect(setupAutoRevive)
 if player.Character then setupAutoRevive(player.Character) end
-
 -- =========================================
 -- [ 5. เทเลพอร์ต ]
 -- =========================================
@@ -578,26 +576,7 @@ TPSection:AddToggle("TPFloat", {Title="เทเลพอร์ตขึ้น�
 end})
 TPSection:AddKeybind("TPKey", {Title="ตั้งค่าปุ่มคีย์บอร์ด", Mode="Always", Default="T", Callback=teleportRoof})
 
--- =========================================
--- [ 6. ของเสริม: AFK MONEY ]
--- =========================================
-local ExtraSection = ExtraTab:AddSection("ระบบฟาร์ม")
-local afkPart, afkLoop
 
-ExtraSection:AddToggle("AFKMoneyToggle", {Title="เปิดฟาร์มเงิน AFK", Default=false, Callback=function(v)
-    if v then
-        afkPart = Instance.new("Part", workspace)
-        afkPart.Size, afkPart.Position, afkPart.Anchored, afkPart.Transparency = Vector3.new(8, 1, 8), Vector3.new(0, 6000, 0), true, 1
-        afkLoop = game:GetService("RunService").Heartbeat:Connect(function()
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                player.Character.HumanoidRootPart.CFrame = afkPart.CFrame + Vector3.new(0, 4, 0)
-            end
-        end)
-    else
-        if afkLoop then afkLoop:Disconnect() afkLoop = nil end
-        if afkPart then afkPart:Destroy() afkPart = nil end
-    end
-end})
 
 -- [[ EVADE SCRIPT: FLUENT VERSION - FULL INTEGRATED PART 2 ]]
 -- น้องหนึ่ง โค้ดนี้รวมฟังก์ชันใหม่ทั้งหมด พร้อมปุ่มลอยสีฟ้าและ Keybind ในตัวครับ
