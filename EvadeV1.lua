@@ -988,40 +988,6 @@ FPSSection:AddButton({Title = "ลดกราฟฟิก V.2 (ลบเอฟ�
     end
 end})
 
--- =========================================
--- [ TELEPORT: MOUSE CLICK ]
--- =========================================
-local TPMouseSection = TeleportTab:AddSection("วาร์ปตามเมาส์")
-local teleportEnabled = false
-local floatingTeleportButton
-
-local function runTeleportClick()
-    local mouse = player:GetMouse()
-    if teleportEnabled then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0,3,0))
-    end
-end
-
-TPMouseSection:AddToggle("TPClickToggle", {Title = "เปิด Teleport Mode", Default = false, Callback = function(v) teleportEnabled = v end})
-
-local function createFloatingTeleportButton()
-    if floatingTeleportButton then return end
-    floatingTeleportButton = Instance.new("TextButton", FloatingGui)
-    floatingTeleportButton.Size = UDim2.new(0, 140, 0, 50)
-    floatingTeleportButton.Position = UDim2.new(0.5, -70, 0.4, 0)
-    floatingTeleportButton.Text = "Teleport: OFF"
-    floatingTeleportButton.Active = true
-    floatingTeleportButton.Draggable = true
-    StyleNeungButton(floatingTeleportButton)
-    floatingTeleportButton.MouseButton1Click:Connect(function()
-        teleportEnabled = not teleportEnabled
-        floatingTeleportButton.Text = teleportEnabled and "Teleport: ON" or "Teleport: OFF"
-    end)
-end
-
-TPMouseSection:AddToggle("TPClickFloat", {Title = "ปุ่มลอย Teleport", Default = false, Callback = function(v)
-    if v then createFloatingTeleportButton() else if floatingTeleportButton then floatingTeleportButton:Destroy(); floatingTeleportButton=nil end end
-end})
 
 -- คีย์บอร์ดสำหรับ Teleport (ใช้ Click)
 
@@ -1392,59 +1358,50 @@ ExtraTab:AddButton({
 
 
 
--- =========================
--- Bounce Button (Auto Trimp Style)
--- =========================
-local RunService = game:GetService("RunService")
-local Debris = game:GetService("Debris")
+-- [[ ⚙️ ตัวแปรควบคุม - ปรับสเกลใหม่ตามเซิร์ฟวี ]]
+getgenv().BounceEnabled = false
+getgenv().BounceHeight = 350 -- เริ่มต้นให้ที่ 350 (กำลังดีสำหรับสายโดด)
+local bounceDistance = 10 -- เพิ่มระยะแสกนพื้นให้กว้างขึ้น
 
-local bounceEnabled = false
-local bounceHeight = 100
-local bounceDistance = 8
-
--- ฟังก์ชันเช็คพื้น (Raycast)
-local function isNearGround(hrp)
+-- [[ 🧠 สมองการเด้ง (เน้นแรงส่ง Velocity แบบสะใจ) ]]
+local function IsNearGround(hrp)
     local rayParams = RaycastParams.new()
-    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
     rayParams.FilterDescendantsInstances = {hrp.Parent}
-
+    -- แสกนพื้น 3 จุด (ซ้าย ขวา กลาง)
     local offsets = {
         Vector3.new(0,-bounceDistance,0),
         Vector3.new(2,-bounceDistance,0),
-        Vector3.new(-2,-bounceDistance,0),
-        Vector3.new(0,-bounceDistance,2),
-        Vector3.new(0,-bounceDistance,-2)
+        Vector3.new(-2,-bounceDistance,0)
     }
-
     for _,offset in ipairs(offsets) do
         local r = workspace:Raycast(hrp.Position, offset, rayParams)
-        if r and r.Instance and r.Instance.CanCollide then
-            return true
-        end
+        if r and r.Instance and r.Instance.CanCollide then return true end
     end
     return false
 end
 
--- ทำงานตลอดจนกว่าจะปิด
 task.spawn(function()
     while true do
-        if bounceEnabled then
+        if getgenv().BounceEnabled then
             local char = player.Character
-            if char then
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    local vel = hrp.Velocity
-                    if vel.Y < -35 and isNearGround(hrp) then
-                        hrp.Velocity = Vector3.new(vel.X, bounceHeight, vel.Z)
-
-                        local fx = Instance.new("ParticleEmitter")
-                        fx.Texture = "rbxassetid://241594180"
-                        fx.Lifetime = NumberRange.new(0.3)
-                        fx.Speed = NumberRange.new(40)
-                        fx.Rate = 200
-                        fx.Parent = hrp
-                        Debris:AddItem(fx,0.3)
-                    end
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local vel = hrp.Velocity
+                -- เช็คจังหวะตก (Y < -20) เพื่อทำการ Bounce
+                if vel.Y < -20 and IsNearGround(hrp) then
+                    -- สั่งดีดตัวด้วยแรงส่งที่น้องตั้งค่าไว้
+                    hrp.Velocity = Vector3.new(vel.X, getgenv().BounceHeight, vel.Z)
+                    
+                    -- Effect พุ่ง (Particle)
+                    local fx = Instance.new("ParticleEmitter")
+                    fx.Texture = "rbxassetid://241594180"
+                    fx.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+                    fx.Lifetime = NumberRange.new(0.3)
+                    fx.Speed = NumberRange.new(50)
+                    fx.SpreadAngle = Vector2.new(180, 180)
+                    fx.Parent = hrp
+                    game:GetService("Debris"):AddItem(fx, 0.3)
                 end
             end
         end
@@ -1452,94 +1409,125 @@ task.spawn(function()
     end
 end)
 
--- ========= ปุ่มลอย (ดึง GUI มาจากที่น้องสร้างไว้) =========
-local floatingBounceButton
-local autoBounce = false
+-- =========================================
+-- [ 📺 ส่วนของเมนู Fluent UI ]
+-- =========================================
+local BounceSection = MainTab:AddSection("ระบบออโต้เด้ง (สูงๆ)")
 
-local function createBounceFloatingButton()
-    if floatingBounceButton then return end
+-- 1. สวิตช์ เปิด/ปิด
+local BounceToggle = BounceSection:AddToggle("BounceToggle", {
+    Title = "เปิดใช้งาน Auto Bounce",
+    Default = false,
+    Callback = function(Value)
+        getgenv().BounceEnabled = Value
+    end
+})
 
-    -- ตรวจสอบว่ามี FloatingGui หรือยัง (ถ้าไม่มีให้สร้างเผื่อไว้)
-    local targetGui = player:WaitForChild("PlayerGui"):FindFirstChild("FloatingGui") or Instance.new("ScreenGui", player.PlayerGui)
-    targetGui.Name = "FloatingGui"
+-- 2. ตัวเลือกปุ่มกด
+BounceSection:AddKeybind("BounceKeybind", {
+    Title = "ตั้งค่าปุ่ม Hotkey",
+    Mode = "Toggle",
+    Default = "B", 
+    Callback = function(Value)
+        getgenv().BounceEnabled = Value
+        BounceToggle:SetValue(Value)
+    end
+})
 
-    floatingBounceButton = Instance.new("TextButton")
-    floatingBounceButton.Size = UDim2.new(0,100,0,50)
-    floatingBounceButton.Position = UDim2.new(0.5,-50,0.85,0)
-    floatingBounceButton.AnchorPoint = Vector2.new(0.5,0)
-    floatingBounceButton.BackgroundColor3 = Color3.fromRGB(255,0,150)
-    floatingBounceButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingBounceButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
-    floatingBounceButton.Parent = targetGui
+-- 3. แถบปรับความสูง (ปรับสเกลเป็นหลักร้อยถึงหลักพัน)
+BounceSection:AddSlider("BounceHeightSlider", {
+    Title = "ระดับแรงส่ง (Velocity)",
+    Description = "300 (ปกติ) | 600 (สูงมาก) | 1000+ (ทะลุแมพ)",
+    Default = 100,
+    Min = 50,
+    Max = 1500, -- จัดให้หนักๆ ตามที่น้องอยากได้เลย
+    Rounding = 1,
+    Callback = function(Value)
+        getgenv().BounceHeight = Value
+    end
+})
 
-    floatingBounceButton.Active = true
-    floatingBounceButton.Draggable = true
+-- 4. ช่องพิมพ์ตัวเลข (Input)
+BounceSection:AddInput("BounceHeightInput", {
+    Title = "พิมพ์ระบุความสูงเอง",
+    Default = "100",
+    Numeric = true,
+    Callback = function(Value)
+        local num = tonumber(Value)
+        if num then
+            getgenv().BounceHeight = num
+        end
+    end
+})
+-- =========================================
+-- [ 📺 ระบบหน้าจอยืดแบบแยกช่องคำนวณ ]
+-- =========================================
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
 
-    floatingBounceButton.MouseButton1Click:Connect(function()
-        autoBounce = not autoBounce
-        bounceEnabled = autoBounce
-        floatingBounceButton.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+-- ค่าเริ่มต้น
+getgenv().ResWidth = 2000
+getgenv().ResHeight = 2500
+getgenv().ScreenStretchActive = false
+
+local ScreenStretchConn
+
+-- [[ 🧠 ฟังก์ชันคำนวณสัดส่วน ]]
+local function GetCalculatedStretch()
+    if getgenv().ResWidth > 0 and getgenv().ResHeight > 0 then
+        return getgenv().ResWidth / getgenv().ResHeight
+    end
+    return 1
+end
+
+local function UpdateStretch()
+    if ScreenStretchConn then ScreenStretchConn:Disconnect() end
+    ScreenStretchConn = RunService.RenderStepped:Connect(function()
+        if Camera and getgenv().ScreenStretchActive then
+            local ratio = GetCalculatedStretch()
+            -- ใช้ค่าที่คำนวณได้ไปยืดแกน Y (หรือเปลี่ยนไป X ตามชอบ)
+            Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, ratio, 0, 0, 0, 1)
+        end
     end)
 end
 
--- ========= ปุ่มในเมนูหลัก Fluent UI =========
-MainTab:AddToggle("AutoTrimpToggle", {
-    Title = "ออโต้ทริป (Auto Bounce)",
-    Description = "เด้งอัตโนมัติเมื่อตกถึงพื้น (จะสร้างปุ่มลอยด้วย)",
+-- [[ UI ในหมวดของเสริม ]]
+local StretchSection = ExtraTab:AddSection("หน้าจอยืด (แยกช่องคำนวณ) ถ้ากดค่าเริ่มต้นแล้วไม่เข้าให้ใส่ตัวเลขเดิม")
+
+StretchSection:AddToggle("ScreenStretchToggle", {
+    Title = "เปิดระบบหน้าจอยืด",
     Default = false,
-    Callback = function(v)
-        bounceEnabled = v
-        autoBounce = v
-        if v then
-            createBounceFloatingButton()
-            if floatingBounceButton then 
-                floatingBounceButton.Visible = true 
-                floatingBounceButton.Text = "Auto Bounce: ON"
-            end
-        else
-            if floatingBounceButton then 
-                floatingBounceButton.Visible = false 
-            end
+    Callback = function(state)
+        getgenv().ScreenStretchActive = state
+        if state then UpdateStretch() else
+            if ScreenStretchConn then ScreenStretchConn:Disconnect() ScreenStretchConn = nil end
         end
     end
 })
 
--- =========================
--- ปุ่มหน้าจอยืด (Stretch Screen) ในหมวดของเสริม
--- =========================
-getgenv().ScreenStretchActive = false
-getgenv().Resolution = { [".gg/scripters"] = 0.65 }
-local Camera = workspace.CurrentCamera
-local ScreenStretchConn
-
--- ใช้ชื่อตัวแปร ExtraTab ให้ตรงกับที่น้องสร้างไว้นะครับ
-ExtraTab:AddToggle("ScreenStretchToggle", {
-    Title = "หน้าจอยืด (Stretch Screen)",
-    Description = "เปิด/ปิด การปรับแกน Y ของกล้อง (ช่วยให้มุมมองกว้างขึ้น)",
-    Default = false,
-    Callback = function(state)
-        if state then
-            -- ถ้าเปิดสวิตช์
-            if not ScreenStretchConn then
-                getgenv().ScreenStretchActive = true
-                ScreenStretchConn = game:GetService("RunService").RenderStepped:Connect(function()
-                    if Camera and getgenv().ScreenStretchActive then
-                        -- แก้ไขการคำนวณ Matrix ของกล้องให้ยืดตามค่าที่ตั้งไว้
-                        Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[".gg/scripters"], 0, 0, 0, 1)
-                    end
-                end)
-            end
-            print("U-HUB: หน้าจอยืด เปิดแล้ว")
-        else
-            -- ถ้าปิดสวิตช์
-            getgenv().ScreenStretchActive = false
-            if ScreenStretchConn then
-                ScreenStretchConn:Disconnect()
-                ScreenStretchConn = nil
-            end
-            print("U-HUB: หน้าจอยืด ปิดแล้ว")
-        end
+-- ช่องที่ 1: ความกว้าง (Width)
+StretchSection:AddInput("InputWidth", {
+    Title = "1. พิมพ์ความกว้าง (Width)",
+    Default = "2000",
+    Numeric = true,
+    Callback = function(Value)
+        getgenv().ResWidth = tonumber(Value) or 1080
     end
+})
+
+-- ช่องที่ 2: ความสูง (Height)
+StretchSection:AddInput("InputHeight", {
+    Title = "2. พิมพ์ความสูง (Height)",
+    Default = "2500",
+    Numeric = true,
+    Callback = function(Value)
+        getgenv().ResHeight = tonumber(Value) or 1080
+    end
+})
+
+StretchSection:AddParagraph({
+    Title = "📝 สูตรที่ใช้คำนวณ",
+    Content = "ระบบจะเอา: [ความกว้าง] ÷ [ความสูง]\nตัวอย่าง: 1080 ÷ 1080 = 1.0 (ปกติ)\nตัวอย่าง: 800 ÷ 1080 = 0.74 (ยืดขึ้น)"
 })
 
 -- =========================
@@ -1670,24 +1658,7 @@ local function stopAutoRevive()
     -- loop จะหลุดเองเพราะเงื่อนไข while autoReviveEnabled เป็น false
 end
 
--- =========================
--- 🎨 ส่วนที่ 2: ปุ่มในเมนู Fluent (ฝังใน MainTab)
--- =========================
 
-MainTab:AddToggle("AutoReviveV2", {
-    Title = "ออโต้ชุบ (V2)",
-    Description = "ชุบเพื่อนอัตโนมัติ (เวอร์ชัน Loop)",
-    Default = false,
-    Callback = function(state)
-        if state then
-            startAutoRevive()
-            print("U-HUB: Auto Revive (Loop) Started")
-        else
-            stopAutoRevive()
-            print("U-HUB: Auto Revive (Loop) Stopped")
-        end
-    end
-})
 
 -- =========================
 -- 🧠 ส่วนที่ 1: AFK MONEY SYSTEM (Logic)
@@ -1815,16 +1786,7 @@ SettingsTab:AddButton({
     end
 })
 
--- --- [ Tab: Extra ] ---
-ExtraTab:AddToggle("FloorReflectToggle", {
-    Title = "พื้นใส",
-    Description = "ทำให้ Part ทั้งแมพสะท้อนแสง",
-    Default = false,
-    Callback = function(state)
-        floorReflectOn = state
-        if state then enableFloorReflect() else disableFloorReflect() end
-    end
-})
+
 
 -- =========================
 -- 🔄 ส่วนที่ 4: ระบบสนับสนุน (Events)
