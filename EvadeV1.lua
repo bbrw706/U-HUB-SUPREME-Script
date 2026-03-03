@@ -139,161 +139,99 @@ SidebarLine.Parent = game:GetService("CoreGui")
 -- =================================================
 local MainTab     = Window:AddTab({Title="เมนูหลัก", Icon="star"})
 local TeleportTab = Window:AddTab({Title="เทเลพอร์ต", Icon="navigation"})
+local FarmTab     = Window:AddTab({Title="เมนูฟาร์ม", Icon="component"})
 local VisualsTab  = Window:AddTab({Title="มองต่างๆ", Icon="eye"})
 local ExtraTab    = Window:AddTab({Title="ของเสริม", Icon="tag"})
 local FPSTab      = Window:AddTab({Title = "fps", Icon = "accessibility"})
 local EventTab    = Window:AddTab({Title="เกี่ยวกับอีเว้น", Icon="calendar"}) -- แถบนี้แหละ!
 local SettingsTab = Window:AddTab({Title="ตั้งค่า", Icon="wrench"})
 
--- =================================================
--- 🎫 สวิตช์ออโต้เก็บตั๋ว (ใส่เข้าไปใน EventTab ทันที)
--- =================================================
-local collectTicketsActive = false 
 
-EventTab:AddToggle("CollectTicketToggle", {
-    Title = "ออโต้เก็บตั๋ว (Auto Collect)",
-    Description = "เปิดสวิตช์เพื่อเริ่มวาร์ปเก็บตั๋วอัตโนมัติ",
-    Default = false,
-    Callback = function(state)
-        collectTicketsActive = state
-        
-        if state then
-            task.spawn(function()
-                local Players = game:GetService("Players")
-                local LocalPlayer = Players.LocalPlayer
-                
-                while collectTicketsActive do
-                    local char = LocalPlayer.Character
-                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                    
-                    -- เช็คตำแหน่งตั๋วใน Evade
-                    local ticketFolder = workspace:FindFirstChild("Game")
-                        and workspace.Game:FindFirstChild("Effects")
-                        and workspace.Game.Effects:FindFirstChild("Tickets")
-
-                    if hrp and ticketFolder then
-                        local tickets = {}
-                        for _, ticketModel in ipairs(ticketFolder:GetChildren()) do
-                            if ticketModel:IsA("Model") then
-                                local part = ticketModel:FindFirstChildWhichIsA("BasePart")
-                                if part then table.insert(tickets, part) end
-                            end
-                        end
-
-                        for _, part in ipairs(tickets) do
-                            if not collectTicketsActive then break end 
-                            if hrp and part and part.Parent then
-                                -- วาร์ปไปตำแหน่งตั๋ว
-                                hrp.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
-                                task.wait(1) 
-                            end
-                        end
-                    end
-                    task.wait(0.5) 
-                end
-            end)
-
-            Fluent:Notify({
-                Title = "U-HUB Notify",
-                Content = "เริ่มระบบออโต้เก็บตั๋ว ✅",
-                Duration = 2
-            })
-        else
-            Fluent:Notify({
-                Title = "U-HUB Notify",
-                Content = "ปิดระบบออโต้เก็บตั๋ว ❌",
-                Duration = 2
-            })
-        end
-    end
-})
-
--- =================================================
--- 🎫 ระบบ U-HUB Ticket Farm (มีที่ยืน | ไม่มี UI บังหน้าจอ)
--- =================================================
-
+-- [[ 🎫 ระบบ U-HUB Ticket Farm V.6 (ที่ยืนใหญ่ | สีขาวทึบ | วาร์ปตัวเปล่า) ]]
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- ตัวแปรสถานะ
 getgenv().AutoTicketFarm = false
-local platform = nil
+local whitePlatform = nil
 
--- [[ 🧠 1. ฟังก์ชันสร้างที่ยืนกันตก ]]
-local function ManagePlatform(state)
+-- [[ 🏗️ ฟังก์ชันจัดการที่ยืนสีขาวทึบ (ขนาดใหญ่ขึ้น) ]]
+local function ManageWhitePlatform(state)
     if state then
-        if not platform or not platform.Parent then
-            platform = Instance.new("Part")
-            platform.Name = "UHubPlatform"
-            platform.Size = Vector3.new(10, 1, 10)
-            platform.Anchored = true
-            platform.CanCollide = true
-            platform.Transparency = 1 -- ปรับให้ล่องหนสนิท (0.5 ถ้าอยากเห็นที่ยืน)
-            platform.Parent = workspace
+        if not whitePlatform or not whitePlatform.Parent then
+            whitePlatform = Instance.new("Part")
+            whitePlatform.Name = "UHubWhitePlatform"
+            whitePlatform.Size = Vector3.new(12, 1, 12) -- ขยายขนาดให้ใหญ่ขึ้นตามสั่ง!
+            whitePlatform.Anchored = true
+            whitePlatform.CanCollide = true
+            whitePlatform.Color = Color3.new(1, 1, 1) -- สีขาวทึบ
+            whitePlatform.Material = Enum.Material.SmoothPlastic
+            whitePlatform.Transparency = 0 
+            whitePlatform.Parent = workspace
         end
     else
-        if platform then
-            platform:Destroy()
-            platform = nil
+        if whitePlatform then
+            whitePlatform:Destroy()
+            whitePlatform = nil
         end
     end
 end
 
--- [[ 🎡 2. สร้างปุ่ม Toggle ใน EventTab ]]
-EventTab:AddToggle("UHubTicketToggle", {
-    Title = "เปิดระบบ U-HUB Ticket Farm",
-    Description = "วาร์ปเก็บตั๋วอัตโนมัติ + ที่ยืนล่องหนกันตกแมพ",
+-- [[ 🎡 ปุ่ม Toggle ]]
+FarmTab:AddToggle("UHubTicketToggle", {
+    Title = "เปิดระบบ U-HUB Ticket Farm (White Large)",
+    Description = "วาร์ปเก็บตั๋ว (ตัวเปล่า) + กลับมาพักบนที่ยืนขาวใหญ่",
     Default = false,
     Callback = function(state)
         getgenv().AutoTicketFarm = state
-        ManagePlatform(state) -- สร้างหรือลบที่ยืน
+        ManageWhitePlatform(state)
         
         if state then
-            -- เริ่มทำงานเบื้องหลัง
             task.spawn(function()
                 while getgenv().AutoTicketFarm do
                     local char = LocalPlayer.Character
                     local hrp = char and char:FindFirstChild("HumanoidRootPart")
                     
-                    -- ค้นหาตั๋วในแมพ
                     local ticketFolder = workspace:FindFirstChild("Game") 
                         and workspace.Game:FindFirstChild("Effects") 
                         and workspace.Game.Effects:FindFirstChild("Tickets")
-
+                    
                     if hrp and ticketFolder then
                         local tickets = ticketFolder:GetChildren()
-                        for _, ticket in ipairs(tickets) do
-                            if not getgenv().AutoTicketFarm then break end
-                            local part = ticket:FindFirstChildWhichIsA("BasePart")
-                            
-                            if part and part.Parent then
-                                -- ย้ายที่ยืนไปรองรับใต้ตั๋ว
-                                if platform then 
-                                    platform.CFrame = CFrame.new(part.Position + Vector3.new(0, 1, 0)) 
+                        
+                        -- [[ 🏠 จังหวะไม่มีตั๋ว: ให้ยืนบนที่ยืนขาวใหญ่บนฟ้า ]]
+                        if #tickets == 0 then
+                            if whitePlatform then 
+                                whitePlatform.CFrame = CFrame.new(0, 1000, 0) -- ย้ายที่ยืนมารอ
+                                hrp.CFrame = CFrame.new(0, 1003, 0) -- วาร์ปน้องลงบนที่ยืน
+                            end
+                        else
+                            -- [[ 🎫 จังหวะเก็บตั๋ว: วาร์ปไปแค่ตัว (ไม่ต้องเอาที่ยืนไป) ]]
+                            for _, ticket in ipairs(tickets) do
+                                if not getgenv().AutoTicketFarm then break end
+                                
+                                local target = ticket:IsA("BasePart") and ticket or ticket:FindFirstChildWhichIsA("BasePart")
+                                
+                                if target and target.Parent then
+                                    -- ย้ายที่ยืนหนีไปไกลๆ ก่อน (จะได้ไม่เกะกะตอนเก็บ)
+                                    if whitePlatform then whitePlatform.CFrame = CFrame.new(0, -500, 0) end
+                                    
+                                    -- วาร์ปตัวน้องหนึ่งไปที่ตั๋วตรงๆ
+                                    hrp.CFrame = CFrame.new(target.Position)
+                                    hrp.Velocity = Vector3.new(0,0,0) -- ล็อคตัวให้นิ่งกลางอากาศแป๊บนึง
+                                    
+                                    task.wait(0.7) -- รอเก็บ
                                 end
-                                -- วาร์ปตัวเราไปเก็บ
-                                hrp.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
-                                task.wait(1) -- รอให้ Server บันทึกว่าเก็บแล้ว
                             end
                         end
                     end
-                    task.wait(0.5) -- พักเครื่องนิดนึงก่อนเช็คตั๋วใหม่
+                    task.wait(0.5)
                 end
             end)
-
-            Fluent:Notify({
-                Title = "U-HUB",
-                Content = "เริ่มฟาร์มตั๋วแบบคลีนๆ แล้วครับน้องหนึ่ง ✅",
-                Duration = 2
-            })
+            
+            Fluent:Notify({ Title = "U-HUB", Content = "ฟาร์มแบบวาร์ปตัวเปล่าเรียบร้อยครับน้องหนึ่ง! ⚪", Duration = 2 })
         else
-            -- ปิดระบบ
-            ManagePlatform(false)
-            Fluent:Notify({
-                Title = "U-HUB",
-                Content = "ปิดระบบฟาร์มแล้วครับ ❌",
-                Duration = 2
-            })
+            ManageWhitePlatform(false)
+            Fluent:Notify({ Title = "U-HUB", Content = "ปิดระบบฟาร์มแล้ว ❌", Duration = 2 })
         end
     end
 })
@@ -960,12 +898,91 @@ UserInputService.InputBegan:Connect(function(input, processed)
 end)
 TicketSection:AddKeybind("AutoTicketKey", {Title = "ปุ่มฟาร์มตั๋ว", Default = "N", Callback = function(v) getgenv().AutoTicketFarm = v end})
 
--- =========================================
--- [ VISUALS: ESP NEXTBOT ]
--- =========================================
-local NextbotSection = VisualsTab:AddSection("มองศัตรู (Nextbot)")
+-- [[ 👁️ ระบบมองเน็กบอท (U-HUB ESP Nextbot) ]]
+local VisualsSection = VisualsTab:AddSection("ระบบการมองเห็น (Visuals)")
 
-NextbotSection:AddToggle("NextbotESPToggle", {Title = "มองเน็กบอท", Default = false, Callback = function(v) _G.NextbotESPEnabled = v end})
+VisualsSection:AddToggle("UHubNextbotESP", {
+    Title = "ESP Nextbot",
+    Description = "แสดงชื่อและระยะห่างของ Nextbot ทะลุกำแพง",
+    Default = false,
+    Callback = function(state)
+        getgenv().NextbotESPEnabled = state
+        
+        if not state then
+            -- [[ 🛑 กรณีสั่งปิด: ลบ ESP ที่ค้างอยู่ทั้งหมด ]]
+            local folder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Players")
+            if folder then
+                for _, npc in ipairs(folder:GetChildren()) do
+                    local part = npc:FindFirstChild("Root") or npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChildWhichIsA("BasePart")
+                    if part then
+                        local esp = part:FindFirstChild("UHubNextbotESP")
+                        if esp then esp:Destroy() end
+                    end
+                end
+            end
+        else
+            -- [[ ✅ กรณีสั่งเปิด: เริ่มลูปการทำงาน ]]
+            task.spawn(function()
+                while getgenv().NextbotESPEnabled do
+                    local folder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Players")
+                    if folder then
+                        for _, npc in ipairs(folder:GetChildren()) do
+                            -- ตรวจสอบว่าเป็น Nextbot หรือไม่
+                            if npc:GetAttribute("Team") == "Nextbot" then
+                                local part = npc:FindFirstChild("Root") or npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChildWhichIsA("BasePart")
+                                
+                                if part then
+                                    local billboard = part:FindFirstChild("UHubNextbotESP")
+                                    
+                                    -- สร้าง BillboardGui ถ้ายังไม่มี
+                                    if not billboard then
+                                        billboard = Instance.new("BillboardGui")
+                                        billboard.Name = "UHubNextbotESP"
+                                        billboard.Adornee = part
+                                        billboard.Size = UDim2.new(0, 150, 0, 50)
+                                        billboard.StudsOffset = Vector3.new(0, 3, 0)
+                                        billboard.AlwaysOnTop = true
+                                        billboard.Parent = part
+
+                                        local label = Instance.new("TextLabel")
+                                        label.Name = "Label"
+                                        label.Size = UDim2.new(1, 0, 1, 0)
+                                        label.BackgroundTransparency = 1
+                                        label.TextStrokeTransparency = 0
+                                        label.TextStrokeColor3 = Color3.new(0, 0, 0)
+                                        label.TextScaled = true
+                                        label.Font = Enum.Font.GothamBold
+                                        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                        label.Parent = billboard
+                                    end
+
+                                    -- อัปเดตข้อความและระยะทาง
+                                    local label = billboard:FindFirstChild("Label")
+                                    if label then
+                                        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                        local dist = hrp and (part.Position - hrp.Position).Magnitude or 0
+                                        
+                                        label.Text = string.format("%s\n[ %.1f ]", npc.Name, dist)
+
+                                        -- เปลี่ยนสีตามความอันตราย (ใกล้ = แดง | ไกล = ฟ้า/ม่วง)
+                                        if dist <= 20 then
+                                            label.TextColor3 = Color3.fromRGB(255, 50, 50) -- แดงจัด (อันตรายมาก)
+                                        elseif dist <= 70 then
+                                            label.TextColor3 = Color3.fromRGB(255, 150, 0) -- ส้ม (เริ่มใกล้)
+                                        else
+                                            label.TextColor3 = Color3.fromRGB(180, 150, 255) -- ม่วงอ่อน (ปลอดภัย)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.1) -- อัปเดตตำแหน่ง ESP ให้ลื่นไหล
+                end
+            end)
+        end
+    end
+})
 
 -- =========================================
 -- [ FPS: GRAPHICS & FPS DISPLAY ]
@@ -1016,14 +1033,21 @@ task.spawn(function()
     end
 end)
 
-
--- [[ 🧠 ส่วนที่ 1: เตรียมสมอง (วางไว้ด้านบนสุดของสคริปต์) ]]
+-- [[ 🧠 ส่วนที่ 1: เตรียมสมอง (โครงสร้างหลักของน้องหนึ่ง) ]]
 local Players = game:GetService("Players")
 local lp = Players.LocalPlayer
 local downedESPEnabled = false
 local downedBillboards = {}
 
--- ฟังก์ชันล้าง ESP คนล้ม
+-- ฟังก์ชันคำนวณระยะทาง
+local function getDistance(part)
+    if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") and part then
+        return math.floor((lp.Character.HumanoidRootPart.Position - part.Position).Magnitude)
+    end
+    return 0
+end
+
+-- ฟังก์ชันล้าง ESP คนล้ม (ห้ามลบ)
 local function clearDownedESP()
     for _, billboard in pairs(downedBillboards) do
         if billboard then billboard:Destroy() end
@@ -1031,35 +1055,35 @@ local function clearDownedESP()
     downedBillboards = {}
 end
 
--- ฟังก์ชันอัปเดตคนล้ม
+-- ฟังก์ชันอัปเดตคนล้ม (ปรับขนาดให้พอดี)
 local function updateDownedESP()
-    clearDownedESP() -- ลบของเก่าก่อนอัปเดตใหม่
+    clearDownedESP() 
     if not downedESPEnabled then return end
 
     for _, plr in pairs(Players:GetPlayers()) do
         if plr ~= lp and plr.Character then
             local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
             local root = plr.Character:FindFirstChild("HumanoidRootPart")
-            
-            -- เช็คว่าล้มไหม (เลือด 0 หรือมี Attribute "Downed" ของเกม Evade)
             local isDowned = (humanoid and humanoid.Health <= 0) or plr.Character:GetAttribute("Downed") == true
 
             if root and isDowned then
                 local billboard = Instance.new("BillboardGui")
                 billboard.Name = "DownedESP"
                 billboard.Adornee = root
-                billboard.Size = UDim2.new(0, 150, 0, 50)
-                billboard.StudsOffset = Vector3.new(0, 3, 0)
-                billboard.AlwaysOnTop = true
+                billboard.Size = UDim2.new(0, 120, 0, 40) -- ขยับขนาดขึ้นมาหน่อย
+                billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+                billboard.AlwaysOnTop = true 
                 billboard.Parent = root
 
                 local textLabel = Instance.new("TextLabel")
                 textLabel.Size = UDim2.new(1, 0, 1, 0)
                 textLabel.BackgroundTransparency = 1
-                textLabel.Text = "🆘 ล้มตรงนี้!"
+                local dist = getDistance(root)
+                textLabel.Text = string.format("🆘 %s\n%d studs", plr.Name, dist)
                 textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-                textLabel.TextScaled = true
+                textLabel.TextSize = 13 -- ปรับขนาดจาก 10 เป็น 13 (อ่านง่ายขึ้นเยอะ)
                 textLabel.Font = Enum.Font.GothamBlack
+                textLabel.TextStrokeTransparency = 0.5 -- เพิ่มขอบดำนิดนึงให้อ่านง่าย
                 textLabel.Parent = billboard
 
                 downedBillboards[plr] = billboard
@@ -1068,25 +1092,19 @@ local function updateDownedESP()
     end
 end
 
--- รัน Loop อัปเดต ESP แยกต่างหาก
 task.spawn(function()
     while true do
-        if downedESPEnabled then
-            updateDownedESP()
-        end
+        if downedESPEnabled then updateDownedESP() end
         task.wait(0.5)
     end
 end)
 
--- [[ 🧠 1. ตัวแปรสถานะ ]]
+-- [[ 👤 2. ฟังก์ชัน ESP ผู้เล่น (ปรับขนาดใหม่) ]]
 local playerESPEnabled = false
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 
--- [[ 🧠 2. ฟังก์ชันสมอง ESP ]]
 local function updatePlayerESP()
     for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
+        if p ~= lp and p.Character then
             local char = p.Character
             local head = char:FindFirstChild("Head")
             
@@ -1095,31 +1113,38 @@ local function updatePlayerESP()
                 local highlight = char:FindFirstChild("UHubHighlight")
 
                 if playerESPEnabled then
-                    -- สร้างชื่อบนหัว
                     if not billboard then
                         billboard = Instance.new("BillboardGui", head)
                         billboard.Name = "UHubESP"
                         billboard.AlwaysOnTop = true
-                        billboard.Size = UDim2.new(0, 100, 0, 50)
-                        billboard.ExtentsOffset = Vector3.new(0, 3, 0)
+                        billboard.Size = UDim2.new(0, 120, 0, 40)
+                        billboard.ExtentsOffset = Vector3.new(0, 3.5, 0)
                         
                         local text = Instance.new("TextLabel", billboard)
+                        text.Name = "Label"
                         text.Size = UDim2.new(1, 0, 1, 0)
                         text.BackgroundTransparency = 1
-                        text.Text = p.Name
                         text.TextColor3 = Color3.fromRGB(255, 255, 255)
                         text.Font = Enum.Font.GothamBold
-                        text.TextScaled = true
+                        text.TextSize = 17 
+                        text.TextStrokeTransparency = 0.7
+                        text.Parent = billboard
                     end
-                    -- สร้างกรอบตัว (Highlight)
+                    
+                    local label = billboard:FindFirstChild("Label")
+                    if label then
+                        local dist = getDistance(head)
+                        label.RichText = true
+                        label.Text = string.format("%s\n<font color='rgb(255,0,0)'>%d studs</font>", p.Name, dist)
+                    end
+
                     if not highlight then
                         highlight = Instance.new("Highlight", char)
                         highlight.Name = "UHubHighlight"
-                        highlight.FillColor = Color3.fromRGB(255, 0, 0) -- สีแดง
+                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
                         highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
                     end
                 else
-                    -- ลบออกเมื่อปิด
                     if billboard then billboard:Destroy() end
                     if highlight then highlight:Destroy() end
                 end
@@ -1127,6 +1152,13 @@ local function updatePlayerESP()
         end
     end
 end
+
+task.spawn(function()
+    while true do
+        if playerESPEnabled then updatePlayerESP() end
+        task.wait(0.1)
+    end
+end)
 
 -- [[ 🧠 3. ปุ่มกดในหน้า VisualsTab ]]
 VisualsTab:AddToggle("ESPToggle", {
@@ -1171,49 +1203,33 @@ local function getDistance(pos)
     return hrp and (pos - hrp.Position).Magnitude or nil
 end
 
--- 🧠 ฟังก์ชันนับชิ้นส่วนสดๆ (1 ชิ้น = 1 คะแนน / 3 ชิ้น = 4 คะแนน)
-local function getLiveTicketValue(model)
-    local partsCount = 0
-    -- นับเฉพาะชิ้นส่วนที่เป็นตัวหัวใจ (Mesh หรือ Part)
-    for _, obj in pairs(model:GetChildren()) do
-        if obj:IsA("BasePart") or obj:IsA("MeshPart") then
-            partsCount = partsCount + 1
-        end
-    end
-
-    if partsCount >= 3 then
-        return "4"
-    else
-        return "1"
-    end
-end
-
--- ฟังก์ชันสร้างป้าย ESP
+-- ฟังก์ชันสร้างป้าย ESP (ปรับให้ตัวหนังสือพอดีตา)
 local function createESP(part)
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "TicketESP"
     billboard.Adornee = part
-    billboard.Size = UDim2.new(0, 160, 0, 50)
+    billboard.Size = UDim2.new(0, 120, 0, 40) -- ปรับให้เล็กลงหน่อยไม่ให้เกะกะ
     billboard.StudsOffset = Vector3.new(0, 3.5, 0)
-    billboard.AlwaysOnTop = true
+    billboard.AlwaysOnTop = true -- มองทะลุได้ชัวร์
     billboard.Parent = part
 
     local label = Instance.new("TextLabel")
     label.Name = "TicketLabel"
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
-    label.TextStrokeTransparency = 0.3
-    label.TextScaled = true
+    label.TextStrokeTransparency = 0.5
+    label.TextSize = 13 -- ขนาดกลางๆ เท่ากับ ESP คนที่น้องชอบ
     label.Font = Enum.Font.GothamBold
+    label.TextColor3 = Color3.fromRGB(255, 105, 180) -- สีชมพู U-HUB
     label.Parent = billboard
 
     return billboard
 end
 
 -- [[ 🧠 ส่วนที่ 2: ตัวปุ่มใน Fluent UI ]]
-local TicketESPToggle = EventTab:AddToggle("TicketESP_LiveCheck", {
-    Title = "มองตั๋ว (เช็คสด 0.2 วิ)",
-    Description = "นับจำนวนชิ้นหัวใจแบบ Real-time",
+local TicketESPToggle = EventTab:AddToggle("TicketESP_Simple", {
+    Title = "มองตั๋ว (ESP Ticket)",
+    Description = "แสดงตำแหน่งตั๋วและระยะทาง",
     Default = false
 })
 
@@ -1235,22 +1251,14 @@ TicketESPToggle:OnChanged(function()
                             local label = billboard:FindFirstChild("TicketLabel")
                             
                             if label then
-                                -- ⚡️ เช็คสดๆ ทุก 0.2 วินาที ไม่มีการล็อคค่า
-                                local amount = getLiveTicketValue(ticketModel)
                                 local dist = getDistance(part.Position)
-                                
-                                if amount == "4" then
-                                    label.TextColor3 = Color3.fromRGB(255, 20, 147)
-                                    label.Text = string.format("💖 4 POINTS 💖\n[%.0f studs]", dist or 0)
-                                else
-                                    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                                    label.Text = string.format("🤍 1 POINT\n[%.0f studs]", dist or 0)
-                                end
+                                -- พี่เอาระบบนับแต้มออกแล้ว เหลือแค่ป้ายตั๋วกับระยะทางครับ
+                                label.Text = string.format("🎫 TICKET\n[%.0f studs]", dist or 0)
                             end
                         end
                     end
                 end
-                task.wait(0.2) -- ⚡️ อัปเดตไวตามสั่ง (0.2 วินาที)
+                task.wait(0.2)
             end
             
             -- ล้าง ESP เมื่อปิดปุ่ม
@@ -1265,6 +1273,86 @@ TicketESPToggle:OnChanged(function()
     end
 end)
 
+
+-- [[ 🎫 ระบบมองตั๋ว (U-HUB Ticket ESP - Black Edition) ]]
+
+
+local ticketESPEnabled = false
+
+-- ฟังก์ชันสร้างป้าย ESP (สีดำตามสั่ง)
+local function createTicketESP(part)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "TicketESP"
+    billboard.Adornee = part
+    billboard.Size = UDim2.new(0, 120, 0, 40)
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = part
+
+    local label = Instance.new("TextLabel")
+    label.Name = "TicketLabel"
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    -- ปรับสีดำตามที่น้องหนึ่งต้องการ
+    label.TextColor3 = Color3.fromRGB(0, 0, 0) 
+    -- เพิ่มขอบขาวนิดนึงเพื่อให้มองเห็นในที่มืดได้
+    label.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextStrokeTransparency = 0.8
+    label.TextSize = 13 
+    label.Font = Enum.Font.GothamBold
+    label.Parent = billboard
+
+    return billboard
+end
+
+local TicketESPToggle = VisualsTab:AddToggle("UHubTicketESP", {
+    Title = "มองตั๋ว",
+    Description = "แสดงตำแหน่งตั๋วด้วยข้อความสีดำ",
+    Default = false
+})
+
+TicketESPToggle:OnChanged(function()
+    ticketESPEnabled = TicketESPToggle.Value
+    
+    if ticketESPEnabled then
+        task.spawn(function()
+            while ticketESPEnabled do
+                local ticketFolder = workspace:FindFirstChild("Game") 
+                    and workspace.Game:FindFirstChild("Effects") 
+                    and workspace.Game.Effects:FindFirstChild("Tickets")
+                
+                if ticketFolder then
+                    for _, ticketModel in ipairs(ticketFolder:GetChildren()) do
+                        local part = ticketModel:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            local billboard = part:FindFirstChild("TicketESP") or createTicketESP(part)
+                            local label = billboard:FindFirstChild("TicketLabel")
+                            
+                            if label then
+                                -- ดึงฟังก์ชัน getDistance จากส่วนสมองหลักที่น้องมีอยู่แล้ว
+                                local char = lp.Character
+                                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                                local dist = hrp and (part.Position - hrp.Position).Magnitude or 0
+                                
+                                label.Text = string.format("🎫 TICKET\n[ %.0f studs ]", dist)
+                            end
+                        end
+                    end
+                end
+                task.wait(0.2)
+            end
+            
+            -- ลบ ESP ทิ้งเมื่อปิดใช้งาน
+            local ticketFolder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Effects") and workspace.Game.Effects:FindFirstChild("Tickets")
+            if ticketFolder then
+                for _, t in pairs(ticketFolder:GetChildren()) do
+                    local p = t:FindFirstChildWhichIsA("BasePart")
+                    if p and p:FindFirstChild("TicketESP") then p.TicketESP:Destroy() end
+                end
+            end
+        end)
+    end
+end)
 
 -- =============================
 -- ของเสริม : Korblox / Headless (เวอร์ชันแก้ตายแล้วหาย)
@@ -1659,21 +1747,23 @@ local function stopAutoRevive()
 end
 
 
+-- [[ 💰 ระบบ AFK Money (Auto Revive) - U-HUB ]]
+local FarmSection = FarmTab:AddSection("ระบบฟาร์มเงิน (Money Farm)")
 
--- =========================
--- 🧠 ส่วนที่ 1: AFK MONEY SYSTEM (Logic)
--- =========================
 local afkMoneyEnabled = false
 local afkLoop = nil
-local AFK_TELEPORT_DELAY = 0.5
+local AFK_TELEPORT_DELAY = 0.5 -- ตั้งค่าดีเลย์การวาร์ป
 
+-- [[ 🧠 ฟังก์ชันเริ่มต้น AFK Money (รักษาโครงสร้างเดิมของน้องหนึ่ง) ]]
 local function startAFKMoney()
     if afkLoop then return end
-    if createAFKPart then createAFKPart() end -- ตรวจสอบว่ามีฟังก์ชันสร้าง Part ไหม
+    
+    -- ตรวจสอบว่ามีฟังก์ชัน createAFKPart ไหม ถ้าไม่มีให้ข้ามไป (กันสคริปต์หลุด)
+    if typeof(createAFKPart) == "function" then createAFKPart() end
 
     afkLoop = task.spawn(function()  
         while afkMoneyEnabled do  
-            local char = LocalPlayer.Character  
+            local char = lp.Character  -- ใช้ตัวแปร lp ที่เราตั้งไว้ด้านบน
             local hrp = char and char:FindFirstChild("HumanoidRootPart")  
 
             if not hrp then  
@@ -1682,16 +1772,24 @@ local function startAFKMoney()
             end  
 
             local found = false  
+
             for _, pl in ipairs(Players:GetPlayers()) do  
-                if pl ~= LocalPlayer and isDowned and isDowned(pl) then  
+                -- เช็คว่าเป็นคนอื่น และ ล้มอยู่ (isDowned คือฟังก์ชันในหัวใจหลักน้องหนึ่ง)
+                if pl ~= lp and isDowned(pl) then  
                     local pChar = pl.Character  
                     local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")  
+                    
                     if pHrp then  
                         found = true  
                         repeat  
+                            if not afkMoneyEnabled then break end
                             hrp.CFrame = pHrp.CFrame + Vector3.new(0, 3, 0)  
+                            
                             pcall(function()  
-                                interactEvent:FireServer("Revive", true, pl.Name)  
+                                -- ส่ง Event ชุบชีวิต (Interact)
+                                if interactEvent then
+                                    interactEvent:FireServer("Revive", true, pl.Name)  
+                                end
                             end)  
                             task.wait(0.4)  
                         until not isDowned(pl) or not afkMoneyEnabled  
@@ -1699,8 +1797,14 @@ local function startAFKMoney()
                 end  
             end  
 
-            if not found and tpToAFKPart then  
-                tpToAFKPart(hrp)  
+            -- ถ้าไม่มีใครล้ม ให้กลับไปที่จุดพัก AFK
+            if not found then  
+                if typeof(tpToAFKPart) == "function" then
+                    tpToAFKPart(hrp)
+                else
+                    -- ถ้าไม่มีฟังก์ชันวาร์ป ให้ลอยไว้บนฟ้ากันเน็กบอท
+                    hrp.CFrame = CFrame.new(hrp.Position.X, 500, hrp.Position.Z)
+                end
             end  
 
             task.wait(AFK_TELEPORT_DELAY)  
@@ -1709,6 +1813,7 @@ local function startAFKMoney()
     end)
 end
 
+-- [[ 🛑 ฟังก์ชันหยุด AFK Money ]]
 local function stopAFKMoney()
     afkMoneyEnabled = false
     if afkPart then
@@ -1716,6 +1821,23 @@ local function stopAFKMoney()
         afkPart = nil
     end
 end
+
+-- [[ 🔘 ปุ่มเปิด/ปิด ใน UI ]]
+FarmSection:AddToggle("UHubAFKMoney", {
+    Title = "เปิดระบบ AFK ชุบเพื่อน (Money Farm)",
+    Description = "วาร์ปไปชุบคนล้มเพื่อเอาเงิน และกลับจุดพักอัตโนมัติ",
+    Default = false,
+    Callback = function(state)
+        afkMoneyEnabled = state
+        if state then
+            startAFKMoney()
+            Fluent:Notify({Title = "U-HUB", Content = "เริ่มระบบฟาร์มเงินแล้วครับน้องหนึ่ง!", Duration = 2})
+        else
+            stopAFKMoney()
+            Fluent:Notify({Title = "U-HUB", Content = "ปิดระบบฟาร์มเงินแล้ว", Duration = 2})
+        end
+    end
+})
 
 -- =========================
 -- 🛡️ ส่วนที่ 2: ระบบกันเตะ & แจ้งเตือน
@@ -1730,61 +1852,6 @@ pcall(function()
         Duration = 3
     })
 end)
-
--- =========================
--- 🎨 ส่วนที่ 3: เมนู UI (Fluent Syntax)
--- =========================
-
--- --- [ Tab: Teleport ] ---
-TeleportTab:AddToggle("AutoReviveToggle", {
-    Title = "Auto Revive",
-    Description = "ชุบเพื่อนที่ล้มใกล้ตัว",
-    Default = false,
-    Callback = function(state)
-        autoReviveEnabled = state
-        if state then startAutoRevive() else stopAutoRevive() end
-    end
-})
-
-TeleportTab:AddToggle("AFKMoneyToggle", {
-    Title = "AFK Money (New)",
-    Description = "เสก Part + วาร์ปชุบอัตโนมัติ",
-    Default = false,
-    Callback = function(state)
-        afkMoneyEnabled = state
-        if state then startAFKMoney() else stopAFKMoney() end
-    end
-})
-
--- --- [ Tab: Settings ] ---
-SettingsTab:AddButton({
-    Title = "สร้าง / ลบ กล้อง",
-    Description = "สร้าง Part กล้องไว้ตรงหน้า (กดซ้ำเพื่อลบ)",
-    Callback = function()
-        if not partEnabled then
-            createCameraPart()
-            partEnabled = true
-        else
-            if camPart then camPart:Destroy(); camPart = nil end
-            partEnabled = false
-            camera.CameraType = Enum.CameraType.Custom
-            viewEnabled = false
-        end
-    end
-})
-
-SettingsTab:AddButton({
-    Title = "สลับมุมมองกล้อง",
-    Description = "กล้อง ↔ ตัวละคร",
-    Callback = function()
-        if not camPart then return end
-        viewEnabled = not viewEnabled
-        camera.CameraType = viewEnabled and Enum.CameraType.Scriptable or Enum.CameraType.Custom
-        if not viewEnabled and player.Character then
-            camera.CameraSubject = player.Character:FindFirstChild("Humanoid")
-        end
-    end
-})
 
 
 
