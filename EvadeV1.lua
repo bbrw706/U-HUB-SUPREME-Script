@@ -179,7 +179,6 @@ end
 -- [[ 🎡 ปุ่ม Toggle ]]
 FarmTab:AddToggle("UHubTicketToggle", {
     Title = "เปิดระบบ U-HUB Ticket Farm (White Large)",
-    Description = "วาร์ปเก็บตั๋ว (ตัวเปล่า) + กลับมาพักบนที่ยืนขาวใหญ่",
     Default = false,
     Callback = function(state)
         getgenv().AutoTicketFarm = state
@@ -516,8 +515,7 @@ TPSection:AddKeybind("TPKey", {Title="ตั้งค่าปุ่มคีย
 
 
 
--- [[ EVADE SCRIPT: FLUENT VERSION - FULL INTEGRATED PART 2 ]]
--- น้องหนึ่ง โค้ดนี้รวมฟังก์ชันใหม่ทั้งหมด พร้อมปุ่มลอยสีฟ้าและ Keybind ในตัวครับ
+
 
 
 
@@ -1747,97 +1745,7 @@ local function stopAutoRevive()
 end
 
 
--- [[ 💰 ระบบ AFK Money (Auto Revive) - U-HUB ]]
-local FarmSection = FarmTab:AddSection("ระบบฟาร์มเงิน (Money Farm)")
 
-local afkMoneyEnabled = false
-local afkLoop = nil
-local AFK_TELEPORT_DELAY = 0.5 -- ตั้งค่าดีเลย์การวาร์ป
-
--- [[ 🧠 ฟังก์ชันเริ่มต้น AFK Money (รักษาโครงสร้างเดิมของน้องหนึ่ง) ]]
-local function startAFKMoney()
-    if afkLoop then return end
-    
-    -- ตรวจสอบว่ามีฟังก์ชัน createAFKPart ไหม ถ้าไม่มีให้ข้ามไป (กันสคริปต์หลุด)
-    if typeof(createAFKPart) == "function" then createAFKPart() end
-
-    afkLoop = task.spawn(function()  
-        while afkMoneyEnabled do  
-            local char = lp.Character  -- ใช้ตัวแปร lp ที่เราตั้งไว้ด้านบน
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")  
-
-            if not hrp then  
-                task.wait(0.5)  
-                continue  
-            end  
-
-            local found = false  
-
-            for _, pl in ipairs(Players:GetPlayers()) do  
-                -- เช็คว่าเป็นคนอื่น และ ล้มอยู่ (isDowned คือฟังก์ชันในหัวใจหลักน้องหนึ่ง)
-                if pl ~= lp and isDowned(pl) then  
-                    local pChar = pl.Character  
-                    local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")  
-                    
-                    if pHrp then  
-                        found = true  
-                        repeat  
-                            if not afkMoneyEnabled then break end
-                            hrp.CFrame = pHrp.CFrame + Vector3.new(0, 3, 0)  
-                            
-                            pcall(function()  
-                                -- ส่ง Event ชุบชีวิต (Interact)
-                                if interactEvent then
-                                    interactEvent:FireServer("Revive", true, pl.Name)  
-                                end
-                            end)  
-                            task.wait(0.4)  
-                        until not isDowned(pl) or not afkMoneyEnabled  
-                    end  
-                end  
-            end  
-
-            -- ถ้าไม่มีใครล้ม ให้กลับไปที่จุดพัก AFK
-            if not found then  
-                if typeof(tpToAFKPart) == "function" then
-                    tpToAFKPart(hrp)
-                else
-                    -- ถ้าไม่มีฟังก์ชันวาร์ป ให้ลอยไว้บนฟ้ากันเน็กบอท
-                    hrp.CFrame = CFrame.new(hrp.Position.X, 500, hrp.Position.Z)
-                end
-            end  
-
-            task.wait(AFK_TELEPORT_DELAY)  
-        end  
-        afkLoop = nil  
-    end)
-end
-
--- [[ 🛑 ฟังก์ชันหยุด AFK Money ]]
-local function stopAFKMoney()
-    afkMoneyEnabled = false
-    if afkPart then
-        afkPart:Destroy()
-        afkPart = nil
-    end
-end
-
--- [[ 🔘 ปุ่มเปิด/ปิด ใน UI ]]
-FarmSection:AddToggle("UHubAFKMoney", {
-    Title = "เปิดระบบ AFK ชุบเพื่อน (Money Farm)",
-    Description = "วาร์ปไปชุบคนล้มเพื่อเอาเงิน และกลับจุดพักอัตโนมัติ",
-    Default = false,
-    Callback = function(state)
-        afkMoneyEnabled = state
-        if state then
-            startAFKMoney()
-            Fluent:Notify({Title = "U-HUB", Content = "เริ่มระบบฟาร์มเงินแล้วครับน้องหนึ่ง!", Duration = 2})
-        else
-            stopAFKMoney()
-            Fluent:Notify({Title = "U-HUB", Content = "ปิดระบบฟาร์มเงินแล้ว", Duration = 2})
-        end
-    end
-})
 
 -- =========================
 -- 🛡️ ส่วนที่ 2: ระบบกันเตะ & แจ้งเตือน
