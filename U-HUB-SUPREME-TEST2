@@ -21,7 +21,7 @@ if cfg then
         print("U-HUB: Loading for Game ID " .. game.PlaceId)
         loadstring(game:HttpGet(targetUrl))()
     else
-        warn("U-HUB: ลิงก์ว่างนะไอ้หนึ่ง!")
+        warn("https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script--/refs/heads/main/U-HUB-SUPREME-SCRIPT-LANGUAGE-no-lock")
     end
 else
 
