@@ -1,1360 +1,1208 @@
---[[
- .____                  ________ ___.    _____                           __                
- |    |    __ _______   \_____  \\_ |___/ ____\_ __  ______ ____ _____ _/  |_  ___________ 
- |    |   |  |  \__  \   /   |   \| __ \   __\  |  \/  ___// ___\\__  \\   __\/  _ \_  __ \
- |    |___|  |  // __ \_/    |    \ \_\ \  | |  |  /\___ \\  \___ / __ \|  | (  <_> )  | \/
- |_______ \____/(____  /\_______  /___  /__| |____//____  >\___  >____  /__|  \____/|__|   
-         \/          \/         \/    \/                \/     \/     \/                   
-          \_Welcome to LuaObfuscator.com   (Alpha 0.10.9) ~  Much Love, Ferib 
 
-]]--
---สคริปกูล็อคแล้วไอ้สัส--มึงจะเข้ามาดูโค้ดกุทำไมวะเสียใจว่ะ🥀🥀
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))();
-local TweenService = game:GetService("TweenService");
-local UserInputService = game:GetService("UserInputService");
-local vInput = game:GetService("VirtualInputManager");
-local lp = game.Players.LocalPlayer;
-math.randomseed(tick());
-_G.FlySpeed = 400;
-_G.AutoFarm = false;
-_G.IsHiding = false;
-_G.FlySequence = false;
-local SelectedZoneID = 1;
-local HomePos = Vector3.new(127.51, 2.49, 11.21);
-local Locations = {["จุดที่ 1"]=Vector3.new(197.34, -2.51, -94.93),["จุดที่ 2"]=Vector3.new(286.41, -2.51, 21.26),["จุดที่ 3"]=Vector3.new(399.71, -2.51, 118.11),["จุดที่ 4"]=Vector3.new(540.42, -2.51, 15.88),["จุดที่ 5"]=Vector3.new(756.99, -2.51, 2.76),["จุดที่ 6"]=Vector3.new(1074.24, -2.51, -10.5),["จุดที่ 7"]=Vector3.new(1553.9, -2.51, -106.57),["จุดที่ 8"]=Vector3.new(2245.5, -2.51, -19.42),["จุดที่ 9"]=Vector3.new(2600.67, -2.51, -14.11)};
-local ZoneData = {[1]={Farm=Vector3.new(229.04, 3.49, -18.49),Safe=Locations["จุดที่ 1"]},[2]={Farm=Vector3.new(348.37, 3.49, -4.69),Safe=Locations["จุดที่ 2"]},[3]={Farm=Vector3.new(458.68, 3.49, 12.43),Safe=Locations["จุดที่ 3"]},[4]={Farm=Vector3.new(616.35, 3.49, 3.81),Safe=Locations["จุดที่ 4"]},[5]={Farm=Vector3.new(840.69, 3.49, 26.67),Safe=Locations["จุดที่ 5"]},[6]={Farm=Vector3.new(1266.16, 3.49, 4.94),Safe=Locations["จุดที่ 6"]},[7]={Farm=Vector3.new(1788.45, 3.49, -0.41),Safe=Locations["จุดที่ 7"]},[8]={Farm=Vector3.new(2426.1, 3.49, -7.2),Safe=Locations["จุดที่ 8"]},[9]={Farm=Vector3.new(2782.53, 3.49, -9.53),Safe=Locations["จุดที่ 9"]}};
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local vInput = game:GetService("VirtualInputManager")
+local lp = game.Players.LocalPlayer
+math.randomseed(tick())
+
+-- [[ 1. CONFIGURATION & VARIABLES ]]
+_G.FlySpeed = 400 
+_G.AutoFarm = false
+_G.IsHiding = false
+_G.FlySequence = false
+local SelectedZoneID = 1
+local HomePos = Vector3.new(127.51, 2.51, 11.21)
+
+local Locations = {
+    ["จุดที่ 1"] = Vector3.new(197.34, -2.51, -94.93),
+    ["จุดที่ 2"] = Vector3.new(286.41, -2.51, 21.26),
+    ["จุดที่ 3"] = Vector3.new(399.71, -2.51, 118.11),
+    ["จุดที่ 4"] = Vector3.new(540.42, -2.51, 15.88),
+    ["จุดที่ 5"] = Vector3.new(756.99, -2.51, 2.76),
+    ["จุดที่ 6"] = Vector3.new(1074.24, -2.51, -10.50),
+    ["จุดที่ 7"] = Vector3.new(1553.90, -2.51, -106.57),
+    ["จุดที่ 8"] = Vector3.new(2245.50, -2.51, -19.42),
+    ["จุดที่ 9"] = Vector3.new(2600.67, -2.51, -14.11),
+    ["จุดที่ 10"] = Vector3.new(3339.000, -2.51, -129.404),
+    ["จุดที่ 11"] = Vector3.new(3693.999, -2.51, -129.393),
+    ["จุดที่ 12"] = Vector3.new(4048.976, -2.51, -129.403),
+}
+
+
+local ZoneData = {
+    [1] = {Farm = Vector3.new(229.04, 3.49, -18.49), Safe = Locations["จุดที่ 1"]},
+    [2] = {Farm = Vector3.new(348.37, 3.49, -4.69),  Safe = Locations["จุดที่ 2"]},
+    [3] = {Farm = Vector3.new(458.68, 3.49, 12.43),  Safe = Locations["จุดที่ 3"]},
+    [4] = {Farm = Vector3.new(616.35, 3.49, 3.81),   Safe = Locations["จุดที่ 4"]},
+    [5] = {Farm = Vector3.new(840.69, 3.49, 26.67),  Safe = Locations["จุดที่ 5"]},
+    [6] = {Farm = Vector3.new(1266.16, 3.49, 4.94),  Safe = Locations["จุดที่ 6"]},
+    [7] = {Farm = Vector3.new(1788.45, 3.49, -0.41), Safe = Locations["จุดที่ 7"]},
+    [8] = {Farm = Vector3.new(2426.10, 3.49, -7.20), Safe = Locations["จุดที่ 8"]},
+    [9] = {Farm = Vector3.new(2984.003, 3.49, -129.281), Safe = Locations["จุดที่ 9"]},
+    [10] = {Farm = Vector3.new(3339.000, 3.49, -129.404), Safe = Locations["จุดที่ 10"]},
+    [11] = {Farm = Vector3.new(3693.999, 3.49, -129.393), Safe = Locations["จุดที่ 11"]},
+    [12] = {Farm = Vector3.new(4048.976, 3.49, -129.403), Safe = Locations["จุดที่ 12"]},
+}
+
+
+
+
+-- [[ 2. CORE FUNCTIONS (FIXED BUG) ]]
 function HoldGrabLogic(zoneId)
-	local char = lp.Character or lp.CharacterAdded:Wait();
-	local hrp = char:WaitForChild("HumanoidRootPart");
-	local zonePos = ZoneData[zoneId].Farm;
-	local t1 = TweenService:Create(hrp, TweenInfo.new((hrp.Position - zonePos).Magnitude / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame=CFrame.new(zonePos)});
-	t1:Play();
-	t1.Completed:Wait();
-	task.wait(0.5);
-	local targetRoot = nil;
-	local minDist = 999;
-	local zonePos = ZoneData[SelectedZoneID].Farm;
-	for _, p in ipairs(workspace:GetDescendants()) do
-		if p:IsA("ProximityPrompt") then
-			local FlatIdent_6D4CB = 0;
-			local root;
-			while true do
-				if (FlatIdent_6D4CB == 0) then
-					root = (p.Parent:IsA("BasePart") and p.Parent) or p.Parent:FindFirstChildWhichIsA("BasePart");
-					if root then
-						local distToZone = (root.Position - zonePos).Magnitude;
-						if (distToZone < 150) then
-							local model = root:FindFirstAncestorOfClass("Model");
-							if (model and (model ~= lp.Character) and not game.Players:GetPlayerFromCharacter(model)) then
-								local FlatIdent_10BCC = 0;
-								local distToMe;
-								while true do
-									if (0 == FlatIdent_10BCC) then
-										distToMe = (root.Position - hrp.Position).Magnitude;
-										if (distToMe < minDist) then
-											local FlatIdent_47A9C = 0;
-											while true do
-												if (FlatIdent_47A9C == 0) then
-													minDist = distToMe;
-													targetRoot = root;
-													break;
-												end
-											end
-										end
-										break;
-									end
-								end
-							end
-						end
-					end
-					break;
-				end
-			end
-		end
-	end
-	if targetRoot then
-		local FlatIdent_63487 = 0;
-		local tween;
-		local prompt;
-		while true do
-			if (FlatIdent_63487 == 3) then
-				task.wait(0.1);
-				vInput:SendKeyEvent(false, "E", false, game);
-				break;
-			end
-			if (FlatIdent_63487 == 2) then
-				if prompt then
-					fireproximityprompt(prompt);
-				end
-				vInput:SendKeyEvent(true, "E", false, game);
-				FlatIdent_63487 = 3;
-			end
-			if (FlatIdent_63487 == 0) then
-				tween = TweenService:Create(hrp, TweenInfo.new((hrp.Position - targetRoot.Position).Magnitude / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame=targetRoot.CFrame});
-				tween:Play();
-				FlatIdent_63487 = 1;
-			end
-			if (FlatIdent_63487 == 1) then
-				tween.Completed:Wait();
-				prompt = targetRoot:FindFirstChildWhichIsA("ProximityPrompt") or targetRoot.Parent:FindFirstChildWhichIsA("ProximityPrompt");
-				FlatIdent_63487 = 2;
-			end
-		end
-	end
-	if (targetRoot and not _G.IsHiding) then
-		local FlatIdent_8F047 = 0;
-		local t2;
-		local p;
-		while true do
-			if (2 == FlatIdent_8F047) then
-				vInput:SendKeyEvent(false, "E", false, game);
-				firetouchinterest(hrp, targetRoot, 1);
-				task.wait(0.2);
-				break;
-			end
-			if (FlatIdent_8F047 == 0) then
-				t2 = TweenService:Create(hrp, TweenInfo.new((hrp.Position - targetRoot.Position).Magnitude / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame=targetRoot.CFrame});
-				t2:Play();
-				t2.Completed:Wait();
-				p = targetRoot.Parent:FindFirstChildWhichIsA("ProximityPrompt", true);
-				FlatIdent_8F047 = 1;
-			end
-			if (FlatIdent_8F047 == 1) then
-				if p then
-					fireproximityprompt(p);
-				end
-				vInput:SendKeyEvent(true, "E", false, game);
-				firetouchinterest(hrp, targetRoot, 0);
-				task.wait(0.2);
-				FlatIdent_8F047 = 2;
-			end
-		end
-	end
-	TweenService:Create(hrp, TweenInfo.new((hrp.Position - HomePos).Magnitude / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame=CFrame.new(HomePos)}):Play();
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local zonePos = ZoneData[zoneId].Farm
+    
+    -- บินไปโซนที่มึงเลือก
+    local t1 = TweenService:Create(hrp, TweenInfo.new((hrp.Position - zonePos).Magnitude/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(zonePos)})
+    t1:Play()
+    t1.Completed:Wait()
+    task.wait(0.5)
+
+  -- [[ หามอน/ไอเทมที่มีปุ่มกด ในระยะโซนฟาร์ม ]]
+    local targetRoot = nil
+    local minDist = 999
+    local zonePos = ZoneData[SelectedZoneID].Farm -- จุดศูนย์กลางโซน
+
+    -- 1. หา "ปุ่มกด" (ProximityPrompt) ทั่วแมพเฉพาะที่อยู่ใกล้โซน
+    for _, p in ipairs(workspace:GetDescendants()) do
+        if p:IsA("ProximityPrompt") then
+            local root = p.Parent:IsA("BasePart") and p.Parent or p.Parent:FindFirstChildWhichIsA("BasePart")
+            if root then
+                -- 2. เช็คว่าไอ้นี่อยู่ในโซนฟาร์มเราไหม (ระยะ 150 บล็อก)
+                local distToZone = (root.Position - zonePos).Magnitude
+                if distToZone < 150 then
+                    -- 3. เช็คว่าไม่ใช่ตัวเรา และไม่ใช่ผู้เล่น
+                    local model = root:FindFirstAncestorOfClass("Model")
+                    if model and model ~= lp.Character and not game.Players:GetPlayerFromCharacter(model) then
+                        -- 4. เลือกตัวที่ใกล้เราที่สุดเพื่อความไว
+                        local distToMe = (root.Position - hrp.Position).Magnitude
+                        if distToMe < minDist then
+                            minDist = distToMe
+                            targetRoot = root
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- [[ 5. พุ่งไปหยิบ (จบงาน) ]]
+    if targetRoot then
+        -- บินไปหาเป้าหมาย
+        local tween = TweenService:Create(hrp, TweenInfo.new((hrp.Position - targetRoot.Position).Magnitude/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetRoot.CFrame})
+        tween:Play()
+        tween.Completed:Wait()
+
+        -- สั่งหยิบ (ใช้ทั้ง fire และกดปุ่ม)
+        local prompt = targetRoot:FindFirstChildWhichIsA("ProximityPrompt") or targetRoot.Parent:FindFirstChildWhichIsA("ProximityPrompt")
+        if prompt then 
+            fireproximityprompt(prompt) 
+        end
+        vInput:SendKeyEvent(true, "E", false, game)
+        task.wait(0.1)
+        vInput:SendKeyEvent(false, "E", false, game)
+    end
+
+   if targetRoot and not _G.IsHiding then
+        local t2 = TweenService:Create(hrp, TweenInfo.new((hrp.Position - targetRoot.Position).Magnitude/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetRoot.CFrame})
+        t2:Play()
+        t2.Completed:Wait()
+
+        -- [[ แก้ 3 บรรทัดนี้แทนอันที่มึงเขียนผิด ]]
+        local p = targetRoot.Parent:FindFirstChildWhichIsA("ProximityPrompt", true)
+        if p then 
+            fireproximityprompt(p) 
+        end
+        -- [[ -------------------------------- ]]
+
+        vInput:SendKeyEvent(true, "E", false, game)
+        firetouchinterest(hrp, targetRoot, 0)
+        task.wait(0.2) 
+        vInput:SendKeyEvent(false, "E", false, game)
+        firetouchinterest(hrp, targetRoot, 1)
+        task.wait(0.2)
+    end
+    TweenService:Create(hrp, TweenInfo.new((hrp.Position - HomePos).Magnitude/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(HomePos)}):Play()
 end
-local Window = Fluent:CreateWindow({Title="U-HUB SUPREME ",SubTitle="BY Neung",TabWidth=160,Size=UDim2.fromOffset(580, 460),Acrylic=false,Theme="Dark",MinimizeKey=Enum.KeyCode.U});
-local Tabs = {Main=Window:AddTab({Title="Home / หน้าหลัก",Icon="home"}),Farm=Window:AddTab({Title="Auto Fly / บินวน",Icon="map"}),Settings=Window:AddTab({Title="Settings / ตั้งค่า",Icon="settings"})};
-local VIPSection = Tabs.Main:AddSection("VIP Room / ห้องวีไอพี");
-VIPSection:AddButton({Title="Unlock VIP Room (ลบกำแพง)",Description="ลบกำแพงกั้นห้อง VIP ออกเพื่อให้เดินเข้าไปได้",Callback=function()
-	local vip = game.Workspace:FindFirstChild("VIPWalls", true);
-	if vip then
-		local FlatIdent_61B23 = 0;
-		while true do
-			if (FlatIdent_61B23 == 0) then
-				vip:Destroy();
-				Fluent:Notify({Title="U-HUB",Content="ปลดล็อกห้อง VIP เรียบร้อยแล้ว!",Duration=5});
-				break;
-			end
-		end
-	else
-		Fluent:Notify({Title="U-HUB",Content="ไม่พบกำแพง VIP ในแมพนี้",Duration=5});
-	end
-end});
-_G.GodNean = false;
+-- [[ 3. GUI INITIALIZATION ]]
+local Window = Fluent:CreateWindow({
+    Title = "U-HUB SUPREME ",
+    SubTitle = "BY Neung",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false, 
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.U 
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Home / หน้าหลัก", Icon = "home" }),
+    Farm = Window:AddTab({ Title = "Auto Fly / บินวน", Icon = "map" }),
+    Settings = Window:AddTab({ Title = "Settings / ตั้งค่า", Icon = "settings" })
+}
+
+
+-- [[ แก้ไขส่วนปลดล็อก VIP ให้เข้ากับ Fluent ]]
+local VIPSection = Tabs.Main:AddSection("VIP Room / ห้องวีไอพี")
+
+VIPSection:AddButton({
+    Title = "Unlock VIP Room (ลบกำแพง)",
+    Description = "ลบกำแพงกั้นห้อง VIP ออกเพื่อให้เดินเข้าไปได้",
+    Callback = function()
+        -- ใช้ workspace ตัวเล็ก และระบุตำแหน่งให้แม่นยำขึ้น
+        local vip = game.Workspace:FindFirstChild("VIPWalls", true)
+        
+        if vip then
+            vip:Destroy()
+            -- ใช้ Fluent Notification แทน warn เพื่อให้เห็นที่หน้าจอ
+            Fluent:Notify({
+                Title = "U-HUB",
+                Content = "ปลดล็อกห้อง VIP เรียบร้อยแล้ว!",
+                Duration = 5
+            })
+        else
+            Fluent:Notify({
+                Title = "U-HUB",
+                Content = "ไม่พบกำแพง VIP ในแมพนี้",
+                Duration = 5
+            })
+        end
+    end
+})
+
+_G.GodNean = false
+
+-- [[ ฟังก์ชันวนลูปเช็คเลือดตลอดเวลา ]]
 task.spawn(function()
-	while task.wait() do
-		if _G.GodNean then
-			pcall(function()
-				local FlatIdent_E652 = 0;
-				local char;
-				while true do
-					if (0 == FlatIdent_E652) then
-						char = game.Players.LocalPlayer.Character;
-						if char then
-							local FlatIdent_27957 = 0;
-							local hum;
-							while true do
-								if (FlatIdent_27957 == 1) then
-									if char:FindFirstChild("Health") then
-										char.Health.Disabled = true;
-									end
-									break;
-								end
-								if (0 == FlatIdent_27957) then
-									hum = char:FindFirstChildOfClass("Humanoid");
-									if hum then
-										local FlatIdent_8F59B = 0;
-										while true do
-											if (FlatIdent_8F59B == 0) then
-												if (hum.Health < 20) then
-													hum.Health = 20;
-												end
-												hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false);
-												break;
-											end
-										end
-									end
-									FlatIdent_27957 = 1;
-								end
-							end
-						end
-						break;
-					end
-				end
-			end);
-		end
-	end
-end);
-local SurvivalSection = Tabs.Main:AddSection("Survival / ระบบอมตะเนียน");
-SurvivalSection:AddToggle("GodNeanToggle", {Title="🛡️ อมตะแบบเลือดไม่หมด (ล็อคเลือด)",Default=false,Callback=function(Value)
-	local FlatIdent_2AC68 = 0;
-	while true do
-		if (FlatIdent_2AC68 == 0) then
-			_G.GodNean = Value;
-			if _G.GodNean then
-				Fluent:Notify({Title="U-HUB",Content="เปิดระบบล็อคเลือดแล้ว! (เลือดจะไม่ต่ำกว่า 20)",Duration=3});
-			else
-				local FlatIdent_1B51D = 0;
-				local char;
-				while true do
-					if (FlatIdent_1B51D == 1) then
-						Fluent:Notify({Title="U-HUB",Content="ปิดระบบอมตะแล้วนะคัฟ",Duration=3});
-						break;
-					end
-					if (FlatIdent_1B51D == 0) then
-						char = game.Players.LocalPlayer.Character;
-						if (char and char:FindFirstChild("Humanoid")) then
-							local FlatIdent_25DF3 = 0;
-							while true do
-								if (FlatIdent_25DF3 == 0) then
-									char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true);
-									if char:FindFirstChild("Health") then
-										char.Health.Disabled = false;
-									end
-									break;
-								end
-							end
-						end
-						FlatIdent_1B51D = 1;
-					end
-				end
-			end
-			break;
-		end
-	end
-end});
-Tabs.Main:AddDropdown("ZoneSelector", {Title="เลือกโซนฟาร์ม",Values={"โซน 1","โซน 2","โซน 3","โซน 4","โซน 5","โซน 6","โซน 7","โซน 8","โซน 9"},Default="โซน 1",Callback=function(v)
-	SelectedZoneID = tonumber(v:match("%d+"));
-end});
-Tabs.Main:AddButton({Title="ไปหยิบมอน (ครั้งเดียว)",Callback=function()
-	task.spawn(function()
-		HoldGrabLogic(SelectedZoneID);
-	end);
-end});
-Tabs.Main:AddToggle("FarmToggle", {Title="เปิดออโต้ฟาร์มวนลูป",Default=false,Callback=function(v)
-	local FlatIdent_5BA5E = 0;
-	while true do
-		if (FlatIdent_5BA5E == 0) then
-			_G.AutoFarm = v;
-			if v then
-				task.spawn(function()
-					while _G.AutoFarm do
-						local FlatIdent_74348 = 0;
-						while true do
-							if (FlatIdent_74348 == 0) then
-								if not _G.IsHiding then
-									HoldGrabLogic(SelectedZoneID);
-								end
-								task.wait(1);
-								break;
-							end
-						end
-					end
-				end);
-			end
-			break;
-		end
-	end
-end});
-Tabs.Farm:AddToggle("TsunamiFly400", {Title="บินวนจุดเซฟอัตโนมัติ (Speed 400)",Default=false,Callback=function(v)
-	_G.FlySequence = v;
-	if v then
-		task.spawn(function()
-			local LocList = {Locations["จุดที่ 1"],Locations["จุดที่ 2"],Locations["จุดที่ 3"],Locations["จุดที่ 4"],Locations["จุดที่ 5"],Locations["จุดที่ 6"],Locations["จุดที่ 7"],Locations["จุดที่ 8"],Locations["จุดที่ 9"]};
-			while _G.FlySequence do
-				for _, pos in pairs(LocList) do
-					if not _G.FlySequence then
-						break;
-					end
-					local root = lp.Character.HumanoidRootPart;
-					local tween = TweenService:Create(root, TweenInfo.new((root.Position - pos).Magnitude / 400, Enum.EasingStyle.Linear), {CFrame=CFrame.new(pos)});
-					tween:Play();
-					repeat
-						task.wait();
-					until ((root.Position - pos).Magnitude < 7) or not _G.FlySequence 
-					task.wait(0.5);
-				end
-			end
-		end);
-	end
-end});
-local SelectPoint = Tabs.Farm:AddDropdown("WarpDropdown", {Title="วาร์ปไปจุดที่เลือก",Values={"ปิด","จุดที่ 1","จุดที่ 2","จุดที่ 3","จุดที่ 4","จุดที่ 5","จุดที่ 6","จุดที่ 7","จุดที่ 8","จุดที่ 9"},Default="ปิด"});
+    while task.wait() do -- วนลูปเช็คทุกๆ เสี้ยววินาที
+        if _G.GodNean then
+            pcall(function()
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        -- ถ้าเลือดเหลือน้อยกว่า 20 ให้เด้งกลับมาที่ 20 ทันที
+                        if hum.Health < 20 then
+                            hum.Health = 20
+                        end
+                        -- ล็อคสถานะไม่ให้ตาย
+                        hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+                    end
+                    -- ปิดสคริปต์ลดเลือดของแมพ (ถ้ามี)
+                    if char:FindFirstChild("Health") then
+                        char.Health.Disabled = true
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- [[ ปุ่ม Toggle ในหน้า Main ]]
+-- (น้องอย่าลืมเปลี่ยน Tabs.Main เป็นชื่อ Tab ของน้องนะจ๊ะ)
+local SurvivalSection = Tabs.Main:AddSection("Survival / ระบบอมตะเนียน")
+
+SurvivalSection:AddToggle("GodNeanToggle", {
+    Title = "🛡️ อมตะแบบเลือดไม่หมด (ล็อคเลือด)",
+    Default = false,
+    Callback = function(Value)
+        _G.GodNean = Value
+        if _G.GodNean then
+            Fluent:Notify({ Title = "U-HUB", Content = "เปิดระบบล็อคเลือดแล้ว! (เลือดจะไม่ต่ำกว่า 20)", Duration = 3 })
+        else
+            -- คืนค่าปกติ
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+                if char:FindFirstChild("Health") then
+                    char.Health.Disabled = false
+                end
+            end
+            Fluent:Notify({ Title = "U-HUB", Content = "ปิดระบบอมตะแล้วนะคัฟ", Duration = 3 })
+        end
+    end
+})
+
+-- [[ 4. UI COMPONENTS (HOME) ]]
+Tabs.Main:AddDropdown("ZoneSelector", {
+    Title = "เลือกโซนฟาร์ม",
+    Values = {"โซน 1", "โซน 2", "โซน 3", "โซน 4", "โซน 5", "โซน 6", "โซน 7", "โซน 8", "โซน 9", "โซน 10", "โซน 11", "โซน 12"},
+    Default = "โซน 1",
+    Callback = function(v) SelectedZoneID = tonumber(v:match("%d+")) end
+})
+
+Tabs.Main:AddButton({
+    Title = "ไปหยิบมอน (ครั้งเดียว)",
+    Callback = function() task.spawn(function() HoldGrabLogic(SelectedZoneID) end) end
+})
+
+Tabs.Main:AddToggle("FarmToggle", {
+    Title = "เปิดออโต้ฟาร์มวนลูป",
+    Default = false,
+    Callback = function(v) 
+        _G.AutoFarm = v 
+        if v then 
+            task.spawn(function()
+                while _G.AutoFarm do
+                    if not _G.IsHiding then HoldGrabLogic(SelectedZoneID) end
+                    task.wait(1)
+                end
+            end)
+        end 
+    end
+})
+
+-- [[ 5. UI COMPONENTS (AUTO FLY) ]]
+Tabs.Farm:AddToggle("TsunamiFly400", {
+    Title = "บินวนจุดเซฟอัตโนมัติ (Speed 400)",
+    Default = false,
+    Callback = function(v)
+        _G.FlySequence = v
+        if v then
+            task.spawn(function()
+                local LocList = {Locations["จุดที่ 1"], Locations["จุดที่ 2"], Locations["จุดที่ 3"], Locations["จุดที่ 4"], Locations["จุดที่ 5"], Locations["จุดที่ 6"], Locations["จุดที่ 7"], Locations["จุดที่ 8"], Locations["จุดที่ 9"], Locations["จุดที่ 10"], Locations["จุดที่ 11"], Locations["จุดที่ 12"]}
+                while _G.FlySequence do
+                    for _, pos in pairs(LocList) do
+                        if not _G.FlySequence then break end
+                        local root = lp.Character.HumanoidRootPart
+                        local tween = TweenService:Create(root, TweenInfo.new((root.Position - pos).Magnitude/400, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
+                        tween:Play()
+                        repeat task.wait() until (root.Position - pos).Magnitude < 7 or not _G.FlySequence
+                        task.wait(0.5)
+                    end
+                end
+            end)
+        end
+    end
+})
+
+local SelectPoint = Tabs.Farm:AddDropdown("WarpDropdown", {
+    Title = "วาร์ปไปจุดที่เลือก",
+    Values = {"ปิด","จุดที่ 1", "จุดที่ 2", "จุดที่ 3", "จุดที่ 4", "จุดที่ 5", "จุดที่ 6", "จุดที่ 7", "จุดที่ 8", "จุดที่ 9", "จุดที่ 10", "จุดที่ 11", "จุดที่ 12"},
+    Default = "ปิด",
+})
+
 SelectPoint:OnChanged(function(Value)
-	local FlatIdent_39764 = 0;
-	local targetPos;
-	local hrp;
-	while true do
-		if (FlatIdent_39764 == 2) then
-			task.wait(2);
-			SelectPoint:SetValue("ปิด");
-			break;
-		end
-		if (FlatIdent_39764 == 0) then
-			if (Value == "ปิด") then
-				return;
-			end
-			targetPos = Locations[Value];
-			FlatIdent_39764 = 1;
-		end
-		if (FlatIdent_39764 == 1) then
-			hrp = lp.Character.HumanoidRootPart;
-			TweenService:Create(hrp, TweenInfo.new((hrp.Position - targetPos).Magnitude / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame=CFrame.new(targetPos)}):Play();
-			FlatIdent_39764 = 2;
-		end
-	end
-end);
-Tabs.Settings:AddSlider("FlySpeedSlider", {Title="ปรับความเร็วการบิน",Default=400,Min=100,Max=1000,Rounding=0,Callback=function(v)
-	_G.FlySpeed = v;
-end});
+    if Value == "ปิด" then return end
+    local targetPos = Locations[Value]
+    local hrp = lp.Character.HumanoidRootPart
+    TweenService:Create(hrp, TweenInfo.new((hrp.Position - targetPos).Magnitude/_G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPos)}):Play()
+    task.wait(2)
+    SelectPoint:SetValue("ปิด")
+end)
+
+-- [[ 6. UI COMPONENTS (SETTINGS) ]]
+Tabs.Settings:AddSlider("FlySpeedSlider", {
+    Title = "ปรับความเร็วการบิน",
+    Default = 400, Min = 100, Max = 1000, Rounding = 0,
+    Callback = function(v) _G.FlySpeed = v end
+})
+
+-- [[ 7. LOGO & WINDOW DRAG SYSTEM ]]
 local function SetupLogoV50(MainBtn)
-	local Container = Instance.new("Frame", MainBtn);
-	Container.Size = UDim2.new(1, 0, 1, 0);
-	Container.BackgroundTransparency = 1;
-	Container.ClipsDescendants = true;
-	local function CreateChar(txt, color)
-		local FlatIdent_7909D = 0;
-		local h;
-		local l;
-		while true do
-			if (FlatIdent_7909D == 2) then
-				l.Font = Enum.Font.GothamBold;
-				l.Size = UDim2.new(1, 0, 1, 0);
-				l.BackgroundTransparency = 1;
-				FlatIdent_7909D = 3;
-			end
-			if (FlatIdent_7909D == 1) then
-				l = Instance.new("TextLabel", h);
-				l.Text = txt;
-				l.TextColor3 = color;
-				FlatIdent_7909D = 2;
-			end
-			if (FlatIdent_7909D == 3) then
-				task.spawn(function()
-					while true do
-						local FlatIdent_40B41 = 0;
-						while true do
-							if (1 == FlatIdent_40B41) then
-								TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position=UDim2.new(0, 0, 0, -2)}):Play();
-								task.wait(1.5);
-								break;
-							end
-							if (FlatIdent_40B41 == 0) then
-								TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position=UDim2.new(0, 0, 0, 2)}):Play();
-								task.wait(1.5);
-								FlatIdent_40B41 = 1;
-							end
-						end
-					end
-				end);
-				return h, l;
-			end
-			if (FlatIdent_7909D == 0) then
-				h = Instance.new("Frame", Container);
-				h.Size = UDim2.new(1, 0, 1, 0);
-				h.BackgroundTransparency = 1;
-				FlatIdent_7909D = 1;
-			end
-		end
-	end
-	local holderU, textU = CreateChar("U", Color3.fromRGB(0, 255, 100));
-	local holderN, textN = CreateChar("N", Color3.fromRGB(0, 170, 255));
-	holderU.Position = UDim2.new(0, 0, 0, 0);
-	textU.TextSize = 35;
-	holderN.Position = UDim2.new(-0.25, 0, -0.25, 0);
-	textN.TextSize = 14;
-	return function(isMinimized)
-		if isMinimized then
-			local FlatIdent_8A742 = 0;
-			while true do
-				if (0 == FlatIdent_8A742) then
-					TweenService:Create(holderU, TweenInfo.new(0.4), {Position=UDim2.new(0, 0, 0, 0)}):Play();
-					textU.TextSize = 35;
-					FlatIdent_8A742 = 1;
-				end
-				if (FlatIdent_8A742 == 1) then
-					TweenService:Create(holderN, TweenInfo.new(0.4), {Position=UDim2.new(-0.25, 0, -0.25, 0)}):Play();
-					textN.TextSize = 14;
-					break;
-				end
-			end
-		else
-			local FlatIdent_8435E = 0;
-			while true do
-				if (FlatIdent_8435E == 0) then
-					TweenService:Create(holderN, TweenInfo.new(0.4), {Position=UDim2.new(0, 0, 0, 0)}):Play();
-					textN.TextSize = 35;
-					FlatIdent_8435E = 1;
-				end
-				if (FlatIdent_8435E == 1) then
-					TweenService:Create(holderU, TweenInfo.new(0.4), {Position=UDim2.new(-0.25, 0, -0.25, 0)}):Play();
-					textU.TextSize = 14;
-					break;
-				end
-			end
-		end
-	end;
+    local Container = Instance.new("Frame", MainBtn)
+    Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
+    local function CreateChar(txt, color)
+        local h = Instance.new("Frame", Container); h.Size = UDim2.new(1, 0, 1, 0); h.BackgroundTransparency = 1
+        local l = Instance.new("TextLabel", h); l.Text = txt; l.TextColor3 = color; l.Font = Enum.Font.GothamBold; l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1
+        task.spawn(function() while true do
+            TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,2)}):Play()
+            task.wait(1.5)
+            TweenService:Create(l, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Position = UDim2.new(0,0,0,-2)}):Play()
+            task.wait(1.5)
+        end end)
+        return h, l
+    end
+    local holderU, textU = CreateChar("U", Color3.fromRGB(0, 255, 100))
+    local holderN, textN = CreateChar("N", Color3.fromRGB(0, 170, 255))
+    holderU.Position = UDim2.new(0,0,0,0); textU.TextSize = 35
+    holderN.Position = UDim2.new(-0.25,0,-0.25,0); textN.TextSize = 14
+    return function(isMinimized)
+        if isMinimized then
+            TweenService:Create(holderU, TweenInfo.new(0.4), {Position = UDim2.new(0,0,0,0)}):Play(); textU.TextSize = 35
+            TweenService:Create(holderN, TweenInfo.new(0.4), {Position = UDim2.new(-0.25,0,-0.25,0)}):Play(); textN.TextSize = 14
+        else
+            TweenService:Create(holderN, TweenInfo.new(0.4), {Position = UDim2.new(0,0,0,0)}):Play(); textN.TextSize = 35
+            TweenService:Create(holderU, TweenInfo.new(0.4), {Position = UDim2.new(-0.25,0,-0.25,0)}):Play(); textU.TextSize = 14
+        end
+    end
 end
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui);
-local MainBtn = Instance.new("Frame", ScreenGui);
-MainBtn.Size = UDim2.new(0, 60, 0, 60);
-MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0);
-MainBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0);
-MainBtn.Active = true;
-Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 12);
-local UpdateLogo = SetupLogoV50(MainBtn);
-local dragging, dragStart, startPos, startTime;
+
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainBtn = Instance.new("Frame", ScreenGui)
+MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0)
+MainBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0); MainBtn.Active = true
+Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 12)
+local UpdateLogo = SetupLogoV50(MainBtn)
+
+local dragging, dragStart, startPos, startTime
 MainBtn.InputBegan:Connect(function(input)
-	if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then
-		local FlatIdent_206F8 = 0;
-		while true do
-			if (2 == FlatIdent_206F8) then
-				input.Changed:Connect(function()
-					if (input.UserInputState == Enum.UserInputState.End) then
-						local FlatIdent_19F98 = 0;
-						while true do
-							if (FlatIdent_19F98 == 0) then
-								dragging = false;
-								if ((tick() - startTime) < 0.25) then
-									local FlatIdent_75224 = 0;
-									while true do
-										if (FlatIdent_75224 == 0) then
-											Window:Minimize();
-											task.wait(0.05);
-											FlatIdent_75224 = 1;
-										end
-										if (FlatIdent_75224 == 1) then
-											UpdateLogo(Window.Minimized);
-											break;
-										end
-									end
-								end
-								break;
-							end
-						end
-					end
-				end);
-				break;
-			end
-			if (0 == FlatIdent_206F8) then
-				dragging = true;
-				startTime = tick();
-				FlatIdent_206F8 = 1;
-			end
-			if (FlatIdent_206F8 == 1) then
-				dragStart = input.Position;
-				startPos = MainBtn.Position;
-				FlatIdent_206F8 = 2;
-			end
-		end
-	end
-end);
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true; startTime = tick(); dragStart = input.Position; startPos = MainBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                if tick() - startTime < 0.25 then
+                    Window:Minimize()
+                    task.wait(0.05)
+                    UpdateLogo(Window.Minimized)
+                end
+            end
+        end)
+    end
+end)
 UserInputService.InputChanged:Connect(function(input)
-	if (dragging and ((input.UserInputType == Enum.UserInputType.MouseMovement) or (input.UserInputType == Enum.UserInputType.Touch))) then
-		local FlatIdent_494F6 = 0;
-		local delta;
-		while true do
-			if (FlatIdent_494F6 == 0) then
-				delta = input.Position - dragStart;
-				MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y);
-				break;
-			end
-		end
-	end
-end);
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- [[ 8. TSUNAMI PROTECTION ]]
 task.spawn(function()
-	while task.wait(0.5) do
-		local FlatIdent_581C8 = 0;
-		local water;
-		while true do
-			if (FlatIdent_581C8 == 0) then
-				water = workspace:FindFirstChild("Tsunami") or workspace:FindFirstChild("Water");
-				if (water and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")) then
-					local FlatIdent_1B881 = 0;
-					local hrp;
-					while true do
-						if (FlatIdent_1B881 == 0) then
-							hrp = lp.Character.HumanoidRootPart;
-							if ((water.Position - hrp.Position).Magnitude < 450) then
-								local FlatIdent_25A9F = 0;
-								while true do
-									if (FlatIdent_25A9F == 1) then
-										repeat
-											task.wait(1);
-										until not workspace:FindFirstChild("Tsunami") and not workspace:FindFirstChild("Water") 
-										task.wait(2);
-										FlatIdent_25A9F = 2;
-									end
-									if (FlatIdent_25A9F == 0) then
-										_G.IsHiding = true;
-										hrp.CFrame = CFrame.new(ZoneData[SelectedZoneID].Safe);
-										FlatIdent_25A9F = 1;
-									end
-									if (FlatIdent_25A9F == 2) then
-										_G.IsHiding = false;
-										break;
-									end
-								end
-							end
-							break;
-						end
-					end
-				end
-				break;
-			end
-		end
-	end
-end);
-local InstantEnabled = true;
+    while task.wait(0.5) do
+        local water = workspace:FindFirstChild("Tsunami") or workspace:FindFirstChild("Water")
+        if water and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = lp.Character.HumanoidRootPart
+            if (water.Position - hrp.Position).Magnitude < 450 then
+                _G.IsHiding = true
+                hrp.CFrame = CFrame.new(ZoneData[SelectedZoneID].Safe)
+                repeat task.wait(1) until not workspace:FindFirstChild("Tsunami") and not workspace:FindFirstChild("Water")
+                task.wait(2)
+                _G.IsHiding = false
+            end
+        end
+    end
+end)
+
+-- [[ ตั้งค่าเริ่มต้น ]]
+local InstantEnabled = true -- สั่งให้สถานะเป็น "เปิด" ทันทีในตัวแปร
+
+-- ฟังก์ชันกลางสำหรับเปลี่ยนค่าปุ่ม
 local function ApplyInstant(obj)
-	if obj:IsA("ProximityPrompt") then
-		if InstantEnabled then
-			obj.HoldDuration = 0;
-			obj.RequiresLineOfSight = false;
-		else
-			obj.HoldDuration = 0.5;
-			obj.RequiresLineOfSight = true;
-		end
-	end
+    if obj:IsA("ProximityPrompt") then
+        if InstantEnabled then
+            obj.HoldDuration = 0
+            obj.RequiresLineOfSight = false
+        else
+            obj.HoldDuration = 0.5 -- กลับเป็นค่าปกติเวลาปิด
+            obj.RequiresLineOfSight = true
+        end
+    end
 end
+
+-- 1. รันทันทีที่โหลดสคริปต์ (ไม่ต้องรอใครสั่ง)
 for _, v in pairs(workspace:GetDescendants()) do
-	ApplyInstant(v);
+    ApplyInstant(v)
 end
-workspace.DescendantAdded:Connect(ApplyInstant);
-Tabs.Settings:AddToggle("InstantInteract", {Title="Instant Interaction (กดไวสัด)",Default=true,Callback=function(Value)
-	local FlatIdent_20FE3 = 0;
-	while true do
-		if (FlatIdent_20FE3 == 0) then
-			InstantEnabled = Value;
-			for _, v in pairs(workspace:GetDescendants()) do
-				ApplyInstant(v);
-			end
-			break;
-		end
-	end
-end});
-Tabs.Settings:AddDropdown("WindowSize", {Title="ปรับขนาดเมนู",Values={"เล็ก","กลาง","ใหญ่"},Default="กลาง",Callback=function(Value)
-	if (Window and Window.Root) then
-		local FlatIdent_578E3 = 0;
-		local NewSize;
-		while true do
-			if (FlatIdent_578E3 == 0) then
-				NewSize = nil;
-				if (Value == "เล็ก") then
-					NewSize = UDim2.fromOffset(480, 360);
-				elseif (Value == "กลาง") then
-					NewSize = UDim2.fromOffset(580, 460);
-				elseif (Value == "ใหญ่") then
-					NewSize = UDim2.fromOffset(800, 600);
-				end
-				FlatIdent_578E3 = 1;
-			end
-			if (FlatIdent_578E3 == 1) then
-				Window.Root.Size = NewSize;
-				break;
-			end
-		end
-	end
-end});
-Tabs.Settings:AddKeybind("MenuBind", {Title="ตั้งค่าปุ่มเปิด/ปิดเมนู",Default="...",Mode="Toggle",Callback=function()
-	Window:Minimize();
-end});
+
+-- 2. ดักของที่เกิดใหม่ให้กดไวตลอดเวลา
+workspace.DescendantAdded:Connect(ApplyInstant)
+
+-- 3. ตัวปุ่ม Toggle ในเมนู (จะขึ้นว่าเปิดอยู่แล้ว)
+Tabs.Settings:AddToggle("InstantInteract", {
+    Title = "Instant Interaction (กดไวสัด)", 
+    Default = true, -- สวิตช์เปิดค้างไว้ให้เลย
+    Callback = function(Value)
+        InstantEnabled = Value
+        -- ถ้ามึงไปมือบอนกดปิด/เปิดใหม่ มันก็จะอัปเดตให้ทันที
+        for _, v in pairs(workspace:GetDescendants()) do
+            ApplyInstant(v)
+        end
+    end
+})
+
+Tabs.Settings:AddDropdown("WindowSize", {
+    Title = "ปรับขนาดเมนู",
+    Values = {"เล็ก", "กลาง", "ใหญ่"},
+    Default = "กลาง",
+    Callback = function(Value)
+        -- เช็คว่าตัวแปร Window ของน้องมีอยู่จริงไหม
+        if Window and Window.Root then
+            local NewSize
+            if Value == "เล็ก" then 
+                NewSize = UDim2.fromOffset(480, 360)
+            elseif Value == "กลาง" then 
+                NewSize = UDim2.fromOffset(580, 460)
+            elseif Value == "ใหญ่" then 
+                NewSize = UDim2.fromOffset(800, 600) 
+            end
+            
+            -- สั่งปรับขนาดไปที่ตัว Frame หลักของ UI เลย
+            Window.Root.Size = NewSize
+        end
+    end
+})
+
+-- [[ ปุ่มเปลี่ยนปุ่มเมนู แบบโชว์ให้กดเปลี่ยนได้ ]]
+Tabs.Settings:AddKeybind("MenuBind", {
+    Title = "ตั้งค่าปุ่มเปิด/ปิดเมนู",
+    Default = "...",
+    Mode = "Toggle",
+    Callback = function() Window:Minimize() end
+})
+
+-- [[ ⚡ สคริปต์ FORCE BOOST (แปลงจาก FastFlags เป๊ะๆ) ⚡ ]]
+
 local function ForceExtremeBoost()
-	setfpscap(2147483647);
-	settings().Rendering.QualityLevel = 1;
-	settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level10;
-	local Lighting = game:GetService("Lighting");
-	Lighting.GlobalShadows = false;
-	Lighting.FogEnd = 8999999488;
-	Lighting.Brightness = 0;
-	Lighting.ExposureCompensation = 0;
-	for _, v in pairs(Lighting:GetChildren()) do
-		if (v:IsA("PostEffect") or v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect")) then
-			v.Enabled = false;
-		end
-	end
-	for _, v in pairs(game:GetDescendants()) do
-		if v:IsA("BasePart") then
-			v.Material = Enum.Material.SmoothPlastic;
-			v.CastShadow = false;
-		elseif (v:IsA("Texture") or v:IsA("Decal")) then
-			v:Destroy();
-		elseif v:IsA("DataModelMesh") then
-			v.LODEffortMode = Enum.LODEffortMode.Low;
-		end
-	end
-	if workspace:FindFirstChildOfClass("Terrain") then
-		local t = workspace.Terrain;
-		t.WaterWaveSize = 0;
-		t.WaterWaveSpeed = 0;
-		t.WaterReflectance = 0;
-		t.WaterTransparency = 0;
-		sethiddenproperty(t, "Decoration", false);
-	end
+    -- 1. ปลดล็อค FPS (พยายามฝืนให้สูงที่สุดเท่าที่ Lua ทำได้)
+    setfpscap(2147483647) 
+
+    -- 2. ตั้งค่า Rendering ให้ต่ำสุด (เลียนแบบ QualityLevel 1)
+    settings().Rendering.QualityLevel = 1
+    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level10
+    
+    -- 3. ปรับระบบแสงและเงา (เลียนแบบ DisablePostFx & Voxel)
+    local Lighting = game:GetService("Lighting")
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.Brightness = 0
+    Lighting.ExposureCompensation = 0
+    for _, v in pairs(Lighting:GetChildren()) do
+        if v:IsA("PostEffect") or v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") then
+            v.Enabled = false
+        end
+    end
+
+    -- 4. จัดการพื้นผิวและวัตถุ (เลียนแบบ TextureQuality & CSG Level)
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.CastShadow = false
+        elseif v:IsA("Texture") or v:IsA("Decal") then
+            v:Destroy() -- ลบรูปภาพพื้นผิวออกให้หมดตามสูตร
+        elseif v:IsA("DataModelMesh") then
+            v.LODEffortMode = Enum.LODEffortMode.Low
+        end
+    end
+
+    -- 5. ปิดหญ้าและน้ำ (เลียนแบบ FRMMaxGrassDistance & WaterSlice)
+    if workspace:FindFirstChildOfClass("Terrain") then
+        local t = workspace.Terrain
+        t.WaterWaveSize = 0
+        t.WaterWaveSpeed = 0
+        t.WaterReflectance = 0
+        t.WaterTransparency = 0
+        sethiddenproperty(t, "Decoration", false)
+    end
+
+    -- [[ ส่วนอันตราย: ถ้าอยากให้หน้าจอหายไปเลยตามสูตรเป๊ะ ให้เอา -- ออกข้างล่างนี้ ]]
+     -- game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
 end
-Tabs.Settings:AddButton({Title="ภาพกาก สำหรับคนโทรศัพกัง",Callback=function()
-	ForceExtremeBoost();
-end});
-Tabs.Settings:AddButton({Title="รี เซิร์ฟ",Description="กลับเข้าเซิร์ฟเวอร์เดิมแบบไวๆ",Callback=function()
-	game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer);
-end});
-Tabs.Settings:AddButton({Title="เปลี่ยนเซิร์ฟใหม่",Description="สุ่มย้ายไปเซิร์ฟเวอร์อื่นที่คนไม่เต็ม",Callback=function()
-	local FlatIdent_2E34E = 0;
-	local Http;
-	local Tps;
-	local Api;
-	local Hop;
-	while true do
-		if (FlatIdent_2E34E == 0) then
-			Http = game:GetService("HttpService");
-			Tps = game:GetService("TeleportService");
-			FlatIdent_2E34E = 1;
-		end
-		if (FlatIdent_2E34E == 2) then
-			function Hop()
-				local Raw = game:HttpGet(Api);
-				local Decode = Http:JSONDecode(Raw);
-				if (Decode and Decode.data) then
-					for _, v in pairs(Decode.data) do
-						if ((type(v) == "table") and (v.playing < v.maxPlayers) and (v.id ~= game.JobId)) then
-							Tps:TeleportToPlaceInstance(game.PlaceId, v.id, LocalPlayer);
-							break;
-						end
-					end
-				end
-			end
-			Hop();
-			break;
-		end
-		if (FlatIdent_2E34E == 1) then
-			Api = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100";
-			Hop = nil;
-			FlatIdent_2E34E = 2;
-		end
-	end
-end});
-local Tabs = {Main=Tabs.Main,Farm=Tabs.Farm,Settings=Tabs.Settings,Event=Window:AddTab({Title="Event / กิจกรรม",Icon="star"})};
-Tabs.Event:AddToggle("BrainrotTimer", {Title="Brainrot Event Timer (ป้ายเวลา)",Default=false,Callback=function(v)
-	local PlayerGui = lp:WaitForChild("PlayerGui");
-	if v then
-		local FlatIdent_21297 = 0;
-		local sg;
-		local timer;
-		while true do
-			if (FlatIdent_21297 == 0) then
-				sg = Instance.new("ScreenGui", PlayerGui);
-				sg.Name = "EventTimerGUI";
-				FlatIdent_21297 = 1;
-			end
-			if (FlatIdent_21297 == 1) then
-				timer = workspace:FindFirstChild("EventTimers", true);
-				if timer then
-					for _, p in ipairs(timer:GetDescendants()) do
-						if p:IsA("SurfaceGui") then
-							for _, g in ipairs(p:GetChildren()) do
-								local c = g:Clone();
-								c.Parent = sg;
-								Instance.new("UIScale", c).Scale = 0.2;
-								c.Position = UDim2.new(0.5, 0, 0.1, 0);
-								c.AnchorPoint = Vector2.new(0.5, 0.5);
-							end
-						end
-					end
-				end
-				break;
-			end
-		end
-	elseif PlayerGui:FindFirstChild("EventTimerGUI") then
-		PlayerGui.EventTimerGUI:Destroy();
-	end
-end});
-local player = game.Players.LocalPlayer;
-local RunService = game:GetService("RunService");
-local WarpTab = Window:AddTab({Title="วาร์ป",Icon="map-pin"});
-local MySection = WarpTab:AddSection("เลือกจุดวาร์ป");
-local part1 = Instance.new("Part", workspace);
-part1.Name = "1";
-part1.Size = Vector3.new(10, 1, 10);
-part1.Anchored = true;
-part1.CanCollide = true;
-part1.CFrame = CFrame.new(151.81601, -0.0000019073486, -139.729675, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local part2 = Instance.new("Part", workspace);
-part2.Name = "2";
-part2.Size = Vector3.new(10, 1, 10);
-part2.Anchored = true;
-part2.CanCollide = true;
-part2.CFrame = CFrame.new(2280.77612, 0.0499992371, -139.261551, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local part3 = Instance.new("Part", workspace);
-part3.Name = "3";
-part3.Size = Vector3.new(10, 1, 10);
-part3.Anchored = true;
-part3.CanCollide = true;
-part3.CFrame = CFrame.new(2276.26221, -5.99998856, -126.776489, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local flying = false;
+
+
+Tabs.Settings:AddButton({
+    Title = "ภาพกาก สำหรับคนโทรศัพกัง",
+    Callback = function()
+        ForceExtremeBoost()
+    end
+})
+
+
+
+Tabs.Settings:AddButton({
+    Title = "รี เซิร์ฟ",
+    Description = "กลับเข้าเซิร์ฟเวอร์เดิมแบบไวๆ",
+    Callback = function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+})
+
+Tabs.Settings:AddButton({
+    Title = "เปลี่ยนเซิร์ฟใหม่",
+    Description = "สุ่มย้ายไปเซิร์ฟเวอร์อื่นที่คนไม่เต็ม",
+    Callback = function()
+        local Http = game:GetService("HttpService")
+        local Tps = game:GetService("TeleportService")
+        local Api = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
+        
+        local function Hop()
+            local Raw = game:HttpGet(Api)
+            local Decode = Http:JSONDecode(Raw)
+            if Decode and Decode.data then
+                for _, v in pairs(Decode.data) do
+                    if type(v) == "table" and v.playing < v.maxPlayers and v.id ~= game.JobId then
+                        Tps:TeleportToPlaceInstance(game.PlaceId, v.id, LocalPlayer)
+                        break
+                    end
+                end
+            end
+        end
+        
+        Hop() -- เริ่มทำงานทันทีที่กดปุ่ม
+    end
+})
+
+
+
+-- [[ 8. สร้างแถบใหม่ (Fluent Style) ]]
+local Tabs = {
+    Main = Tabs.Main,
+    Farm = Tabs.Farm,
+    Settings = Tabs.Settings,
+    -- เพิ่ม 2 แถบที่มึงขอ
+    Event = Window:AddTab({ Title = "Event / กิจกรรม", Icon = "star" }),
+
+}
+
+
+
+-- ย้ายป้ายเวลามาไว้ที่นี่ด้วย
+Tabs.Event:AddToggle("BrainrotTimer", {
+    Title = "Brainrot Event Timer (ป้ายเวลา)",
+    Default = false,
+    Callback = function(v)
+        local PlayerGui = lp:WaitForChild("PlayerGui")
+        if v then
+            local sg = Instance.new("ScreenGui", PlayerGui)
+            sg.Name = "EventTimerGUI"
+            local timer = workspace:FindFirstChild("EventTimers", true)
+            if timer then
+                for _, p in ipairs(timer:GetDescendants()) do
+                    if p:IsA("SurfaceGui") then
+                        for _, g in ipairs(p:GetChildren()) do
+                            local c = g:Clone()
+                            c.Parent = sg
+                            Instance.new("UIScale", c).Scale = 0.2
+                            c.Position = UDim2.new(0.5, 0, 0.1, 0)
+                            c.AnchorPoint = Vector2.new(0.5, 0.5)
+                        end
+                    end
+                end
+            end
+        else
+            if PlayerGui:FindFirstChild("EventTimerGUI") then PlayerGui.EventTimerGUI:Destroy() end
+        end
+    end
+})
+
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local WarpTab = Window:AddTab({ Title = "วาร์ป", Icon = "map-pin" })
+local MySection = WarpTab:AddSection("เลือกจุดวาร์ป")
+
+
+local part1 = Instance.new("Part", workspace)
+part1.Name = "1"
+part1.Size = Vector3.new(10,1,10)
+part1.Anchored = true
+part1.CanCollide = true
+part1.CFrame = CFrame.new(
+	151.81601, -1.90734863e-06, -139.729675,
+	1,0,0,0,1,0,0,0,1
+)
+
+-- สร้าง Part 2
+local part2 = Instance.new("Part", workspace)
+part2.Name = "2"
+part2.Size = Vector3.new(10,1,10)
+part2.Anchored = true
+part2.CanCollide = true
+part2.CFrame = CFrame.new(
+	2280.77612, 0.0499992371, -139.261551,
+	1,0,0,0,1,0,0,0,1
+)
+
+-- สร้าง Part 3
+local part3 = Instance.new("Part", workspace)
+part3.Name = "3"
+part3.Size = Vector3.new(10,1,10)
+part3.Anchored = true
+part3.CanCollide = true
+part3.CFrame = CFrame.new(
+	2276.26221, -5.99998856, -126.776489,
+	1,0,0,0,1,0,0,0,1
+)
+
+local flying = false
+
 local function getChar()
-	return player.Character or player.CharacterAdded:Wait();
+	return player.Character or player.CharacterAdded:Wait()
 end
+
 player.CharacterAdded:Connect(function()
-	flying = false;
-end);
+	flying = false
+end)
+
 local function flyTo(targetPart)
-	local char = getChar();
-	local hrp = char:WaitForChild("HumanoidRootPart");
-	local hum = char:WaitForChild("Humanoid");
-	hum.PlatformStand = true;
-	for _, v in pairs(char:GetChildren()) do
+	local char = getChar()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	local hum = char:WaitForChild("Humanoid")
+
+	hum.PlatformStand = true
+
+	for _,v in pairs(char:GetChildren()) do
 		if v:IsA("BasePart") then
-			v.CanCollide = false;
+			v.CanCollide = false
 		end
 	end
-	while char.Parent and ((hrp.Position - targetPart.Position).Magnitude > 3) do
-		local dir = (targetPart.Position - hrp.Position).Unit;
-		local speed = hum.WalkSpeed;
-		hrp.AssemblyLinearVelocity = dir * speed;
-		RunService.RenderStepped:Wait();
+
+	while char.Parent and (hrp.Position - targetPart.Position).Magnitude > 3 do
+		local dir = (targetPart.Position - hrp.Position).Unit
+		local speed = hum.WalkSpeed
+		hrp.AssemblyLinearVelocity = dir * speed
+		RunService.RenderStepped:Wait()
 	end
+
 	if char.Parent then
-		local FlatIdent_28855 = 0;
-		while true do
-			if (FlatIdent_28855 == 0) then
-				hrp.AssemblyLinearVelocity = Vector3.zero;
-				hrp.CFrame = targetPart.CFrame + Vector3.new(0, 3, 0);
-				break;
-			end
-		end
+		hrp.AssemblyLinearVelocity = Vector3.zero
+		hrp.CFrame = targetPart.CFrame + Vector3.new(0,3,0)
 	end
 end
+
 local function restore()
-	local FlatIdent_331F0 = 0;
-	local char;
-	local hum;
-	local hrp;
-	while true do
-		if (FlatIdent_331F0 == 1) then
-			hrp = char:WaitForChild("HumanoidRootPart");
-			hum.PlatformStand = false;
-			FlatIdent_331F0 = 2;
-		end
-		if (FlatIdent_331F0 == 0) then
-			char = getChar();
-			hum = char:WaitForChild("Humanoid");
-			FlatIdent_331F0 = 1;
-		end
-		if (FlatIdent_331F0 == 2) then
-			hrp.AssemblyLinearVelocity = Vector3.zero;
-			for _, v in pairs(char:GetChildren()) do
-				if v:IsA("BasePart") then
-					v.CanCollide = true;
-				end
-			end
-			break;
+	local char = getChar()
+	local hum = char:WaitForChild("Humanoid")
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	hum.PlatformStand = false
+	hrp.AssemblyLinearVelocity = Vector3.zero
+
+	for _,v in pairs(char:GetChildren()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = true
 		end
 	end
 end
+
 local function getClosestPart()
-	local FlatIdent_7F3C8 = 0;
-	local char;
-	local hrp;
-	local d1;
-	local d2;
-	local d3;
-	while true do
-		if (FlatIdent_7F3C8 == 0) then
-			char = getChar();
-			hrp = char:WaitForChild("HumanoidRootPart");
-			FlatIdent_7F3C8 = 1;
-		end
-		if (FlatIdent_7F3C8 == 2) then
-			d3 = (hrp.Position - part3.Position).Magnitude;
-			if ((d1 <= d2) and (d1 <= d3)) then
-				return 1;
-			elseif ((d2 <= d1) and (d2 <= d3)) then
-				return 2;
-			else
-				return 3;
-			end
-			break;
-		end
-		if (1 == FlatIdent_7F3C8) then
-			d1 = (hrp.Position - part1.Position).Magnitude;
-			d2 = (hrp.Position - part2.Position).Magnitude;
-			FlatIdent_7F3C8 = 2;
-		end
+	local char = getChar()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	local d1 = (hrp.Position - part1.Position).Magnitude
+	local d2 = (hrp.Position - part2.Position).Magnitude
+	local d3 = (hrp.Position - part3.Position).Magnitude
+
+	if d1 <= d2 and d1 <= d3 then
+		return 1
+	elseif d2 <= d1 and d2 <= d3 then
+		return 2
+	else
+		return 3
 	end
 end
-MySection:AddButton({Title="ไปโซนฟาร์ม",Callback=function()
-	if flying then
-		return;
-	end
-	flying = true;
-	local start = getClosestPart();
-	if (start == 1) then
-		local FlatIdent_7873D = 0;
-		while true do
-			if (1 == FlatIdent_7873D) then
-				flyTo(part3);
-				break;
-			end
-			if (FlatIdent_7873D == 0) then
-				flyTo(part1);
-				flyTo(part2);
-				FlatIdent_7873D = 1;
-			end
+
+-- =====================
+-- ปุ่ม Teleport Last zone
+-- =====================
+ MySection:AddButton({
+	Title = "ไปโซนฟาร์ม",
+	Callback = function()
+		if flying then return end
+		flying = true
+
+		local start = getClosestPart()
+
+		if start == 1 then
+			flyTo(part1)
+			flyTo(part2)
+			flyTo(part3)
+		elseif start == 2 then
+			flyTo(part2)
+			flyTo(part3)
+		else
+			flyTo(part3)
 		end
-	elseif (start == 2) then
-		local FlatIdent_92F66 = 0;
-		while true do
-			if (FlatIdent_92F66 == 0) then
-				flyTo(part2);
-				flyTo(part3);
-				break;
-			end
+
+		restore()
+		flying = false
+	end,
+})
+
+-- =====================
+-- ปุ่ม Return to base
+-- =====================
+ MySection:AddButton({
+	Title = "กลับบ้าน",
+	Callback = function()
+		if flying then return end
+		flying = true
+
+		local start = getClosestPart()
+
+		if start == 3 then
+			flyTo(part3)
+			flyTo(part2)
+			flyTo(part1)
+		elseif start == 2 then
+			flyTo(part2)
+			flyTo(part1)
+		else
+			flyTo(part1)
 		end
-	else
-		flyTo(part3);
-	end
-	restore();
-	flying = false;
-end});
-MySection:AddButton({Title="กลับบ้าน",Callback=function()
-	if flying then
-		return;
-	end
-	flying = true;
-	local start = getClosestPart();
-	if (start == 3) then
-		local FlatIdent_957A4 = 0;
-		while true do
-			if (FlatIdent_957A4 == 0) then
-				flyTo(part3);
-				flyTo(part2);
-				FlatIdent_957A4 = 1;
-			end
-			if (FlatIdent_957A4 == 1) then
-				flyTo(part1);
-				break;
-			end
-		end
-	elseif (start == 2) then
-		flyTo(part2);
-		flyTo(part1);
-	else
-		flyTo(part1);
-	end
-	restore();
-	flying = false;
-end});
-local TweenService = game:GetService("TweenService");
-local RunService = game:GetService("RunService");
-local lp = game.Players.LocalPlayer;
-local flying = false;
-_G.FlySpeed = 500;
+
+		restore()
+		flying = false
+	end,
+})
+
+-- [[ U-HUB: ฉบับรวมร่าง บิน 3 จังหวะ + หน้าตรงเป๊ะ ]]
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local lp = game.Players.LocalPlayer
+local flying = false
+_G.FlySpeed = 500 -- ความเร็วเทอร์โบ
+
+
+
+-- [[ 1. ฟังก์ชันบินพุ่งตรง (ล็อคหน้าตรงตามพิกัดเป๊ะ) ]]
 local function flyTo(targetCF)
-	local char = lp.Character or lp.CharacterAdded:Wait();
-	local hrp = char:WaitForChild("HumanoidRootPart");
-	flying = true;
-	local nc = RunService.Stepped:Connect(function()
-		if flying then
-			local FlatIdent_7126B = 0;
-			while true do
-				if (0 == FlatIdent_7126B) then
-					for _, v in pairs(char:GetDescendants()) do
-						if v:IsA("BasePart") then
-							v.CanCollide = false;
-						end
-					end
-					hrp.Velocity = Vector3.zero;
-					FlatIdent_7126B = 1;
-				end
-				if (FlatIdent_7126B == 1) then
-					hrp.RotVelocity = Vector3.zero;
-					break;
-				end
-			end
-		end
-	end);
-	local dist = (hrp.Position - targetCF.Position).Magnitude;
-	local tween = TweenService:Create(hrp, TweenInfo.new(dist / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame=targetCF});
-	tween:Play();
-	tween.Completed:Wait();
-	nc:Disconnect();
-	flying = false;
-	task.wait(0.01);
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    flying = true
+
+    -- ระบบ NoClip ทะลุวัตถุและล็อคตัวไม่ให้ดีด
+    local nc = RunService.Stepped:Connect(function()
+        if flying then
+            for _, v in pairs(char:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = false end
+            end
+            hrp.Velocity = Vector3.zero
+            hrp.RotVelocity = Vector3.zero
+        end
+    end)
+
+    local dist = (hrp.Position - targetCF.Position).Magnitude
+    -- บินพุ่งไปที่ CFrame โดยตรง (จะล็อคหน้าตรงตามค่า Matrix 1,0,0... ที่น้องให้มา)
+    local tween = TweenService:Create(hrp, TweenInfo.new(dist / _G.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetCF})
+    
+    tween:Play()
+    tween.Completed:Wait()
+
+    nc:Disconnect()
+    flying = false
+    task.wait(0.01) -- พัก 0.01s ตามสั่งคัฟ
 end
+
+-- [[ 2. ฟังก์ชันวาร์ปแบบ 3 จังหวะ (ใช้พิกัดล่าสุดของน้องหนึ่ง) ]]
 local function WarpTo(finalTarget)
-	local FlatIdent_21CA5 = 0;
-	local Pos1;
-	local Pos2;
-	local Pos3;
-	while true do
-		if (FlatIdent_21CA5 == 3) then
-			flyTo(Pos3);
-			for _, v in pairs(lp.Character:GetDescendants()) do
-				if v:IsA("BasePart") then
-					v.CanCollide = true;
-				end
-			end
-			break;
-		end
-		if (FlatIdent_21CA5 == 1) then
-			Pos2 = CFrame.new(2280.77612, 0.0499992371, -139.261551, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-			Pos3 = finalTarget;
-			FlatIdent_21CA5 = 2;
-		end
-		if (2 == FlatIdent_21CA5) then
-			flyTo(Pos1);
-			flyTo(Pos2);
-			FlatIdent_21CA5 = 3;
-		end
-		if (FlatIdent_21CA5 == 0) then
-			if flying then
-				return;
-			end
-			Pos1 = CFrame.new(151.81601, -0.0000019073486, -139.729675, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-			FlatIdent_21CA5 = 1;
-		end
-	end
+    if flying then return end
+    
+    -- พิกัด 1, 2, 3 ที่น้องหนึ่งให้มา
+    local Pos1 = CFrame.new(151.81601, -1.90734863e-06, -139.729675, 1,0,0,0,1,0,0,0,1)
+    local Pos2 = CFrame.new(2280.77612, 0.0499992371, -139.261551, 1,0,0,0,1,0,0,0,1)
+    local Pos3 = finalTarget -- จุดหมายโซนต่างๆ หรือจุดที่ 3
+
+    -- เริ่มกระบวนการบิน 1 -> 2 -> 3
+    flyTo(Pos1)
+    flyTo(Pos2)
+    flyTo(Pos3)
+
+    -- คืนค่าการชนกัน
+    for _, v in pairs(lp.Character:GetDescendants()) do
+        if v:IsA("BasePart") then v.CanCollide = true end
+    end
 end
-local P_Zone1 = CFrame.new(202.155243, -2.511581, -128.192078, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local P_Zone2 = CFrame.new(289.880798, -2.511581, -129.255997, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local P_Zone3 = CFrame.new(403.998199, -2.511581, -129.329926, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local P_Zone4 = CFrame.new(547.977722, -2.511581, -129.377441, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local P_Zone5 = CFrame.new(761.993469, -2.511586, -129.503113, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local P_Zone6 = CFrame.new(1083.314575, -2.511588, -129.501953, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local P_Zone7 = CFrame.new(1573.947632, -2.511583, -129.509949, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local P_Zone8 = CFrame.new(2276.26221, -5.99998856, -126.776489, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local P_Zone9 = CFrame.new(2632.862061, -2.511454, -129.501831, 1, 0, 0, 0, 1, 0, 0, 0, 1);
-local ZoneWarp = WarpTab:AddDropdown("ZoneWarpDropdown", {Title="บินแบบ 3 จังหวะ (จุดพัก 1-2 -> โซนที่เลือก)",Values={"ปิด","โซน 1","โซน 2","โซน 3","โซน 4","โซน 5","โซน 6","โซน 7","โซน 8","โซน 9"},Multi=false,Default="ปิด"});
+
+-- [[ 3. ประกาศพิกัดโซน 1-9 (อ้างอิงตำแหน่งที่น้องต้องการ) ]]
+local P_Zone1 = CFrame.new(202.155243, -2.511581, -128.192078, 1,0,0,0,1,0,0,0,1)
+local P_Zone2 = CFrame.new(289.880798, -2.511581, -129.255997, 1,0,0,0,1,0,0,0,1)
+local P_Zone3 = CFrame.new(403.998199, -2.511581, -129.329926, 1,0,0,0,1,0,0,0,1)
+local P_Zone4 = CFrame.new(547.977722, -2.511581, -129.377441, 1,0,0,0,1,0,0,0,1)
+local P_Zone5 = CFrame.new(761.993469, -2.511586, -129.503113, 1,0,0,0,1,0,0,0,1)
+local P_Zone6 = CFrame.new(1083.314575, -2.511588, -129.501953, 1,0,0,0,1,0,0,0,1)
+local P_Zone7 = CFrame.new(1573.947632, -2.511583, -129.509949, 1,0,0,0,1,0,0,0,1)
+local P_Zone8 = CFrame.new(2276.26221, -5.99998856, -126.776489, 1,0,0,0,1,0,0,0,1) -- พิกัดจุด 3 ของน้อง
+local P_Zone9 = CFrame.new(2984.003, 3.49, -129.281, 1,0,0,0,1,0,0,0,1)
+local P_Zone10 = CFrame.new(3339.000, 3.49, -129.404, 1,0,0,0,1,0,0,0,1)
+local P_Zone11 = CFrame.new(3693.999, 3.49, -129.393, 1,0,0,0,1,0,0,0,1)
+local P_Zone12 = CFrame.new(4048.976, 3.49, -129.403, 1,0,0,0,1,0,0,0,1)
+
+-- [[ 4. ส่วน UI Dropdown (2-in-1) ]]
+local ZoneWarp = WarpTab:AddDropdown("ZoneWarpDropdown", {
+    Title = "บินแบบ 3 จังหวะ (จุดพัก 1-2 -> โซนที่เลือก)",
+    Values = {"ปิด", "โซน 1", "โซน 2", "โซน 3", "โซน 4", "โซน 5", "โซน 6", "โซน 7", "โซน 8", "โซน 9", "โซน 10", "โซน 11", "โซน 12"},
+    Multi = false,
+    Default = "ปิด",
+})
+
 ZoneWarp:OnChanged(function(Value)
-	local FlatIdent_3ACCC = 0;
-	local target;
-	while true do
-		if (FlatIdent_3ACCC == 1) then
-			if (Value == "โซน 1") then
-				target = P_Zone1;
-			elseif (Value == "โซน 2") then
-				target = P_Zone2;
-			elseif (Value == "โซน 3") then
-				target = P_Zone3;
-			elseif (Value == "โซน 4") then
-				target = P_Zone4;
-			elseif (Value == "โซน 5") then
-				target = P_Zone5;
-			elseif (Value == "โซน 6") then
-				target = P_Zone6;
-			elseif (Value == "โซน 7") then
-				target = P_Zone7;
-			elseif (Value == "โซน 8") then
-				target = P_Zone8;
-			elseif (Value == "โซน 9") then
-				target = P_Zone9;
-			end
-			if target then
-				WarpTo(target);
-			end
-			FlatIdent_3ACCC = 2;
-		end
-		if (FlatIdent_3ACCC == 0) then
-			if (Value == "ปิด") then
-				return;
-			end
-			target = nil;
-			FlatIdent_3ACCC = 1;
-		end
-		if (FlatIdent_3ACCC == 2) then
-			ZoneWarp:SetValue("ปิด");
-			break;
-		end
-	end
-end);
-local StartPos = CFrame.new(151.816, -2.5, -139.729);
-local Locations = {[1]=CFrame.new(197.34, -2.51, -94.93),[2]=CFrame.new(286.41, -2.51, 21.26),[3]=CFrame.new(399.71, -2.51, 118.11),[4]=CFrame.new(540.42, -2.51, 15.88),[5]=CFrame.new(756.99, -2.51, 2.76),[6]=CFrame.new(1074.24, -2.51, -10.5),[7]=CFrame.new(1553.9, -2.51, -106.57),[8]=CFrame.new(2245.5, -2.51, -19.42),[9]=CFrame.new(2984.003, -2.511, -129.281),[10]=CFrame.new(3339, -2.511, -129.404),[11]=CFrame.new(3693.999, -2.511, -129.393),[12]=CFrame.new(4048.976, -2.511, -129.403)};
-local CurrentZone = 1;
-local lp = game:GetService("Players").LocalPlayer;
+    if Value == "ปิด" then return end
+    local target = nil
+    if Value == "โซน 1" then target = P_Zone1
+    elseif Value == "โซน 2" then target = P_Zone2
+    elseif Value == "โซน 3" then target = P_Zone3
+    elseif Value == "โซน 4" then target = P_Zone4
+    elseif Value == "โซน 5" then target = P_Zone5
+    elseif Value == "โซน 6" then target = P_Zone6
+    elseif Value == "โซน 7" then target = P_Zone7
+    elseif Value == "โซน 8" then target = P_Zone8
+    elseif Value == "โซน 9" then target = P_Zone9
+    elseif Value == "โซน 10" then target = P_Zone10
+    elseif Value == "โซน 11" then target = P_Zone11
+    elseif Value == "โซน 12" then target = P_Zone12 end
+
+    if target then WarpTo(target) end
+    ZoneWarp:SetValue("ปิด")
+end)
+
+-- [[ --------------------------------------------------------- ]]
+-- [[ ส่วนที่ 1: ฟังชั่นและตัวแปรสำหรับปุ่มลอย (Black Warp UI) ]]
+-- [[ --------------------------------------------------------- ]]
+
+local StartPos = CFrame.new(151.816, -2.5, -139.729)
+local Locations = {
+    [1] = CFrame.new(197.34, -2.51, -94.93), [2] = CFrame.new(286.41, -2.51, 21.26),
+    [3] = CFrame.new(399.71, -2.51, 118.11), [4] = CFrame.new(540.42, -2.51, 15.88),
+    [5] = CFrame.new(756.99, -2.51, 2.76), [6] = CFrame.new(1074.24, -2.51, -10.50),
+    [7] = CFrame.new(1553.90, -2.51, -106.57), [8] = CFrame.new(2245.50, -2.51, -19.42),
+    [9] = CFrame.new(2984.003, -2.511, -129.281), [10] = CFrame.new(3339.000, -2.511, -129.404),
+    [11] = CFrame.new(3693.999, -2.511, -129.393), [12] = CFrame.new(4048.976, -2.511, -129.403)
+}
+
+
+
+local CurrentZone = 1
+local lp = game:GetService("Players").LocalPlayer
+
+-- ฟังก์ชันวาร์ป (เพิ่มเช็ค FlySpeed ป้องกัน Error)
 local function WarpTo(target)
-	local FlatIdent_90113 = 0;
-	local char;
-	local hrp;
-	local speed;
-	while true do
-		if (FlatIdent_90113 == 0) then
-			char = lp.Character or lp.CharacterAdded:Wait();
-			hrp = char:WaitForChild("HumanoidRootPart", 5);
-			FlatIdent_90113 = 1;
-		end
-		if (FlatIdent_90113 == 1) then
-			speed = _G.FlySpeed or 400;
-			if hrp then
-				local FlatIdent_B1F4 = 0;
-				local dist;
-				local tween;
-				while true do
-					if (FlatIdent_B1F4 == 1) then
-						tween = game:GetService("TweenService"):Create(hrp, TweenInfo.new(dist / speed, Enum.EasingStyle.Linear), {CFrame=target});
-						tween:Play();
-						FlatIdent_B1F4 = 2;
-					end
-					if (FlatIdent_B1F4 == 0) then
-						for _, v in pairs(char:GetChildren()) do
-							if v:IsA("BasePart") then
-								v.CanCollide = false;
-							end
-						end
-						dist = (hrp.Position - target.Position).Magnitude;
-						FlatIdent_B1F4 = 1;
-					end
-					if (FlatIdent_B1F4 == 2) then
-						tween.Completed:Wait();
-						for _, v in pairs(char:GetChildren()) do
-							if v:IsA("BasePart") then
-								v.CanCollide = true;
-							end
-						end
-						break;
-					end
-				end
-			end
-			break;
-		end
-	end
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart", 5)
+    local speed = _G.FlySpeed or 400 -- ถ้าไม่มีค่า ให้ใช้ 400 ไปก่อน
+    
+    if hrp then
+        for _, v in pairs(char:GetChildren()) do if v:IsA("BasePart") then v.CanCollide = false end end
+        local dist = (hrp.Position - target.Position).Magnitude
+        local tween = game:GetService("TweenService"):Create(hrp, TweenInfo.new(dist / speed, Enum.EasingStyle.Linear), {CFrame = target})
+        tween:Play()
+        tween.Completed:Wait()
+        for _, v in pairs(char:GetChildren()) do if v:IsA("BasePart") then v.CanCollide = true end end
+    end
 end
-local PlayerGui = lp:WaitForChild("PlayerGui");
-if PlayerGui:FindFirstChild("BlackWarpUI") then
-	PlayerGui.BlackWarpUI:Destroy();
-end
-local sg = Instance.new("ScreenGui", PlayerGui);
-sg.Name = "BlackWarpUI";
-sg.ResetOnSpawn = false;
-sg.Enabled = false;
-local Frame = Instance.new("ScrollingFrame", sg);
-Frame.Size = UDim2.new(0, 250, 0, 450);
-Frame.Position = UDim2.new(0.05, 0, 0.2, 0);
-Frame.BackgroundColor3 = Color3.new(0, 0, 0);
-Frame.BorderSizePixel = 1;
-Frame.BorderColor3 = Color3.new(1, 1, 1);
-Frame.CanvasSize = UDim2.new(0, 0, 0, 800);
-Frame.ScrollBarThickness = 13;
-Frame.Active = true;
-local dragging, dragInput, dragStart, startPos;
+
+-- สร้าง UI
+local PlayerGui = lp:WaitForChild("PlayerGui")
+if PlayerGui:FindFirstChild("BlackWarpUI") then PlayerGui.BlackWarpUI:Destroy() end
+
+local sg = Instance.new("ScreenGui", PlayerGui)
+sg.Name = "BlackWarpUI"
+sg.ResetOnSpawn = false
+sg.Enabled = false 
+
+local Frame = Instance.new("ScrollingFrame", sg)
+Frame.Size = UDim2.new(0, 250, 0, 450)
+Frame.Position = UDim2.new(0.05, 0, 0.2, 0)
+Frame.BackgroundColor3 = Color3.new(0, 0, 0)
+Frame.BorderSizePixel = 1
+Frame.BorderColor3 = Color3.new(1, 1, 1)
+Frame.CanvasSize = UDim2.new(0, 0, 0, 800)
+Frame.ScrollBarThickness = 13
+Frame.Active = true
+
+-- [[ 🧠 ใส่สมองส่วนลากลื่นๆ (แทน Draggable แบบเก่า) ]]
+local dragging, dragInput, dragStart, startPos
 local function update(input)
-	local FlatIdent_5202D = 0;
-	local delta;
-	while true do
-		if (0 == FlatIdent_5202D) then
-			delta = input.Position - dragStart;
-			Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y);
-			break;
-		end
-	end
+    local delta = input.Position - dragStart
+    Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 Frame.InputBegan:Connect(function(input)
-	if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then
-		dragging = true;
-		dragStart = input.Position;
-		startPos = Frame.Position;
-		input.Changed:Connect(function()
-			if (input.UserInputState == Enum.UserInputState.End) then
-				dragging = false;
-			end
-		end);
-	end
-end);
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
 Frame.InputChanged:Connect(function(input)
-	if ((input.UserInputType == Enum.UserInputType.MouseMovement) or (input.UserInputType == Enum.UserInputType.Touch)) then
-		dragInput = input;
-	end
-end);
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+end)
 game:GetService("UserInputService").InputChanged:Connect(function(input)
-	if ((input == dragInput) and dragging) then
-		update(input);
-	end
-end);
-local layout = Instance.new("UIListLayout", Frame);
-layout.Padding = UDim.new(0, 5);
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
-local ZoneDisplay = Instance.new("TextLabel", Frame);
-ZoneDisplay.Size = UDim2.new(1, 0, 0, 50);
-ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone;
-ZoneDisplay.TextColor3 = Color3.new(1, 1, 1);
-ZoneDisplay.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1);
-ZoneDisplay.Font = Enum.Font.Code;
-ZoneDisplay.TextSize = 18;
+    if input == dragInput and dragging then update(input) end
+end)
+
+local layout = Instance.new("UIListLayout", Frame)
+layout.Padding = UDim.new(0, 5)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local ZoneDisplay = Instance.new("TextLabel", Frame)
+ZoneDisplay.Size = UDim2.new(1, 0, 0, 50)
+ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone
+ZoneDisplay.TextColor3 = Color3.new(1, 1, 1)
+ZoneDisplay.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+ZoneDisplay.Font = Enum.Font.Code
+ZoneDisplay.TextSize = 18
+
 local function createBtn(parent, txt, bg, tc, func)
-	local FlatIdent_C595 = 0;
-	local b;
-	while true do
-		if (FlatIdent_C595 == 1) then
-			b.BackgroundColor3 = bg;
-			b.TextColor3 = tc;
-			b.Font = Enum.Font.Code;
-			FlatIdent_C595 = 2;
-		end
-		if (FlatIdent_C595 == 3) then
-			b.MouseButton1Click:Connect(func);
-			return b;
-		end
-		if (0 == FlatIdent_C595) then
-			b = Instance.new("TextButton", parent);
-			b.Size = UDim2.new(0.95, 0, 0, 40);
-			b.Text = txt;
-			FlatIdent_C595 = 1;
-		end
-		if (FlatIdent_C595 == 2) then
-			b.TextSize = 14;
-			b.BorderSizePixel = 1;
-			b.BorderColor3 = Color3.new(0.3, 0.3, 0.3);
-			FlatIdent_C595 = 3;
-		end
-	end
+    local b = Instance.new("TextButton", parent)
+    b.Size = UDim2.new(0.95, 0, 0, 40)
+    b.Text = txt
+    b.BackgroundColor3 = bg
+    b.TextColor3 = tc
+    b.Font = Enum.Font.Code
+    b.TextSize = 14
+    b.BorderSizePixel = 1
+    b.BorderColor3 = Color3.new(0.3, 0.3, 0.3)
+    b.MouseButton1Click:Connect(func)
+    return b
 end
+
 createBtn(Frame, "เดินหน้า", Color3.new(0.15, 0.15, 0.15), Color3.new(1, 1, 1), function()
-	local FlatIdent_92514 = 0;
-	while true do
-		if (FlatIdent_92514 == 0) then
-			CurrentZone = math.clamp(CurrentZone + 1, 1, 12);
-			ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone;
-			FlatIdent_92514 = 1;
-		end
-		if (FlatIdent_92514 == 1) then
-			WarpTo(Locations[CurrentZone]);
-			break;
-		end
-	end
-end);
+    CurrentZone = math.clamp(CurrentZone + 1, 1, 12)
+    ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone
+    WarpTo(Locations[CurrentZone])
+end)
+
 createBtn(Frame, "ถอยหลัง", Color3.new(0.15, 0.15, 0.15), Color3.new(1, 1, 1), function()
-	CurrentZone = math.clamp(CurrentZone - 1, 1, 12);
-	ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone;
-	WarpTo(Locations[CurrentZone]);
-end);
-local divider = Instance.new("TextLabel", Frame);
-divider.Size = UDim2.new(1, 0, 0, 30);
-divider.Text = "แม่ติ๊ก 1 เซน";
-divider.TextColor3 = Color3.new(0.5, 0.5, 0.5);
-divider.BackgroundTransparency = 1;
+    CurrentZone = math.clamp(CurrentZone - 1, 1, 12)
+    ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone
+    WarpTo(Locations[CurrentZone])
+end)
+
+local divider = Instance.new("TextLabel", Frame)
+divider.Size = UDim2.new(1, 0, 0, 30)
+divider.Text = "บักเตี้ยเจเจ"
+divider.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+divider.BackgroundTransparency = 1
+
+-- [[ วางต่อจากปุ่ม ถอยหลัง ได้เลยคัฟ ]]
+
+createBtn(Frame, "🏠 กลับบ้าน (STEP-BACK)", Color3.new(0.4, 0, 0), Color3.new(1, 1, 1), function()
+    if flying then return end
+    flying = true
+
+    local start = getClosestPart() -- ฟังก์ชันที่เช็คจุด 1, 2, 3
+
+    if start == 3 then
+        WarpTo(part3.CFrame)
+        WarpTo(part2.CFrame)
+        WarpTo(part1.CFrame)
+    elseif start == 2 then
+        WarpTo(part2.CFrame)
+        WarpTo(part1.CFrame)
+    else
+        WarpTo(part1.CFrame)
+    end
+
+    CurrentZone = 1
+    ZoneDisplay.Text = "SELECTED: ZONE " .. CurrentZone
+    flying = false
+end)
+
+-- [[ ต่อด้วยตัวแบ่งชื่อ บักคอปเตอร์ (มีอยู่แล้วในโค้ดเดิม) ]]
+local divider = Instance.new("TextLabel", Frame)
+divider.Size = UDim2.new(1, 0, 0, 30)
+divider.Text = "บักคอปเตอร์บักจ่อย"
+divider.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+divider.BackgroundTransparency = 1
+
+-- [[ แล้วค่อยตามด้วย Loop ปุ่ม Zone 1-12 ]]
 for i = 1, 12 do
-	createBtn(Frame, "2-IN-1: ZONE " .. i, Color3.new(0.05, 0.05, 0.05), Color3.new(1, 1, 1), function()
-		WarpTo(StartPos);
-		task.wait(0.2);
-		WarpTo(Locations[i]);
-	end);
+    -- ... โค้ดสร้างปุ่ม Zone ...
 end
+
+for i = 1, 12 do
+    createBtn(Frame, "2-IN-1: ZONE " .. i, Color3.new(0.05, 0.05, 0.05), Color3.new(1, 1, 1), function()
+        WarpTo(StartPos)
+        task.wait(0.2)
+        WarpTo(Locations[i])
+    end)
+end
+
+
+
+-- [[ --------------------------------------------------------- ]]
+-- [[ ส่วนที่ 2: สวิตช์เปิด/ปิดปุ่มลอย ]]
+-- [[ --------------------------------------------------------- ]]
+
 if WarpTab then
-	WarpTab:AddToggle("ShowBlackUI", {Title="ปุ่มลอยพิกัดแบบตึงๆ",Default=false,Callback=function(Value)
-		local FlatIdent_9448C = 0;
-		while true do
-			if (FlatIdent_9448C == 0) then
-				sg.Enabled = Value;
-				if Value then
-					Fluent:Notify({Title="U-HUB",Content="เปิดเมนูปุ่มลอยแล้วคัฟ",Duration=3});
-				end
-				break;
-			end
-		end
-	end});
+    WarpTab:AddToggle("ShowBlackUI", {
+        Title = "ปุ่มลอยพิกัดแบบตึงๆ",
+        Default = false,
+        Callback = function(Value)
+            sg.Enabled = Value
+            if Value then
+                Fluent:Notify({ Title = "U-HUB", Content = "เปิดเมนูปุ่มลอยแล้วคัฟ", Duration = 3 })
+            end
+        end
+    })
 else
-	warn("WarpTab is nil! วางโค้ดชุดนี้ไว้ล่างสุดของสคริปต์นะคัฟ");
+    warn("WarpTab is nil! วางโค้ดชุดนี้ไว้ล่างสุดของสคริปต์นะคัฟ")
 end
-local ZoneSection = WarpTab:AddSection("วาร์ปด่วน (พุ่งตรง 3 จังหวะ)");
-ZoneSection:AddButton({Title="วาร์ป โซน 1",Callback=function()
-	WarpTo(P_Zone1);
-end});
-ZoneSection:AddButton({Title="วาร์ป โซน 2",Callback=function()
-	WarpTo(P_Zone2);
-end});
-ZoneSection:AddButton({Title="วาร์ป โซน 3",Callback=function()
-	WarpTo(P_Zone3);
-end});
-ZoneSection:AddButton({Title="วาร์ป โซน 4",Callback=function()
-	WarpTo(P_Zone4);
-end});
-ZoneSection:AddButton({Title="วาร์ป โซน 5",Callback=function()
-	WarpTo(P_Zone5);
-end});
-ZoneSection:AddButton({Title="วาร์ป โซน 6",Callback=function()
-	WarpTo(P_Zone6);
-end});
-ZoneSection:AddButton({Title="วาร์ป โซน 7",Callback=function()
-	WarpTo(P_Zone7);
-end});
-ZoneSection:AddButton({Title="วาร์ป โซน 8 (จุดสาม)",Callback=function()
-	WarpTo(P_Zone8);
-end});
-ZoneSection:AddButton({Title="วาร์ป โซน 9",Callback=function()
-	WarpTo(P_Zone9);
-end});
-local HttpService = game:GetService("HttpService");
-local ConfigFolder = "UHub_Configs";
-local HttpService = game:GetService("HttpService");
-local ConfigFolder = "UHub_Configs";
-if not isfolder(ConfigFolder) then
-	makefolder(ConfigFolder);
-end
+
+-- [[ 5. ส่วน UI ปุ่มกดแยกโซน ]]
+local ZoneSection = WarpTab:AddSection("วาร์ปด่วน (พุ่งตรง 3 จังหวะ)")
+
+ZoneSection:AddButton({ Title = "วาร์ป โซน 1", Callback = function() WarpTo(P_Zone1) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 2", Callback = function() WarpTo(P_Zone2) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 3", Callback = function() WarpTo(P_Zone3) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 4", Callback = function() WarpTo(P_Zone4) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 5", Callback = function() WarpTo(P_Zone5) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 6", Callback = function() WarpTo(P_Zone6) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 7", Callback = function() WarpTo(P_Zone7) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 8 (จุดสาม)", Callback = function() WarpTo(P_Zone8) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 9", Callback = function() WarpTo(P_Zone9) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 10", Callback = function() WarpTo(P_Zone10) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 11", Callback = function() WarpTo(P_Zone11) end })
+ZoneSection:AddButton({ Title = "วาร์ป โซน 12", Callback = function() WarpTo(P_Zone12) end })
+local HttpService = game:GetService("HttpService")
+local ConfigFolder = "UHub_Configs"
+
+
+
+local HttpService = game:GetService("HttpService")
+local ConfigFolder = "UHub_Configs"
+
+if not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
+
 local function GetConfigList()
-	local files = listfiles(ConfigFolder);
-	local list = {};
-	for _, file in ipairs(files) do
-		local name = file:match("([^/\\]+)%.json$");
-		if name then
-			table.insert(list, name);
-		end
-	end
-	if (#list == 0) then
-		return {"ไม่มีข้อมูลอะ🥀🥀"};
-	end
-	return list;
+    local files = listfiles(ConfigFolder)
+    local list = {}
+    for _, file in ipairs(files) do
+        -- แก้ไขการดึงชื่อไฟล์ให้รองรับทั้ง \ และ /
+        local name = file:match("([^/\\]+)%.json$")
+        if name then table.insert(list, name) end
+    end
+    if #list == 0 then return {"ไม่มีข้อมูลอะ🥀🥀"} end
+    return list
 end
-local ConfigSection = Tabs.Settings:AddSection("Configuration / จัดการไฟล์เซฟ");
-local SaveName = "MyConfig";
-ConfigSection:AddInput("ConfigNameInput", {Title="ตั้งชื่อไฟล์เซฟ",Default="MyConfig",Placeholder="พิมพ์ชื่อไฟล์ที่นี่...",Callback=function(Value)
-	SaveName = Value;
-end});
-local ConfigDropdown;
-ConfigSection:AddButton({Title="กดเพื่อบันทึกการตั้งค่า❤️❤️",Callback=function()
-	if (SaveName == "") then
-		local FlatIdent_7699F = 0;
-		while true do
-			if (FlatIdent_7699F == 0) then
-				Fluent:Notify({Title="U-HUB",Content="กรุณาตั้งชื่อไฟล์ก่อนนะคัฟ!",Duration=2});
-				return;
-			end
-		end
-	end
-	local Data = {FlySpeed=(_G.FlySpeed or 400),AutoFarm=(_G.AutoFarm or false),IsHiding=(_G.IsHiding or false),FlySeq=_G.FlySequence,Zone=SelectedZoneID,Instant=InstantEnabled};
-	writefile(ConfigFolder .. "/" .. SaveName .. ".json", HttpService:JSONEncode(Data));
-	ConfigDropdown:SetValues(GetConfigList());
-	Fluent:Notify({Title="U-HUB",Content=("บันทึกไฟล์ " .. SaveName .. " เรียบร้อย!"),Duration=2});
-end});
-ConfigDropdown = ConfigSection:AddDropdown("ConfigDropdown", {Title="เลือกไฟล์ที่จะโหลดนะคัฟ",Values=GetConfigList(),Default=nil,Callback=function(Value)
-	if ((Value == "ไม่มีข้อมูลอะ🥀🥀") or not Value) then
-		return;
-	end
-	local Path = ConfigFolder .. "/" .. Value .. ".json";
-	if isfile(Path) then
-		local status, Data = pcall(function()
-			return HttpService:JSONDecode(readfile(Path));
-		end);
-		if status then
-			local FlatIdent_8B7B0 = 0;
-			while true do
-				if (FlatIdent_8B7B0 == 2) then
-					SelectedZoneID = Data.Zone or 1;
-					InstantEnabled = Data.Instant or true;
-					FlatIdent_8B7B0 = 3;
-				end
-				if (FlatIdent_8B7B0 == 3) then
-					Fluent:Notify({Title="U-HUB",Content=("U-HUB โหลดค่าจาก " .. Value .. " แล้ว!"),Duration=2});
-					break;
-				end
-				if (FlatIdent_8B7B0 == 1) then
-					_G.IsHiding = Data.IsHiding or false;
-					_G.FlySequence = Data.FlySeq or false;
-					FlatIdent_8B7B0 = 2;
-				end
-				if (FlatIdent_8B7B0 == 0) then
-					_G.FlySpeed = Data.FlySpeed or 400;
-					_G.AutoFarm = Data.AutoFarm or false;
-					FlatIdent_8B7B0 = 1;
-				end
-			end
-		end
-	end
-end});
-ConfigSection:AddButton({Title="🗑️ ลบไฟล์ที่เลือก",Callback=function()
-	local Value = ConfigDropdown.Value;
-	if (Value and (Value ~= "ไม่มีข้อมูลอะ🥀🥀")) then
-		delfile(ConfigFolder .. "/" .. Value .. ".json");
-		ConfigDropdown:SetValues(GetConfigList());
-		ConfigDropdown:SetValue(nil);
-		Fluent:Notify({Title="U-HUB",Content=("ลบไฟล์ " .. Value .. " แล้ว!"),Duration=2});
-	end
-end});
-ConfigSection:AddButton({Title="🔄 รีเฟรชรายชื่อไฟล์ ลาก่อนนะไฟล์เก่า 🥀🥀",Callback=function()
-	ConfigDropdown:SetValues(GetConfigList());
-end});
-local RunService = game:GetService("RunService");
-local player = game.Players.LocalPlayer;
-local CoinSuckerEnabled = false;
-local CoinSuckerConnection;
-local EventSection = Tabs.Event:AddSection("Auto Collect / ระบบดูดของ");
-EventSection:AddToggle("CoinSuckerToggle", {Title="🧲 Coin Sucker (ดูด Game Console)",Default=false,Callback=function(v)
-	local FlatIdent_71493 = 0;
-	while true do
-		if (FlatIdent_71493 == 0) then
-			CoinSuckerEnabled = v;
-			if v then
-				local FlatIdent_1691A = 0;
-				while true do
-					if (FlatIdent_1691A == 1) then
-						warn("Coin sucker ON 🧲");
-						break;
-					end
-					if (FlatIdent_1691A == 0) then
-						CoinSuckerConnection = RunService.Heartbeat:Connect(function()
-							local FlatIdent_38BFA = 0;
-							local char;
-							local root;
-							while true do
-								if (FlatIdent_38BFA == 1) then
-									if not root then
-										return;
-									end
-									for _, obj in ipairs(workspace:GetDescendants()) do
-										if (obj:IsA("Model") and (obj.Name == "Game Console")) then
-											local FlatIdent_1F620 = 0;
-											local part;
-											while true do
-												if (FlatIdent_1F620 == 0) then
-													part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart");
-													if part then
-														part.AssemblyLinearVelocity = Vector3.zero;
-														part.CanCollide = false;
-														part.CFrame = part.CFrame:Lerp(root.CFrame * CFrame.new(0, 0, -1), 0.2);
-													end
-													break;
-												end
-											end
-										end
-									end
-									break;
-								end
-								if (FlatIdent_38BFA == 0) then
-									char = player.Character;
-									root = char and char:FindFirstChild("HumanoidRootPart");
-									FlatIdent_38BFA = 1;
-								end
-							end
-						end);
-						Fluent:Notify({Title="U-HUB",Content="เปิดเครื่องดูดแล้วคัฟน้องหนึ่ง! 🧲",Duration=2});
-						FlatIdent_1691A = 1;
-					end
-				end
-			else
-				local FlatIdent_8BE54 = 0;
-				while true do
-					if (FlatIdent_8BE54 == 1) then
-						warn("Coin sucker OFF");
-						break;
-					end
-					if (FlatIdent_8BE54 == 0) then
-						if CoinSuckerConnection then
-							CoinSuckerConnection:Disconnect();
-							CoinSuckerConnection = nil;
-						end
-						Fluent:Notify({Title="U-HUB",Content="ปิดเครื่องดูดแล้วจ้า",Duration=2});
-						FlatIdent_8BE54 = 1;
-					end
-				end
-			end
-			break;
-		end
-	end
-end});
+
+local ConfigSection = Tabs.Settings:AddSection("Configuration / จัดการไฟล์เซฟ")
+
+-- แก้ไข: ตั้งชื่อเริ่มต้นไว้ป้องกันค่าว่าง
+local SaveName = "MyConfig" 
+
+ConfigSection:AddInput("ConfigNameInput", {
+    Title = "ตั้งชื่อไฟล์เซฟ",
+    Default = "MyConfig",
+    Placeholder = "พิมพ์ชื่อไฟล์ที่นี่...",
+    Callback = function(Value) 
+        SaveName = Value 
+    end
+})
+
+local ConfigDropdown
+
+ConfigSection:AddButton({
+    Title = "กดเพื่อบันทึกการตั้งค่า❤️❤️",
+    Callback = function()
+        -- ป้องกันการเซฟชื่อว่าง
+        if SaveName == "" then 
+            Fluent:Notify({ Title = "U-HUB", Content = "กรุณาตั้งชื่อไฟล์ก่อนนะคัฟ!", Duration = 2 })
+            return 
+        end
+
+        local Data = {
+            FlySpeed = _G.FlySpeed or 400,
+            AutoFarm = _G.AutoFarm or false,
+            IsHiding = _G.IsHiding or false,
+            FlySeq = _G.FlySequence,
+            Zone = SelectedZoneID,
+            Instant = InstantEnabled
+        }
+        
+        writefile(ConfigFolder .. "/" .. SaveName .. ".json", HttpService:JSONEncode(Data))
+        
+        ConfigDropdown:SetValues(GetConfigList())
+        Fluent:Notify({ Title = "U-HUB", Content = "บันทึกไฟล์ " .. SaveName .. " เรียบร้อย!", Duration = 2 })
+    end
+})
+
+ConfigDropdown = ConfigSection:AddDropdown("ConfigDropdown", {
+    Title = "เลือกไฟล์ที่จะโหลดนะคัฟ",
+    Values = GetConfigList(),
+    Default = nil,
+    Callback = function(Value)
+        -- แก้ไข: เช็คข้อความให้ตรงกับ GetConfigList
+        if Value == "ไม่มีข้อมูลอะ🥀🥀" or not Value then return end
+        
+        local Path = ConfigFolder .. "/" .. Value .. ".json"
+        if isfile(Path) then
+            local status, Data = pcall(function() 
+                return HttpService:JSONDecode(readfile(Path)) 
+            end)
+            
+            if status then
+                _G.FlySpeed = Data.FlySpeed or 400
+                _G.AutoFarm = Data.AutoFarm or false
+                _G.IsHiding = Data.IsHiding or false
+                _G.FlySequence = Data.FlySeq or false
+                SelectedZoneID = Data.Zone or 1
+                InstantEnabled = Data.Instant or true
+                
+                Fluent:Notify({ Title = "U-HUB", Content = "U-HUB โหลดค่าจาก " .. Value .. " แล้ว!", Duration = 2 })
+            end
+        end
+    end
+})
+
+ConfigSection:AddButton({
+    Title = "🗑️ ลบไฟล์ที่เลือก",
+    Callback = function()
+        local Value = ConfigDropdown.Value
+        if Value and Value ~= "ไม่มีข้อมูลอะ🥀🥀" then
+            delfile(ConfigFolder .. "/" .. Value .. ".json")
+            ConfigDropdown:SetValues(GetConfigList())
+            ConfigDropdown:SetValue(nil)
+            Fluent:Notify({ Title = "U-HUB", Content = "ลบไฟล์ " .. Value .. " แล้ว!", Duration = 2 })
+        end
+    end
+})
+
+ConfigSection:AddButton({
+    Title = "🔄 รีเฟรชรายชื่อไฟล์ ลาก่อนนะไฟล์เก่า 🥀🥀",
+    Callback = function()
+        ConfigDropdown:SetValues(GetConfigList())
+    end
+})
+
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local CoinSuckerEnabled = false
+local CoinSuckerConnection
+
+-- [[ ส่วนสร้าง Toggle ในแถบ Event ]]
+-- (พี่เปลี่ยนชื่อจาก EventSection:NewToggle เป็น EventTab:AddToggle ตามแบบ Fluent นะคัฟ)
+local EventSection = Tabs.Event:AddSection("Auto Collect / ระบบดูดของ")
+
+EventSection:AddToggle("CoinSuckerToggle", {
+    Title = "🧲 Coin Sucker (ดูด Game Console)",
+    Default = false,
+    Callback = function(v)
+        CoinSuckerEnabled = v
+
+        if v then
+            -- เริ่มระบบดูด
+            CoinSuckerConnection = RunService.Heartbeat:Connect(function()
+                local char = player.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    -- เช็คว่าเป็น Model ชื่อ Game Console หรือไม่
+                    if obj:IsA("Model") and obj.Name == "Game Console" then
+                        local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            -- หยุดแรงเหวี่ยงเดิมแล้วดูดเข้าหาตัวผู้เล่น
+                            part.AssemblyLinearVelocity = Vector3.zero
+                            part.CanCollide = false -- ปิดกันชนเพื่อให้มันทะลุมาหาเราได้ง่ายๆ
+                            
+                            part.CFrame = part.CFrame:Lerp(
+                                root.CFrame * CFrame.new(0, 0, -1), -- ดูดมาจ่อหน้าตัวเรา
+                                0.2 -- ความเร็วในการดูด (ปรับเพิ่มได้)
+                            )
+                        end
+                    end
+                end
+            end)
+            
+            Fluent:Notify({ Title = "U-HUB", Content = "เปิดเครื่องดูดแล้วคัฟน้องหนึ่ง! 🧲", Duration = 2 })
+            warn("Coin sucker ON 🧲")
+        else
+            -- ปิดระบบดูด
+            if CoinSuckerConnection then
+                CoinSuckerConnection:Disconnect()
+                CoinSuckerConnection = nil
+            end
+            
+            Fluent:Notify({ Title = "U-HUB", Content = "ปิดเครื่องดูดแล้วจ้า", Duration = 2 })
+            warn("Coin sucker OFF")
+        end
+    end
+})
+
