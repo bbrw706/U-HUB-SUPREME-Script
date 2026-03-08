@@ -1,4 +1,4 @@
--- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]       ตอนนี้ถึงการทำชุบคน
+-- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]       ตอนนี้ถึงการทำถึงบรรทัดที่ 456
 local VirtualUser = game:GetService("VirtualUser")
 game:GetService("Players").LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
@@ -178,7 +178,8 @@ end
 
 -- [[ 🎡 ปุ่ม Toggle ]]
 FarmTab:AddToggle("UHubTicketToggle", {
-    Title = "เปิดระบบ U-HUB Ticket Farm (White Large)",
+    Title = "ฟาร์มโทเค้นท์",
+    Description = "🔥วาร์ปไปเอาโทเค้นท์นะจ๊ะ🔥",
     Default = false,
     Callback = function(state)
         getgenv().AutoTicketFarm = state
@@ -235,7 +236,224 @@ FarmTab:AddToggle("UHubTicketToggle", {
     end
 })
 
+-- [[ 🧠 1. ตั้งค่าตัวแปรหลัก ]]
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
 
+local interactEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("Character"):WaitForChild("Interact")
+local changeModeEvent = ReplicatedStorage:FindFirstChild("ChangePlayerMode", true)
+
+_G.MasterFarm = false
+local lastSavedPosition = nil
+local afkPart = nil
+
+-- [[ 🛠️ 2. ฟังก์ชันสมองกล ]]
+
+local function isPlayerDowned(plr)
+    if not plr or not plr.Character then return false end
+    return plr.Character:GetAttribute("Downed") == true and plr.Character:GetAttribute("BeingCarried") ~= true
+end
+
+-- [[ 🔄 3. ระบบ Auto Respawn (ออโต้เกิด) ]]
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        if _G.MasterFarm and LocalPlayer.Character then
+            local char = LocalPlayer.Character
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+
+            if hrp and not char:GetAttribute("Downed") then
+                lastSavedPosition = hrp.Position
+            end
+
+            if char:GetAttribute("Downed") == true then
+                task.wait(3) 
+                if _G.MasterFarm then
+                    if changeModeEvent then changeModeEvent:FireServer(true) end
+                    local newChar = LocalPlayer.CharacterAdded:Wait()
+                    local newHrp = newChar:WaitForChild("HumanoidRootPart", 5)
+                    if newHrp and lastSavedPosition then
+                        task.wait(0.5)
+                        newHrp.CFrame = CFrame.new(lastSavedPosition)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+
+FarmTab:AddToggle("UHubTicketToggle", {
+    Title = "🔥 ฟาร์มเงิน",
+    Description = "วาร์ปติดตัวคนล้ม + รอ 2 วิวาร์ปกลับ",
+    Default = false,
+    Callback = function(state)
+        _G.MasterFarm = state
+        
+        if state then
+            if not afkPart then
+                afkPart = Instance.new("Part", workspace)
+                afkPart.Size = Vector3.new(12, 1, 12)
+                afkPart.Position = Vector3.new(0, 6000, 0)
+                afkPart.Anchored = true
+                afkPart.Transparency = 0.5
+            end
+
+            task.spawn(function()
+                while _G.MasterFarm do
+                    local char = LocalPlayer.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    
+                    if hrp and not char:GetAttribute("Downed") then
+                        local foundTarget = false
+                        
+                        for _, pl in ipairs(Players:GetPlayers()) do
+                            if pl ~= LocalPlayer and isPlayerDowned(pl) then
+                                local pChar = pl.Character
+                                local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")
+                                
+                                if pHrp then
+                                    local dist = (hrp.Position - pHrp.Position).Magnitude
+                                    
+                                    -- 1. ระยะใกล้ (ชุบปกติ)
+                                    if dist <= 15 then
+                                        pcall(function() interactEvent:FireServer("Revive", true, pl.Name) end)
+                                    
+                                    -- 2. ระยะไกล (วาร์ปล็อกตัว)
+                                    else
+                                        foundTarget = true
+                                        task.wait(2) -- รอ 3 วิ
+                                        
+                                        if _G.MasterFarm and isPlayerDowned(pl) and not char:GetAttribute("Downed") then
+                                            -- [[ เริ่มระบบวาร์ปล็อกเป้าหมาย ]]
+                                            local lockTime = tick()
+                                            while tick() - lockTime < 2.5 do -- ล็อกตัวไว้ 2.5 วิ (รวมเวลาชุบและรอก่อนวาร์ปกลับ)
+                                                if not isPlayerDowned(pl) or not _G.MasterFarm or char:GetAttribute("Downed") then break end
+                                                
+                                                -- วาร์ปไปตำแหน่งเพื่อนปัจจุบันแบบ Real-time
+                                                hrp.CFrame = pHrp.CFrame + Vector3.new(0, 3, 0)
+                                                
+                                                -- ส่งคำสั่งชุบย้ำๆ
+                                                interactEvent:FireServer("Revive", true, pl.Name)
+                                                
+                                                task.wait(0.05) -- วาร์ปติดตัวถี่ยิบ (กันหลุด)
+                                            end
+                                            
+                                            -- หลังจากล็อกตัวครบแล้ว ให้รออีกนิดตามสั่ง (รวมใน Loop ล็อกตัวแล้ว)
+                                            task.wait(0.5) 
+                                            
+                                            -- วาร์ปกลับฐาน
+                                            if afkPart and _G.MasterFarm then
+                                                hrp.CFrame = afkPart.CFrame + Vector3.new(0, 5, 0)
+                                            end
+                                        end
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                        
+                        if not foundTarget and afkPart then
+                            if (hrp.Position - afkPart.Position).Magnitude > 25 then
+                                hrp.CFrame = afkPart.CFrame + Vector3.new(0, 5, 0)
+                            end
+                        end
+                    end
+                    task.wait(0.3)
+                end
+                if afkPart then afkPart:Destroy() afkPart = nil end
+            end)
+        end
+    end
+})
+
+
+-- [[ 🧠 1. ตั้งค่าตัวแปรหลัก ]]
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+local changeModeEvent = ReplicatedStorage:FindFirstChild("ChangePlayerMode", true)
+_G.MasterAFK = false
+local afkPart = nil
+
+-- [[ 🔄 2. ระบบ Auto Respawn (เกิดใหม่แล้ววาร์ปกลับขึ้นฟ้า) ]]
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        if _G.MasterAFK and LocalPlayer.Character then
+            local char = LocalPlayer.Character
+            if char:GetAttribute("Downed") == true then
+                task.wait(3) -- รอ 3 วิ
+                if _G.MasterAFK then
+                    if changeModeEvent then changeModeEvent:FireServer(true) end
+                    
+                    local newChar = LocalPlayer.CharacterAdded:Wait()
+                    local newHrp = newChar:WaitForChild("HumanoidRootPart", 5)
+                    
+                    if newHrp and _G.MasterAFK then
+                        task.wait(0.5)
+                        newHrp.CFrame = CFrame.new(0, 6005, 0) -- เกิดแล้ววาร์ปกลับขึ้นฟ้าทันที
+                    end
+                end
+            end
+        end
+    end
+end)
+
+FarmTab:AddToggle("UHubTicketToggle", {
+    Title = "☁️ เปิดระบบยืน AFK บนฟ้า",
+    Description = "ยืนบนฟ้าฟาร์มเวล+ฟาร์มเงิน+มีที่วิ่งเล่น",
+    Default = false,
+    Callback = function(state)
+        _G.MasterAFK = state
+        
+        if state then
+            -- สร้างฐาน AFK บนฟ้า (ห้ามลบตามสั่ง)
+            if not afkPart then
+                afkPart = Instance.new("Part", workspace)
+                afkPart.Size = Vector3.new(300, 1, 300)
+                afkPart.Position = Vector3.new(0, 6000, 0)
+                afkPart.Anchored = true
+                afkPart.Transparency = 0.5
+                afkPart.Color = Color3.fromRGB(0, 255, 255)
+                afkPart.Name = "UHub_AFK_Platform"
+            end
+
+            -- วาร์ปขึ้นฟ้าครั้งแรก
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = CFrame.new(0, 6005, 0)
+            end
+
+            -- [[ 🛠️ ระบบกันตก: ถ้าตกจากฐานให้วาร์ปกลับไปจุดเริ่มบนฟ้า ]]
+            task.spawn(function()
+                while _G.MasterAFK do
+                    local char = LocalPlayer.Character
+                    local root = char and char:FindFirstChild("HumanoidRootPart")
+                    
+                    if root and _G.MasterAFK then
+                        -- ถ้าค่า Y (ความสูง) ต่ำกว่า 5950 (ตกฐาน) ให้ดึงกลับไปที่กลางฐาน
+                        if root.Position.Y < 5950 then
+                            root.CFrame = CFrame.new(0, 6005, 0)
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+
+            Fluent:Notify({Title = "U-HUB", Content = "เริ่มระบบ AFK บนฟ้า + กันตกร่วงเรียบร้อยครับน้องหนึ่ง!", Duration = 5})
+        else
+            -- ปิดระบบแล้วทำลายฐาน
+            if afkPart then 
+                afkPart:Destroy() 
+                afkPart = nil 
+            end
+            Fluent:Notify({Title = "U-HUB", Content = "ปิดระบบ AFK เรียบร้อย", Duration = 5})
+        end
+    end
+})
 
 -- Player & GUI
 local Players = game:GetService("Players")
