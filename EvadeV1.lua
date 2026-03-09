@@ -1,4 +1,4 @@
--- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]       ตอนนี้ถึงการทำถึงบรรทัดที่ 456
+-- [[ 🛡️ ระบบกันโดนเตะ (Anti-AFK) ]]       ตอนนี้ถึงการทำถึงบรรทัดที่ การปรับความสูงแล็คอุ๊อุ๊
 local VirtualUser = game:GetService("VirtualUser")
 game:GetService("Players").LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
@@ -455,6 +455,8 @@ FarmTab:AddToggle("UHubTicketToggle", {
     end
 })
 
+
+
 -- Player & GUI
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -579,25 +581,55 @@ end)
 -- [ 3. เมนูหลัก: LAG SWITCH ]
 -- =========================================
 local LagSection = MainTab:AddSection("ระบบกระตุก (Lag Switch)")
+local UIS = game:GetService("UserInputService")
 local floatingLagButton
+local isLagging = false 
+local lagKey = Enum.KeyCode.Z -- ตั้งค่าปุ่มเริ่มต้น
 
+-- ฟังก์ชันแลคแบบเดิมของน้องหนึ่ง
 local function lagSwitch(duration)
-    local start = tick()
-    while tick()-start < duration do 
-        for i=1,1e7 do local a=math.random() end 
-    end
+    task.spawn(function()
+        local start = tick()
+        while tick() - start < duration do 
+            for i = 1, 1e6 do local a = math.random() end 
+            task.wait()
+        end
+    end)
 end
+
+-- [[ ระบบจับสัญญาณคีย์บอร์ดโดยตรง (UIS) ]]
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == lagKey then
+        isLagging = true
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.KeyCode == lagKey then
+        isLagging = false
+    end
+end)
+
+-- ลูปความแลคเบื้องหลัง
+task.spawn(function()
+    while true do
+        if isLagging then
+            for i = 1, 1e6 do local a = math.random() end
+        end
+        task.wait()
+    end
+end)
 
 local function createLagFloatingButton()
     if floatingLagButton then return end
     floatingLagButton = Instance.new("TextButton", FloatingGui)
-    floatingLagButton.Size = UDim2.new(0,100,0,50)
+    floatingLagButton.Size = UDim2.fromOffset(100, 50)
     floatingLagButton.Position = UDim2.new(0.7,-50,0.8,0)
     floatingLagButton.AnchorPoint = Vector2.new(0.5,0)
     floatingLagButton.Text = "Lag Switch"
     floatingLagButton.Active = true
     floatingLagButton.Draggable = true
-    StyleFloatingButton(floatingLagButton) -- ใช้ฟังก์ชันแต่งสีฟ้าที่น้องสั่ง
+    StyleFloatingButton(floatingLagButton)
     
     floatingLagButton.MouseButton1Click:Connect(function() 
         lagSwitch(0.5) 
@@ -609,30 +641,86 @@ LagSection:AddButton({
     Callback = function() lagSwitch(0.5) end
 })
 
--- แก้ไขตรงนี้: ใส่ตัวแปร v เพื่อเช็คสถานะเปิด/ปิดปุ่มลอย
 LagSection:AddToggle("LagFloatToggle", {
     Title = "Lag Switch (ปุ่มลอย)", 
     Default = false, 
     Callback = function(v)
-        if v then 
-            createLagFloatingButton() 
-        else 
-            if floatingLagButton then 
-                floatingLagButton:Destroy() 
-                floatingLagButton = nil 
-            end 
+        if v then createLagFloatingButton() else 
+            if floatingLagButton then floatingLagButton:Destroy() floatingLagButton = nil end 
         end
     end
 })
 
-LagSection:AddKeybind("LagKey", {
-    Title = "ตั้งค่าปุ่มคีย์บอร์ด (กดค้าง)", 
+-- ตั้งค่าปุ่มผ่าน Fluent แต่ใช้ UIS เป็นตัวรัน
+local LagKeybind = LagSection:AddKeybind("LagKey", {
+    Title = "ตั้งค่าปุ่มคีย์บอร์ด", 
     Mode = "Hold", 
     Default = "Z", 
-    Callback = function(v) 
-        if v then lagSwitch(0.5) end 
+    Callback = function(Value)
+        -- ไม่ต้องใส่โค้ดในนี้ เพราะเราใช้ UIS ด้านบนคุมแล้ว
+    end,
+    ChangedCallback = function(New)
+        lagKey = New -- อัปเดตปุ่มเวลาที่น้องเปลี่ยนในเมนู
     end
 })
+
+-- [[ เพิ่มตัวแปรสถานะโหมด ]]
+local lagMode = "ปกติ" -- ค่าเริ่มต้น
+
+-- [[ ปรับปรุงฟังก์ชันแลคให้รองรับการเด้งสูง ]]
+local function lagSwitch(duration)
+    task.spawn(function()
+        local start = tick()
+        local char = player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+        -- ถ้าเลือกโหมดเด้งสูง ให้ดีดตัวขึ้นก่อนแลค
+        if lagMode == "เด้งสูง" and hrp then
+            hrp.Velocity = Vector3.new(0, 750, 0) -- ปรับเลข 150 ให้สูงขึ้นตามใจชอบเลยน้องหนึ่ง
+        end
+
+        while tick() - start < duration do 
+            for i = 1, 1e6 do local a = math.random() end 
+            task.wait()
+        end
+    end)
+end
+
+-- [[ เพิ่ม Dropdown ใน LagSection ]]
+LagSection:AddDropdown("LagModeDropdown", {
+    Title = "เลือกโหมดการแลค",
+    Values = {"ปกติ", "เด้งสูง"},
+    Multi = false,
+    Default = "ปกติ",
+    Callback = function(Value)
+        lagMode = Value
+        Fluent:Notify({
+            Title = "U-HUB",
+            Content = "เปลี่ยนเป็นโหมด: " .. Value,
+            Duration = 2
+        })
+    end
+})
+
+-- [[ ปรับลูปเบื้องหลังให้รองรับการเด้งสูง (ตอนกดคีย์บอร์ดค้าง) ]]
+task.spawn(function()
+    while true do
+        if isLagging then
+            local char = player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            
+            -- ถ้ากดค้างในโหมดเด้งสูง ให้ตัวมันลอยค้างบนฟ้าไปเลย
+            if lagMode == "เด้งสูง" and hrp then
+                hrp.Velocity = Vector3.new(0, 50, 0) -- ประคองตัวให้ลอย
+            end
+
+            for i = 1, 1e6 do local a = math.random() end
+        end
+        task.wait()
+    end
+end)
+
+
 
 -------------------------------------------------------------------------
 -- [[ ✅ แก้ไขส่วนที่ Error: สร้าง Section และรวมระบบเกิดใหม่ ]]
@@ -842,6 +930,8 @@ task.spawn(function()
         task.wait(0.05)
     end
 end)
+
+
 
 WallSection:AddToggle("WallHackToggle", {Title="Wall Hack (ปกติ)", Default=false, Callback=setWallHack})
 
@@ -1139,6 +1229,7 @@ VisualsSection:AddToggle("UHubNextbotESP", {
         else
             -- [[ ✅ กรณีสั่งเปิด: เริ่มลูปการทำงาน ]]
             task.spawn(function()
+                local LocalPlayer = game:GetService("Players").LocalPlayer -- เพิ่มตัวแปร LocalPlayer ให้ใช้ได้จริง
                 while getgenv().NextbotESPEnabled do
                     local folder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Players")
                     if folder then
@@ -1166,7 +1257,11 @@ VisualsSection:AddToggle("UHubNextbotESP", {
                                         label.BackgroundTransparency = 1
                                         label.TextStrokeTransparency = 0
                                         label.TextStrokeColor3 = Color3.new(0, 0, 0)
-                                        label.TextScaled = true
+                                        
+                                        -- [[ ปรับขนาดตัวหนังสือเป็น 14 ตามสั่ง ]]
+                                        label.TextScaled = false -- ปิดตัวนี้เพื่อให้ TextSize ทำงาน
+                                        label.TextSize = 14
+                                        
                                         label.Font = Enum.Font.GothamBold
                                         label.TextColor3 = Color3.fromRGB(255, 255, 255)
                                         label.Parent = billboard
@@ -1181,9 +1276,9 @@ VisualsSection:AddToggle("UHubNextbotESP", {
                                         label.Text = string.format("%s\n[ %.1f ]", npc.Name, dist)
 
                                         -- เปลี่ยนสีตามความอันตราย (ใกล้ = แดง | ไกล = ฟ้า/ม่วง)
-                                        if dist <= 20 then
+                                        if dist <= 14 then
                                             label.TextColor3 = Color3.fromRGB(255, 50, 50) -- แดงจัด (อันตรายมาก)
-                                        elseif dist <= 70 then
+                                        elseif dist <= 50 then -- แก้เงื่อนไขให้เป็นช่วงที่กว้างขึ้นตามตรรกะเดิม
                                             label.TextColor3 = Color3.fromRGB(255, 150, 0) -- ส้ม (เริ่มใกล้)
                                         else
                                             label.TextColor3 = Color3.fromRGB(180, 150, 255) -- ม่วงอ่อน (ปลอดภัย)
@@ -1199,7 +1294,6 @@ VisualsSection:AddToggle("UHubNextbotESP", {
         end
     end
 })
-
 -- =========================================
 -- [ FPS: GRAPHICS & FPS DISPLAY ]
 -- =========================================
@@ -1295,7 +1389,7 @@ local function updateDownedESP()
                 textLabel.Size = UDim2.new(1, 0, 1, 0)
                 textLabel.BackgroundTransparency = 1
                 local dist = getDistance(root)
-                textLabel.Text = string.format("🆘 %s\n%d studs", plr.Name, dist)
+                textLabel.Text = string.format("%s\n%d studs", plr.Name, dist)
                 textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
                 textLabel.TextSize = 13 -- ปรับขนาดจาก 10 เป็น 13 (อ่านง่ายขึ้นเยอะ)
                 textLabel.Font = Enum.Font.GothamBlack
