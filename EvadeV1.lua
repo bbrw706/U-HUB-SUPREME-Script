@@ -667,24 +667,7 @@ local LagKeybind = LagSection:AddKeybind("LagKey", {
 -- [[ เพิ่มตัวแปรสถานะโหมด ]]
 local lagMode = "ปกติ" -- ค่าเริ่มต้น
 
--- [[ ปรับปรุงฟังก์ชันแลคให้รองรับการเด้งสูง ]]
-local function lagSwitch(duration)
-    task.spawn(function()
-        local start = tick()
-        local char = player.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-        -- ถ้าเลือกโหมดเด้งสูง ให้ดีดตัวขึ้นก่อนแลค
-        if lagMode == "เด้งสูง" and hrp then
-            hrp.Velocity = Vector3.new(0, 750, 0) -- ปรับเลข 150 ให้สูงขึ้นตามใจชอบเลยน้องหนึ่ง
-        end
-
-        while tick() - start < duration do 
-            for i = 1, 1e6 do local a = math.random() end 
-            task.wait()
-        end
-    end)
-end
 
 -- [[ เพิ่ม Dropdown ใน LagSection ]]
 LagSection:AddDropdown("LagModeDropdown", {
@@ -720,7 +703,52 @@ task.spawn(function()
     end
 end)
 
+-- [[ 🥀 ตัวแปรเก็บค่าความสูง (เชื่อมกับลูปเบื้องหลัง) ]]
+local jumpPowerValue = 50 -- ค่าเริ่มต้น (ต่ำสุด)
 
+-- [[ 🎨 สร้าง Dropdown ใน LagSection ]]
+LagSection:AddDropdown("JumpHeightDropdown", {
+    Title = "เลือกความสูงในการดีด",
+    Description = "เลือกความแรงตามสถานการณ์",
+    Values = {"เริ่มต้น", "กลาง", "สูง"},
+    Default = "เริ่มต้น",
+    Callback = function(Value)
+        -- เช็คค่าที่เลือกแล้วเปลี่ยนตัวแปร jumpPowerValue
+        if Value == "เริ่มต้น" then
+            jumpPowerValue = 50
+        elseif Value == "กลาง" then
+            jumpPowerValue = 70
+        elseif Value == "สูง" then
+            jumpPowerValue = 100
+        end
+
+        -- แจ้งเตือนสั้นๆ ให้รู้ว่าเปลี่ยนแล้ว
+        Fluent:Notify({
+            Title = "U-HUB",
+            Content = "ปรับความสูงเป็น: " .. Value,
+            Duration = 1.5
+        })
+    end
+})
+
+-- [[ 🔄 ลูปเบื้องหลัง (ตัวที่น้องหนึ่งบอกว่าต้องแก้) ]]
+task.spawn(function()
+    while true do
+        if isLagging then
+            local char = game.Players.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if hrp then
+                -- [[ 🚀 ตอนนี้มันจะใช้ค่า 50, 70 หรือ 100 ตามที่น้องเลือกใน Dropdown แล้วครับ ]]
+                hrp.Velocity = Vector3.new(0, jumpPowerValue, 0) 
+            end
+
+            -- ทำให้เครื่องแลค (Lag Switch)
+            for i = 1, 1e6 do local a = math.random() end
+        end
+        task.wait()
+    end
+end)
 
 -------------------------------------------------------------------------
 -- [[ ✅ แก้ไขส่วนที่ Error: สร้าง Section และรวมระบบเกิดใหม่ ]]
@@ -1107,15 +1135,49 @@ local function CreateUHubUI()
     gui.Name = "UHubOverlay"; gui.IgnoreGuiInset = true; gui.ResetOnSpawn = false 
 
     local bg = Instance.new("Frame", gui)
-    bg.Size = UDim2.fromScale(1,1); bg.BackgroundColor3 = Color3.fromRGB(255, 105, 180); bg.BackgroundTransparency = 0.25
+    -- [[ 🚀 จุดที่ 1: พื้นหลังดำสนิทตามสั่ง ]]
+    bg.Size = UDim2.fromScale(1,1); bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0); bg.BackgroundTransparency = 0.35
     
+    -- [[ ⭐ 🚀 จุดที่เพิ่ม: ระบบดาววิ่งข้ามจอ (จากโค้ดของน้องหนึ่ง) ]]
+    for i = 1, 100 do
+        local Star = Instance.new("Frame")
+        Star.Size = UDim2.fromOffset(math.random(1, 2), math.random(1, 2))
+        Star.Position = UDim2.fromScale(math.random(), math.random())
+        Star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Star.BackgroundTransparency = math.random(0.3, 0.6)
+        Star.BorderSizePixel = 0
+        Star.Parent = bg -- เปลี่ยนจาก MainFrame เป็น bg
+        local Corner = Instance.new("UICorner", Star)
+        Corner.CornerRadius = UDim.new(1, 0)
+
+        local speed = math.random(1, 2) / 2500
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if Star and Star.Parent then
+                local newX = Star.Position.X.Scale + speed
+                if newX > 1 then newX = -0.01 end
+                Star.Position = UDim2.fromScale(newX, Star.Position.Y.Scale)
+            end
+        end)
+    end
+
+    -- [[ 🌙 🚀 จุดที่เพิ่ม: ดวงจันทร์สวยๆ (จากโค้ดของน้องหนึ่ง) ]]
+    local Moon = Instance.new("ImageLabel")
+    Moon.Size = UDim2.fromOffset(180, 180)
+    Moon.Position = UDim2.fromScale(0.85, 0.2)
+    Moon.AnchorPoint = Vector2.new(0.5, 0.5)
+    Moon.Image = "rbxassetid://11415840338"
+    Moon.BackgroundTransparency = 1
+    Moon.ImageTransparency = 0.1
+    Moon.Parent = bg
+    game:GetService("TweenService"):Create(Moon, TweenInfo.new(8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Position = UDim2.fromScale(0.87, 0.22)}):Play()
+
     local text = Instance.new("TextLabel", bg)
     text.Name = "InfoText"; text.Size = UDim2.fromScale(1,1); text.BackgroundTransparency = 1; text.TextColor3 = Color3.new(1,1,1)
     text.TextScaled = true; text.Font = Enum.Font.GothamBold
     text.Text = "U-HUB\nกำลังเตรียมตัว..."
 
     local heartL = Instance.new("TextLabel", bg)
-    heartL.Text = "💖"; heartL.Size = UDim2.fromScale(0.1, 0.1); heartL.Position = UDim2.fromScale(0.1, 0.5); heartL.BackgroundTransparency = 1; heartL.TextScaled = true
+    heartL.Text = ""; heartL.Size = UDim2.fromScale(0.1, 0.1); heartL.Position = UDim2.fromScale(0.1, 0.5); heartL.BackgroundTransparency = 1; heartL.TextScaled = true
     local heartR = heartL:Clone(); heartR.Parent = bg; heartR.Position = UDim2.fromScale(0.8, 0.5)
     
     return gui
@@ -1125,7 +1187,7 @@ end
 local TicketSection = EventTab:AddSection("ระบบตั๋ว (Ticket System)")
 
 local TicketToggleUI = TicketSection:AddToggle("UHubTicketToggle", {
-    Title = "เปิดระบบ U-HUB Ticket Farm",
+    Title = "เปิดออโต้ฟาร์มตั๋วยาวๆ",
     Description = "ฟาร์มตั๋ว + นับคะแนน + ที่ยืน [N] ปิด/เปิด",
     Default = false,
     Callback = function(state)
@@ -1135,20 +1197,24 @@ local TicketToggleUI = TicketSection:AddToggle("UHubTicketToggle", {
         if state then
             LastTimeTick = tick()
             local ui = CreateUHubUI()
-            game:GetService("Lighting").Ambient = Color3.fromRGB(255, 150, 200)
+            
+            -- [[ 🌑 ปรับแมพมืดสนิทตามสั่ง ]]
+            local lt = game:GetService("Lighting")
+            lt.Ambient = Color3.fromRGB(0, 0, 0)
+            lt.Brightness = 0
+            lt.ClockTime = 0
+            lt.ExposureCompensation = -1
 
             task.spawn(function()
                 while getgenv().AutoTicketFarm do
-                    -- เช็ค UI
                     if not LocalPlayer.PlayerGui:FindFirstChild("UHubOverlay") then ui = CreateUHubUI() end
                     
-                    -- อัปเดตข้อมูล UI (เวลา + คะแนน)
                     if ui and ui:FindFirstChild("InfoText", true) then
                         local currentTick = tick()
                         _G.TotalFarmSeconds = _G.TotalFarmSeconds + (currentTick - LastTimeTick)
                         LastTimeTick = currentTick
                         ui:FindFirstChild("InfoText", true).Text = string.format(
-                            "U-HUB\nAUTO TICKET\nคะแนนที่เก็บได้: %d ใบ\nเวลาสะสม: %s",
+                            "U-HUB กำลังฟาร์มให้นะคัฟ\nคะแนนที่เก็บได้: %d ใบ\nเวลาสะสม: %s",
                             _G.TicketScore, FormatUHubTime(_G.TotalFarmSeconds)
                         )
                     end
@@ -1166,16 +1232,13 @@ local TicketToggleUI = TicketSection:AddToggle("UHubTicketToggle", {
                                 if not getgenv().AutoTicketFarm then break end
                                 local part = ticket:FindFirstChildWhichIsA("BasePart")
                                 if part and part.Parent then
-                                    -- วาร์ปเก็บตั๋ว
                                     hrp.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
-                                    ManagePlatform(true, part.Position) -- ย้ายที่ยืนไปรอง
-                                    
-                                    _G.TicketScore = _G.TicketScore + 1 -- บวกคะแนน
-                                    task.wait(1) -- เวลารอเก็บ
+                                    ManagePlatform(true, part.Position)
+                                    _G.TicketScore = _G.TicketScore + 1
+                                    task.wait(1)
                                 end
                             end
                         else
-                            -- ถ้าไม่มีตั๋ว ให้วาร์ปขึ้นที่สูงไปรอ
                             hrp.CFrame = CFrame.new(hrp.Position.X, 1250, hrp.Position.Z)
                             ManagePlatform(true, hrp.Position)
                         end
@@ -1186,9 +1249,10 @@ local TicketToggleUI = TicketSection:AddToggle("UHubTicketToggle", {
 
             Fluent:Notify({Title = "U-HUB", Content = "เริ่มฟาร์มแล้ว! เก็บให้เรียบนะน้องหนึ่ง", Duration = 2})
         else
-            -- ปิดระบบ
             if LocalPlayer.PlayerGui:FindFirstChild("UHubOverlay") then LocalPlayer.PlayerGui.UHubOverlay:Destroy() end
-            game:GetService("Lighting").Ambient = Color3.fromRGB(127, 127, 127)
+            local lt = game:GetService("Lighting")
+            lt.Ambient = Color3.fromRGB(127, 127, 127); lt.Brightness = 1; lt.ClockTime = 12; lt.ExposureCompensation = 0
+            
             ManagePlatform(false)
             Fluent:Notify({Title = "U-HUB", Content = "หยุดฟาร์มแล้วครับ", Duration = 2})
         end
