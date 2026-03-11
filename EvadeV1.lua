@@ -585,14 +585,38 @@ local UIS = game:GetService("UserInputService")
 local floatingLagButton
 local isLagging = false 
 local lagKey = Enum.KeyCode.Z -- ตั้งค่าปุ่มเริ่มต้น
+local lagMode = "ปกติ" -- ค่าเริ่มต้น
+local jumpPowerValue = 50 -- ค่าความสูงเริ่มต้น
 
--- ฟังก์ชันแลคแบบเดิมของน้องหนึ่ง
+-- [[ ฟังก์ชันแลค (ปรับปรุงให้รองรับโหมดเด้งและเดินทะลุสำหรับปุ่มลอย) ]]
 local function lagSwitch(duration)
     task.spawn(function()
         local start = tick()
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        
         while tick() - start < duration do 
+            -- ระบบเดินทะลุขณะแลค
+            if char then
+                for _, v in pairs(char:GetChildren()) do
+                    if v:IsA("BasePart") then v.CanCollide = false end
+                end
+            end
+            
+            -- แก้บัคปุ่มลอย: เช็คโหมดถ้าเป็น "เด้งสูง" ให้เด้งด้วย
+            if lagMode == "เด้งสูง" and hrp then
+                hrp.Velocity = Vector3.new(0, jumpPowerValue, 0)
+            end
+
             for i = 1, 1e6 do local a = math.random() end 
             task.wait()
+        end
+        
+        -- คืนค่าการชน
+        if char then
+            for _, v in pairs(char:GetChildren()) do
+                if v:IsA("BasePart") then v.CanCollide = true end
+            end
         end
     end)
 end
@@ -610,16 +634,40 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- ลูปความแลคเบื้องหลัง
+-- [[ 🔄 ลูปเบื้องหลัง: แก้บัคเด้งค้าง + เดินทะลุ (สำหรับกดค้าง) ]]
 task.spawn(function()
     while true do
         if isLagging then
+            local char = game.Players.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if hrp then
+                -- เดินทะลุขณะกดค้าง
+                for _, v in pairs(char:GetChildren()) do
+                    if v:IsA("BasePart") then v.CanCollide = false end
+                end
+
+                -- แก้บัค: เช็คโหมดก่อนเด้ง (ถ้าเป็น "ปกติ" จะไม่เด้งแล้ว)
+                if lagMode == "เด้งสูง" then
+                    hrp.Velocity = Vector3.new(0, jumpPowerValue, 0)
+                end
+            end
+
             for i = 1, 1e6 do local a = math.random() end
+        else
+            -- คืนค่าการชนเมื่อปล่อยปุ่ม
+            local char = game.Players.LocalPlayer.Character
+            if char then
+                for _, v in pairs(char:GetChildren()) do
+                    if v:IsA("BasePart") then v.CanCollide = true end
+                end
+            end
         end
         task.wait()
     end
 end)
 
+-- [[ ระบบปุ่มลอย ]]
 local function createLagFloatingButton()
     if floatingLagButton then return end
     floatingLagButton = Instance.new("TextButton", FloatingGui)
@@ -636,6 +684,7 @@ local function createLagFloatingButton()
     end)
 end
 
+-- [[ UI Elements ]]
 LagSection:AddButton({
     Title = "Lag Switch (กดครั้งเดียว)", 
     Callback = function() lagSwitch(0.5) end
@@ -651,25 +700,16 @@ LagSection:AddToggle("LagFloatToggle", {
     end
 })
 
--- ตั้งค่าปุ่มผ่าน Fluent แต่ใช้ UIS เป็นตัวรัน
 local LagKeybind = LagSection:AddKeybind("LagKey", {
     Title = "ตั้งค่าปุ่มคีย์บอร์ด", 
     Mode = "Hold", 
     Default = "Z", 
-    Callback = function(Value)
-        -- ไม่ต้องใส่โค้ดในนี้ เพราะเราใช้ UIS ด้านบนคุมแล้ว
-    end,
+    Callback = function(Value) end,
     ChangedCallback = function(New)
-        lagKey = New -- อัปเดตปุ่มเวลาที่น้องเปลี่ยนในเมนู
+        lagKey = New 
     end
 })
 
--- [[ เพิ่มตัวแปรสถานะโหมด ]]
-local lagMode = "ปกติ" -- ค่าเริ่มต้น
-
-
-
--- [[ เพิ่ม Dropdown ใน LagSection ]]
 LagSection:AddDropdown("LagModeDropdown", {
     Title = "เลือกโหมดการแลค",
     Values = {"ปกติ", "เด้งสูง"},
@@ -677,61 +717,24 @@ LagSection:AddDropdown("LagModeDropdown", {
     Default = "ปกติ",
     Callback = function(Value)
         lagMode = Value
-        Fluent:Notify({
-            Title = "U-HUB",
-            Content = "เปลี่ยนเป็นโหมด: " .. Value,
-            Duration = 2
-        })
+        Fluent:Notify({Title = "U-HUB", Content = "เปลี่ยนเป็นโหมด: " .. Value, Duration = 2})
     end
 })
 
--- [[ ปรับลูปเบื้องหลังให้รองรับการเด้งสูง (ตอนกดคีย์บอร์ดค้าง) ]]
-task.spawn(function()
-    while true do
-        if isLagging then
-            local char = player.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            
-            -- ถ้ากดค้างในโหมดเด้งสูง ให้ตัวมันลอยค้างบนฟ้าไปเลย
-            if lagMode == "เด้งสูง" and hrp then
-                hrp.Velocity = Vector3.new(0, 50, 0) -- ประคองตัวให้ลอย
-            end
-
-            for i = 1, 1e6 do local a = math.random() end
-        end
-        task.wait()
-    end
-end)
-
--- [[ 🥀 ตัวแปรเก็บค่าความสูง (เชื่อมกับลูปเบื้องหลัง) ]]
-local jumpPowerValue = 50 -- ค่าเริ่มต้น (ต่ำสุด)
-
--- [[ 🎨 สร้าง Dropdown ใน LagSection ]]
 LagSection:AddDropdown("JumpHeightDropdown", {
     Title = "เลือกความสูงในการดีด",
     Description = "เลือกความแรงตามสถานการณ์",
     Values = {"เริ่มต้น", "กลาง", "สูง"},
     Default = "เริ่มต้น",
     Callback = function(Value)
-        -- เช็คค่าที่เลือกแล้วเปลี่ยนตัวแปร jumpPowerValue
-        if Value == "เริ่มต้น" then
-            jumpPowerValue = 50
-        elseif Value == "กลาง" then
-            jumpPowerValue = 70
-        elseif Value == "สูง" then
-            jumpPowerValue = 100
-        end
-
-        -- แจ้งเตือนสั้นๆ ให้รู้ว่าเปลี่ยนแล้ว
-        Fluent:Notify({
-            Title = "U-HUB",
-            Content = "ปรับความสูงเป็น: " .. Value,
-            Duration = 1.5
-        })
+        if Value == "เริ่มต้น" then jumpPowerValue = 50
+        elseif Value == "กลาง" then jumpPowerValue = 70
+        elseif Value == "สูง" then jumpPowerValue = 100 end
+        Fluent:Notify({Title = "U-HUB", Content = "ปรับความสูงเป็น: " .. Value, Duration = 1.5})
     end
 })
 
--- [[ 🔄 ลูปเบื้องหลัง (ตัวที่น้องหนึ่งบอกว่าต้องแก้) ]]
+-- [[ 🔄 ลูปเบื้องหลัง (เวอร์ชันแก้บัคเด้งค้าง + เพิ่มเดินทะลุ) ]]
 task.spawn(function()
     while true do
         if isLagging then
@@ -739,30 +742,51 @@ task.spawn(function()
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             
             if hrp then
-                -- [[ 🚀 ตอนนี้มันจะใช้ค่า 50, 70 หรือ 100 ตามที่น้องเลือกใน Dropdown แล้วครับ ]]
-                hrp.Velocity = Vector3.new(0, jumpPowerValue, 0) 
+                -- [[ 🛰️ ระบบเดินทะลุ (NoClip) ]]
+                -- สั่งให้ร่างกายเดินทะลุสิ่งกีดขวางขณะกดแลค
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+
+                -- [[ 🚀 แก้บัค: เช็คโหมดก่อนสั่งเด้ง ]]
+                -- จะเด้งเฉพาะตอนเลือกโหมด "เด้งสูง" เท่านั้น
+                if lagMode == "เด้งสูง" then
+                    hrp.Velocity = Vector3.new(0, jumpPowerValue, 0)
+                end
             end
 
-            -- ทำให้เครื่องแลค (Lag Switch)
+            -- ทำให้เครื่องแลค (Lag Switch) ตามโค้ดเดิมน้องหนึ่ง
             for i = 1, 1e6 do local a = math.random() end
+        else
+            -- [[ 🛑 คืนค่าการชนเมื่อเลิกแลค ]]
+            -- ป้องกันน้องหนึ่งตกแมพเมื่อปล่อยปุ่ม
+            local char = game.Players.LocalPlayer.Character
+            if char then
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
         end
         task.wait()
     end
 end)
-
 -------------------------------------------------------------------------
--- [[ ✅ แก้ไขส่วนที่ Error: สร้าง Section และรวมระบบเกิดใหม่ ]]
+-- [[ ✅ แก้ไขระบบวาร์ปมั่ว: ล็อคตำแหน่งให้แม่นยำที่สุด ]]
 -------------------------------------------------------------------------
 
--- 1. สร้าง Section ใน MainTab ก่อนจะไปสร้างปุ่ม (ป้องกัน Error บรรทัด 519)
+-- 1. สร้าง Section ใน MainTab
 local RespawnSection = MainTab:AddSection("ระบบจัดการตัวละคร")
 
--- 2. ตัวแปรสำหรับระบบเกิดใหม่ (Auto Revive)
+-- 2. ตัวแปรสำหรับระบบเกิดใหม่
 getgenv().AutoRespawnEnabled = false 
 local lastSavedPosition = nil
-local autoRespawnMethod = "Fake Revive"
+local LocalPlayer = game:GetService("Players").LocalPlayer
 
--- 3. ปุ่ม Toggle สำหรับเปิด-ปิด (ในเมนู)
+-- 3. ปุ่ม Toggle
 RespawnSection:AddToggle("RespawnToggle", {
     Title = "ออโต้รีสปอน (Auto Revive)", 
     Default = false, 
@@ -771,7 +795,7 @@ RespawnSection:AddToggle("RespawnToggle", {
     end
 })
 
--- 4. Dropdown เลือกวิธี (ตามโค้ดเดิมน้องหนึ่ง)
+-- 4. Dropdown วิธีรีสปอน (คงไว้ตามเดิม)
 RespawnSection:AddDropdown("RespawnMethod", {
     Title = "วิธีรีสปอน", 
     Values = {"Random", "Fake Revive"}, 
@@ -781,39 +805,54 @@ RespawnSection:AddDropdown("RespawnMethod", {
     end
 })
 
--- 5. สมองของระบบ (Auto Revive Logic)
+-- 5. สมองของระบบ (แบบแก้บัควาร์ปมั่ว)
 local function setupAutoRevive(character)
-    task.defer(function()
-        local hrp = character:WaitForChild("HumanoidRootPart", 5)
-        if not hrp then return end
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    local hrp = character:WaitForChild("HumanoidRootPart", 5)
+    if not hrp or not humanoid then return end
 
-        -- เก็บตำแหน่งล่าสุด
-        task.spawn(function()
-            while character and character.Parent do
-                if hrp and hrp.Parent then lastSavedPosition = hrp.Position end
-                task.wait(0.5)
+    -- [[ 🛰️ บันทึกตำแหน่งเฉพาะตอนที่ "ยังไม่ล้ม" เท่านั้น ]]
+    task.spawn(function()
+        while character and character.Parent and hrp and hrp.Parent do
+            -- เช็ค: ต้องไม่ล้ม (Downed ~= true) และเลือดต้องมากกว่า 0 และไม่ได้อยู่ในสถานะร่วง
+            if character:GetAttribute("Downed") ~= true and humanoid.Health > 0 then
+                lastSavedPosition = hrp.CFrame
             end
+            task.wait(0.2) -- บันทึกถี่ขึ้นเล็กน้อยเพื่อให้ตำแหน่งล่าสุดจริงๆ
+        end
+    end)
+
+    -- [[ 🔄 เช็คตอนล้มแล้วสั่งเกิดใหม่ ]]
+    character:GetAttributeChangedSignal("Downed"):Connect(function()
+        if not getgenv().AutoRespawnEnabled or character:GetAttribute("Downed") ~= true then return end
+        
+        -- ล็อคตำแหน่งไว้ทันทีที่ล้ม (ห้ามบันทึกต่อ)
+        local warpBackTo = lastSavedPosition
+        
+        task.wait(3) -- รอ 3 วิ ตามสูตรน้องหนึ่ง
+        
+        pcall(function() 
+            game:GetService("ReplicatedStorage").Events.Player.ChangePlayerMode:FireServer(true) 
         end)
 
-        -- เช็คตอนล้ม
-        character:GetAttributeChangedSignal("Downed"):Connect(function()
-            if not getgenv().AutoRespawnEnabled or character:GetAttribute("Downed") ~= true then return end
-            
-            task.wait(3) -- รอ 3 วิ
-            pcall(function() 
-                game:GetService("ReplicatedStorage").Events.Player.ChangePlayerMode:FireServer(true) 
-            end)
-
-            -- วาร์ปกลับจุดเดิม
-            local newChar = player.CharacterAdded:Wait()
-            local newHRP = newChar:WaitForChild("HumanoidRootPart", 5)
-            if lastSavedPosition and newHRP then 
-                newHRP.CFrame = CFrame.new(lastSavedPosition) 
+        -- [[ 🚀 วาร์ปกลับจุดที่ล็อคไว้ ]]
+        local connection
+        connection = LocalPlayer.CharacterAdded:Connect(function(newChar)
+            local newHRP = newChar:WaitForChild("HumanoidRootPart", 10)
+            if newHRP and warpBackTo then
+                -- รอให้โหลดแมพและตัวละครเสร็จสักครู่เพื่อกันวาร์ปตกแมพ
+                task.wait(0.7) 
+                newHRP.CFrame = warpBackTo
+                Fluent:Notify({Title = "U-HUB", Content = "วาร์ปกลับจุดที่ล้มเรียบร้อย!", Duration = 2})
             end
+            connection:Disconnect()
         end)
     end)
 end
 
+-- 6. เชื่อมต่อระบบ (ห้ามลบ)
+if LocalPlayer.Character then setupAutoRevive(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(setupAutoRevive)
 -- รันระบบ
 player.CharacterAdded:Connect(setupAutoRevive)
 if player.Character then setupAutoRevive(player.Character) end
