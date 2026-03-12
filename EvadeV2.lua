@@ -1874,7 +1874,7 @@ SettingsTab:Slider({
     Title = "Speed",
     Min = 1450,
     Max = 1000000,
-    Default = currentSettings.Speed,
+    Value = currentSettings.Speed,  -- เปลี่ยนจาก Default เป็น Value
     Callback = function(val)
         currentSettings.Speed = val
         applyToTables()
@@ -1886,7 +1886,7 @@ SettingsTab:Slider({
     Title = "Jump Cap",
     Min = 0.1,
     Max = 5000,
-    Default = currentSettings.JumpCap,
+    Value = currentSettings.JumpCap,  -- เปลี่ยนจาก Default เป็น Value
     Callback = function(val)
         currentSettings.JumpCap = val
         applyToTables()
@@ -1898,7 +1898,7 @@ SettingsTab:Slider({
     Title = "Strafe Acceleration",
     Min = 200,
     Max = 1000000,
-    Default = currentSettings.AirStrafeAcceleration,
+    Value = currentSettings.AirStrafeAcceleration,  -- เปลี่ยนจาก Default เป็น Value
     Callback = function(val)
         currentSettings.AirStrafeAcceleration = val
         applyToTables()
