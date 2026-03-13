@@ -12,18 +12,16 @@ local scripts = {
         PVP  = "https://gist.githubusercontent.com/bbrw706/e67f05a22b960379de30fdf3dbdd0e48/raw/a71305fa09b0b96415fb4b8f484fd4d74f535b4b/gistfile1.txt",
         FARM = "https://gist.githubusercontent.com/bbrw706/09f75480bbefbdd86afcef02b9364ad4/raw/a6d9223116e400a65e8d597449837e9e8e295057/gistfile1.txt"
     },
-    -- [ID แมพ Evade (9872472334)]
+    -- [ID แมพ Evade 1]
     [9872472334] = { 
         PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/EvadeV1.lua",
         FARM = ""
-    }
-},
-
-    -- [ID แมพ Evade (11353528705)]
+    }, -- เพิ่มคอมม่าปิดท้ายตรงนี้
+    -- [ID แมพ Evade 2]
     [11353528705] = { 
         PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/EvadeV1.lua",
         FARM = ""
-    }
+    } -- ปิดปีกกาให้ครบ
 }
 
 -- เช็ค ID ของแมพปัจจุบัน
@@ -46,8 +44,9 @@ if cfg then
         warn("U-HUB: น้องหนึ่ง ลิงก์สคริปต์ในโหมดนี้มันว่างนะ!")
     end
 else
-    -- ถ้าไม่เจอ ID ในรายการ ให้เตะออกหรือแจ้งเตือน
-    local msg = "Game ID: " .. currentId .. " ยังไม่รองรับนะน้องหนึ่ง! ไปเพิ่ม ID ก่อน"
+    -- ถ้าไม่เจอ ID ในรายการ
+    local msg = "Game ID: " .. currentId .. " ยังไม่รองรับนะน้องหนึ่ง!"
     warn(msg)
-    game:GetService("Players").LocalPlayer:Kick(msg)
+    -- ถ้าไม่อยากให้โดนเตะออก ให้ปิดบรรทัด Kick ข้างล่างนี้ได้ครับ
+    -- game:GetService("Players").LocalPlayer:Kick(msg)
 end
