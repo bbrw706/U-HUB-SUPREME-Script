@@ -17,6 +17,13 @@ local scripts = {
         PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/EvadeV1.lua",
         FARM = ""
     }
+},
+
+    -- [ID แมพ Evade (11353528705)]
+    [11353528705] = { 
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/EvadeV1.lua",
+        FARM = ""
+    }
 }
 
 -- เช็ค ID ของแมพปัจจุบัน
