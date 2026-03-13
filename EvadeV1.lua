@@ -142,7 +142,6 @@ local TeleportTab = Window:AddTab({Title="เทเลพอร์ต", Icon="na
 local FarmTab     = Window:AddTab({Title="เมนูฟาร์ม", Icon="component"})
 local VisualsTab  = Window:AddTab({Title="มองต่างๆ", Icon="eye"})
 local ExtraTab    = Window:AddTab({Title="ของเสริม", Icon="tag"})
-local FPSTab      = Window:AddTab({Title = "fps", Icon = "accessibility"})
 local EventTab    = Window:AddTab({Title="เกี่ยวกับอีเว้น", Icon="calendar"}) -- แถบนี้แหละ!
 local SettingsTab = Window:AddTab({Title="ตั้งค่า", Icon="wrench"})
 
@@ -734,7 +733,7 @@ LagSection:AddDropdown("JumpHeightDropdown", {
     end
 })
 
--- [[ 🔄 ลูปเบื้องหลัง (เวอร์ชันแก้บัคเด้งค้าง + เพิ่มเดินทะลุ) ]]
+-- [[ 🔄 ลูปเบื้องหลัง (เวอร์ชันแก้บัคเด้งค้าง + เดินทะลุ) ]]
 task.spawn(function()
     while true do
         if isLagging then
@@ -954,71 +953,7 @@ end})
 DeadSection:AddKeybind("DeadTPKey", {Title="ปุ่มวาร์ปไปหาคนล้ม", Mode="Always", Default="Y", Callback=teleportToDead})
 
 -- =========================================
--- [ EXTRA: WALL HACK ]
--- =========================================
-local WallSection = ExtraTab:AddSection("ระบบทะลุกำแพง")
-local wallHackActive = false
-local floatingWallButton
-local wallPartsOriginalCollide = {}
 
-local function setWallHack(state)
-    wallHackActive = state
-    if not wallHackActive then
-        for part, collide in pairs(wallPartsOriginalCollide) do
-            if part and part.Parent then part.CanCollide = collide end
-        end
-        wallPartsOriginalCollide = {}
-    end
-end
-
-local function toggleWallHack()
-    setWallHack(not wallHackActive)
-    if floatingWallButton then floatingWallButton.Text = wallHackActive and "Wall Hack: ON" or "Wall Hack: OFF" end
-end
-
-task.spawn(function()
-    while true do
-        if wallHackActive then
-            local char = player.Character
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            if root then
-                local forwardDir = root.CFrame.LookVector
-                for _, part in pairs(workspace:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        local toPart = part.Position - root.Position
-                        if forwardDir:Dot(toPart) > 0 and forwardDir:Dot(toPart) < 5 then
-                            if wallPartsOriginalCollide[part] == nil then wallPartsOriginalCollide[part] = part.CanCollide end
-                            part.CanCollide = false
-                        end
-                    end
-                end
-            end
-        end
-        task.wait(0.05)
-    end
-end)
-
-
-
-WallSection:AddToggle("WallHackToggle", {Title="Wall Hack (ปกติ)", Default=false, Callback=setWallHack})
-
-local function createWallFloatingButton()
-    if floatingWallButton then return end
-    floatingWallButton = Instance.new("TextButton", FloatingGui)
-    floatingWallButton.Size = UDim2.new(0,100,0,50)
-    floatingWallButton.Position = UDim2.new(0.2,-50,0.6,0)
-    floatingWallButton.Text = "Wall Hack: OFF"
-    floatingWallButton.Draggable = true
-    floatingWallButton.Active = true
-    StyleNeungButton(floatingWallButton)
-    floatingWallButton.MouseButton1Click:Connect(toggleWallHack)
-end
-
-WallSection:AddToggle("WallFloat", {Title="Wall Hack (ปุ่มลอย)", Default=false, Callback=function(v)
-    if v then createWallFloatingButton() else if floatingWallButton then floatingWallButton:Destroy(); floatingWallButton=nil end setWallHack(false) end
-end})
-
-WallSection:AddKeybind("WallKey", {Title="ปุ่ม Wall Hack", Mode="Toggle", Default="K", Callback=setWallHack})
 
 -- =========================================
 -- [ EXTRA: MOON MODE ]
@@ -1397,26 +1332,221 @@ VisualsSection:AddToggle("UHubNextbotESP", {
         end
     end
 })
+
 -- =========================================
 -- [ FPS: GRAPHICS & FPS DISPLAY ]
 -- =========================================
-local FPSSection = FPSTab:AddSection("เพิ่มความลื่น (Optimization)")
+local FPSSection = SettingsTab:AddSection("เพิ่มความลื่น (Optimization)")
 
-FPSSection:AddButton({Title = "แสดง FPS", Callback = function()
-    -- Logic แสดง FPS ใน ScreenGui ที่น้องส่งมา
-end})
-
-FPSSection:AddButton({Title = "ลดกราฟฟิก V.1 (เรียบเนียน)", Callback = function()
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then obj.Material = Enum.Material.SmoothPlastic; obj.Reflectance = 0 end
+SettingsTab:AddButton({
+    Title = "เพิ่ม fps", 
+    Callback = function()
+        -- ใช้สมองเดิมของน้องหนึ่งทั้งหมด
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            -- ส่วนของ V.1 (ปรับพื้นผิว)
+            if obj:IsA("BasePart") then 
+                obj.Material = Enum.Material.SmoothPlastic
+                obj.Reflectance = 0 
+            end
+            
+            -- ส่วนของ V.2 (ลบเอฟเฟกต์)
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Decal") then 
+                obj:Destroy() 
+            end
+        end
+        
+        -- แจ้งเตือนปิดท้ายซะหน่อยให้น้องหนึ่งรู้ว่ามันทำงานแล้ว
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "U-HUB",
+            Text = "บูสต์ความลื่น V.1 และ V.2 เรียบร้อย!",
+            Duration = 2
+        })
     end
-end})
+})
 
-FPSSection:AddButton({Title = "ลดกราฟฟิก V.2 (ลบเอฟเฟกต์)", Callback = function()
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Decal") then obj:Destroy() end
+FPSSection:AddToggle("MiniSpaceFPS", {
+    Title = "🌌 หน้าต่างอวกาศ (FPS + Stars)",
+    Default = false,
+    Callback = function(state)
+        local lp = game.Players.LocalPlayer
+        
+        -- 🛠️ ฟังก์ชันสร้างหน้าต่างจิ๋ว
+        local function CreateMiniFPS()
+            if lp.PlayerGui:FindFirstChild("UHub_MiniFPS") then 
+                lp.PlayerGui.UHub_MiniFPS:Destroy() 
+            end
+
+            local gui = Instance.new("ScreenGui", lp.PlayerGui)
+            gui.Name = "UHub_MiniFPS"
+            gui.ResetOnSpawn = false
+
+            -- 📺 ตัวหน้าต่าง (เน้นความใสเพื่อมองทะลุข้างหลังได้)
+            local MainFrame = Instance.new("Frame", gui)
+            MainFrame.Size = UDim2.fromOffset(180, 90) -- ปรับขนาดให้กะทัดรัดขึ้น
+            MainFrame.Position = UDim2.new(0.5, -90, 0.1, 0)
+            MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            MainFrame.BackgroundTransparency = 0.6 -- [🚀 จุดสำคัญ] ปรับความใสให้เห็นข้างหลังได้
+            MainFrame.BorderSizePixel = 0
+            MainFrame.Active = true
+            MainFrame.Draggable = true -- ลากได้เหมือนเดิม
+            MainFrame.ClipsDescendants = true 
+
+            -- 🌈 ขอบโค้งมน
+            local Corner = Instance.new("UICorner", MainFrame)
+            Corner.CornerRadius = UDim.new(0, 15)
+
+            -- ✨ เส้นขอบบางๆ พอให้สวย
+            local Stroke = Instance.new("UIStroke", MainFrame)
+            Stroke.Color = Color3.fromRGB(0, 255, 150)
+            Stroke.Thickness = 1.5
+            Stroke.Transparency = 0.6
+
+            -- ⭐ ระบบดาววิ่ง (ลดเหลือ 25 ดวง ตามสั่งน้องหนึ่ง)
+           -- [[ ⭐ ระบบดาววนลูป (สมองน้องหนึ่ง: ไม่โหลดใหม่ สลับพื้นที่เอา) ]]
+local stars = {}
+
+-- สร้างทิ้งไว้แค่ 25 ดวงตั้งแต่เริ่มครั้งเดียวจบ
+for i = 1, 7 do
+    local Star = Instance.new("Frame", MainFrame)
+    Star.Size = UDim2.fromOffset(math.random(1, 2), math.random(1, 2))
+    -- สุ่มตำแหน่งเริ่มต้นให้กระจายทั่วหน้าต่าง
+    Star.Position = UDim2.fromScale(math.random(), math.random())
+    Star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Star.BackgroundTransparency = 0.5
+    Star.BorderSizePixel = 0
+    Instance.new("UICorner", Star).CornerRadius = UDim.new(1, 0)
+    
+    -- ตั้งค่าความเร็วสุ่มไว้ในตัวดาว
+    Star:SetAttribute("Speed", math.random(5, 15) / 10000)
+    table.insert(stars, Star)
+end
+
+-- ⚡ ลูปเดียวคุมการ "วาร์ป" ดาว (ลื่น No.1)
+task.spawn(function()
+    local runConn
+    runConn = game:GetService("RunService").RenderStepped:Connect(function()
+        if not MainFrame or not MainFrame.Parent then runConn:Disconnect() return end
+        
+        for _, s in ipairs(stars) do
+            if s and s.Parent then
+                local speed = s:GetAttribute("Speed")
+                -- คำนวณตำแหน่ง X ใหม่
+                local currentX = s.Position.X.Scale + speed
+                
+                -- [🚀 จุดที่น้องหนึ่งสั่ง] ถ้าดาววิ่งเลยขอบขวา (1.1) 
+                -- ให้วาร์ปกลับไปเริ่มที่ขอบซ้าย (-0.1) โดยไม่ต้องสร้างใหม่
+                if currentX > 1.1 then 
+                    currentX = -0.1 
+                    -- แถม: สุ่มความสูง (Y) ใหม่ตอนวาร์ปกลับมา จะได้ดูไม่จำเจเหมือนดาวชุดเดิมเป๊ะ
+                    s.Position = UDim2.fromScale(currentX, math.random())
+                else
+                    s.Position = UDim2.fromScale(currentX, s.Position.Y.Scale)
+                end
+            end
+        end
+    end)
+end)
+
+
+            -- ⏱️ ตัวเลข FPS
+            local FPSLabel = Instance.new("TextLabel", MainFrame)
+            FPSLabel.Size = UDim2.fromScale(1, 1)
+            FPSLabel.BackgroundTransparency = 1
+            FPSLabel.TextColor3 = Color3.new(1, 1, 1)
+            FPSLabel.Font = Enum.Font.GothamBold
+            FPSLabel.TextSize = 22
+            FPSLabel.Text = "FPS: ..."
+            FPSLabel.ZIndex = 2
+            
+            task.spawn(function()
+                local lastTime = tick()
+                local frames = 0
+                while gui.Parent do
+                    frames = frames + 1
+                    local now = tick()
+                    if now - lastTime >= 0.5 then
+                        FPSLabel.Text = math.floor(frames / (now - lastTime)) .. " FPS"
+                        frames = 0
+                        lastTime = now
+                    end
+                    game:GetService("RunService").RenderStepped:Wait()
+                end
+            end)
+            return gui
+        end
+
+        -- 🌙 ระบบเปิด/ปิด
+        if state then
+            getgenv().MiniFPSGui = CreateMiniFPS()
+        else
+            if getgenv().MiniFPSGui then
+                getgenv().MiniFPSGui:Destroy()
+                getgenv().MiniFPSGui = nil
+            end
+        end
     end
-end})
+})
+
+
+-- [ EXTRA: No clip ]
+-- =========================================
+local WallSection =  SettingsTab:AddSection("ระบบทะลุกำแพง")
+local wallHackActive = false
+local floatingWallButton
+local wallPartsOriginalCollide = {}
+
+local function setWallHack(state)
+    wallHackActive = state
+    if not wallHackActive then
+        for part, collide in pairs(wallPartsOriginalCollide) do
+            if part and part.Parent then part.CanCollide = collide end
+        end
+        wallPartsOriginalCollide = {}
+    end
+end
+
+local function toggleWallHack()
+    setWallHack(not wallHackActive)
+    if floatingWallButton then floatingWallButton.Text = wallHackActive and "No clip: ON" or "No clip: OFF" end
+end
+
+task.spawn(function()
+    while true do
+        if wallHackActive then
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                local forwardDir = root.CFrame.LookVector
+                for _, part in pairs(workspace:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        local toPart = part.Position - root.Position
+                        if forwardDir:Dot(toPart) > 0 and forwardDir:Dot(toPart) < 5 then
+                            if wallPartsOriginalCollide[part] == nil then wallPartsOriginalCollide[part] = part.CanCollide end
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(0.05)
+    end
+end)
+
+
+
+WallSection:AddToggle("WallHackToggle", {Title="No clip (ปกติ)", Default=false, Callback=setWallHack})
+
+local function createWallFloatingButton()
+    if floatingWallButton then return end
+    floatingWallButton = Instance.new("TextButton", FloatingGui)
+    floatingWallButton.Size = UDim2.new(0,100,0,50)
+    floatingWallButton.Position = UDim2.new(0.2,-50,0.6,0)
+    floatingWallButton.Text = "No clip: OFF"
+    floatingWallButton.Draggable = true
+    floatingWallButton.Active = true
+    StyleNeungButton(floatingWallButton)
+    floatingWallButton.MouseButton1Click:Connect(toggleWallHack)
+end
 
 
 -- คีย์บอร์ดสำหรับ Teleport (ใช้ Click)
@@ -1961,76 +2091,69 @@ BounceSection:AddInput("BounceHeightInput", {
     end
 })
 -- =========================================
--- [ 📺 ระบบหน้าจอยืดแบบแยกช่องคำนวณ ]
+-- [ 📺 ระบบหน้าจอยืดแบบ Auto-Update ]
 -- =========================================
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 
--- ค่าเริ่มต้น
 getgenv().ResWidth = 2000
 getgenv().ResHeight = 2500
 getgenv().ScreenStretchActive = false
 
 local ScreenStretchConn
 
--- [[ 🧠 ฟังก์ชันคำนวณสัดส่วน ]]
-local function GetCalculatedStretch()
-    if getgenv().ResWidth > 0 and getgenv().ResHeight > 0 then
-        return getgenv().ResWidth / getgenv().ResHeight
-    end
-    return 1
-end
-
-local function UpdateStretch()
+-- [[ 🧠 ฟังก์ชันคำนวณและอัปเดตสัดส่วน ]]
+local function ApplyStretch()
+    -- ถ้ามีลูปเดิมอยู่ให้ปิดก่อนแล้วเริ่มใหม่ด้วยค่าล่าสุด
     if ScreenStretchConn then ScreenStretchConn:Disconnect() end
-    ScreenStretchConn = RunService.RenderStepped:Connect(function()
-        if Camera and getgenv().ScreenStretchActive then
-            local ratio = GetCalculatedStretch()
-            -- ใช้ค่าที่คำนวณได้ไปยืดแกน Y (หรือเปลี่ยนไป X ตามชอบ)
-            Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, ratio, 0, 0, 0, 1)
-        end
-    end)
+    
+    if getgenv().ScreenStretchActive then
+        ScreenStretchConn = RunService.RenderStepped:Connect(function()
+            if Camera then
+                local ratio = getgenv().ResWidth / getgenv().ResHeight
+                -- สมองเดิมของน้องหนึ่ง
+                Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, ratio, 0, 0, 0, 1)
+            end
+        end)
+    end
 end
 
 -- [[ UI ในหมวดของเสริม ]]
-local StretchSection = ExtraTab:AddSection("หน้าจอยืด (แยกช่องคำนวณ) ถ้ากดค่าเริ่มต้นแล้วไม่เข้าให้ใส่ตัวเลขเดิม")
+local StretchSection = ExtraTab:AddSection("หน้าจอยืด (สวิตช์เปิด-ปิด)")
 
+-- 🟢 ปุ่มสวิตช์หลัก
 StretchSection:AddToggle("ScreenStretchToggle", {
     Title = "เปิดระบบหน้าจอยืด",
     Default = false,
     Callback = function(state)
         getgenv().ScreenStretchActive = state
-        if state then UpdateStretch() else
-            if ScreenStretchConn then ScreenStretchConn:Disconnect() ScreenStretchConn = nil end
-        end
+        ApplyStretch() -- เรียกใช้ทันทีที่กดสวิตช์
     end
 })
 
--- ช่องที่ 1: ความกว้าง (Width)
+-- 1. ช่องความกว้าง
 StretchSection:AddInput("InputWidth", {
-    Title = "1. พิมพ์ความกว้าง (Width)",
-    Default = "2000",
+    Title = "1. ความกว้าง (Width)",
+    Default = "1080",
     Numeric = true,
     Callback = function(Value)
         getgenv().ResWidth = tonumber(Value) or 1080
+        -- [🚀 จุดเด่น] ถ้าเปิดสวิตช์อยู่ ให้รีเฟรชค่าทันทีที่พิมพ์เสร็จ
+        if getgenv().ScreenStretchActive then ApplyStretch() end
     end
 })
 
--- ช่องที่ 2: ความสูง (Height)
+-- 2. ช่องความสูง
 StretchSection:AddInput("InputHeight", {
-    Title = "2. พิมพ์ความสูง (Height)",
-    Default = "2500",
+    Title = "2. ความสูง (Height)",
+    Default = "1080",
     Numeric = true,
     Callback = function(Value)
-        getgenv().ResHeight = tonumber(Value) or 1080
+        getgenv().ResHeight = tonumber(Value) or 1350
+        -- [🚀 จุดเด่น] ถ้าเปิดสวิตช์อยู่ ให้รีเฟรชค่าทันทีที่พิมพ์เสร็จ
+        if getgenv().ScreenStretchActive then ApplyStretch() end
     end
 })
-
-StretchSection:AddParagraph({
-    Title = "📝 สูตรที่ใช้คำนวณ",
-    Content = "ระบบจะเอา: [ความกว้าง] ÷ [ความสูง]\nตัวอย่าง: 1080 ÷ 1080 = 1.0 (ปกติ)\nตัวอย่าง: 800 ÷ 1080 = 0.74 (ยืดขึ้น)"
-})
-
 -- =========================
 -- 🧠 ส่วนที่ 1: ฟังก์ชันการคำนวณ (Logic)
 -- =========================
