@@ -454,7 +454,122 @@ FarmTab:AddToggle("UHubTicketToggle", {
     end
 })
 
+-- =========================
+-- [ 1. สร้างแถบตั้งค่า ]
+-- =========================
+local SettingsTab = Window:AddTab({ Title = "ตั้งค่า", Icon = "settings" })
 
+-- =========================
+-- [ 2. ตัวแปรหลัก ]
+-- =========================
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local isPC = not UserInputService.TouchEnabled -- เช็คว่าเป็นคอมไหม
+
+local currentSettings = {
+    Speed = 1500,
+    JumpCap = 1,
+    AirStrafeAcceleration = 187
+}
+
+-- =========================
+-- [ 3. เงื่อนไขการค้นหา ]
+-- =========================
+
+-- เงื่อนไขที่ 1: สำหรับมือถือ (ของเดิม 13 ข้อ)
+local mobileFields = {
+    Friction=true, AirStrafeAcceleration=true, JumpHeight=true, RunDeaccel=true,
+    JumpSpeedMultiplier=true, JumpCap=true, SprintCap=true, WalkSpeedMultiplier=true,
+    BhopEnabled=true, Speed=true, AirAcceleration=true, RunAccel=true, SprintAcceleration=true
+}
+
+-- เงื่อนไขที่ 2: สำหรับคอม (เน้นตัวแปรหลักที่ PC Executor เข้าถึงง่าย)
+local pcFields = { "Speed", "JumpCap", "AirStrafeAcceleration", "Friction" }
+
+local function getMatchingTables()
+    local matched = {}
+    local success, allObjects = pcall(function() return getgc(true) end)
+    if not success then return matched end
+
+    for _, obj in pairs(allObjects) do
+        if typeof(obj) == "table" then
+            local ok = true
+            
+            if isPC then
+                -- [[ เงื่อนไขสำหรับคอม ]]
+                for _, field in ipairs(pcFields) do
+                    if rawget(obj, field) == nil then ok = false break end
+                end
+            else
+                -- [[ เงื่อนไขสำหรับมือถือ (เดิม) ]]
+                for field in pairs(mobileFields) do
+                    if rawget(obj, field) == nil then ok = false break end
+                end
+            end
+            
+            if ok then table.insert(matched, obj) end
+        end
+    end
+    return matched
+end
+
+-- ฟังก์ชันอัปเดตค่า (อัปเดตไปที่ทุก Table ที่เจอ)
+local function applyToTables()
+    for _, tbl in ipairs(getMatchingTables()) do
+        pcall(function()
+            tbl.Speed = currentSettings.Speed
+            tbl.JumpCap = currentSettings.JumpCap
+            tbl.AirStrafeAcceleration = currentSettings.AirStrafeAcceleration
+        end)
+    end
+end
+
+-- =========================
+-- [ 4. ระบบ Auto-Update (ทำงานตลอดเวลา) ]
+-- =========================
+task.spawn(function()
+    while true do
+        applyToTables()
+        task.wait(1) -- เช็คทุก 1 วินาที
+    end
+end)
+
+-- =========================
+-- [ 5. ช่องพิมพ์ (Input) ]
+-- =========================
+
+SettingsTab:AddInput("SpeedInput", {
+    Title = "Speed (" .. (isPC and "PC Mode" or "Mobile Mode") .. ")",
+    Default = tostring(currentSettings.Speed),
+    Numeric = true,
+    Finished = false,
+    Callback = function(Value)
+        currentSettings.Speed = tonumber(Value) or 1500
+        applyToTables()
+    end
+})
+
+SettingsTab:AddInput("JumpCapInput", {
+    Title = "Jump Cap",
+    Default = tostring(currentSettings.JumpCap),
+    Numeric = true,
+    Finished = false,
+    Callback = function(Value)
+        currentSettings.JumpCap = tonumber(Value) or 1
+        applyToTables()
+    end
+})
+
+SettingsTab:AddInput("StrafeInput", {
+    Title = "Strafe Acceleration",
+    Default = tostring(currentSettings.AirStrafeAcceleration),
+    Numeric = true,
+    Finished = false,
+    Callback = function(Value)
+        currentSettings.AirStrafeAcceleration = tonumber(Value) or 187
+        applyToTables()
+    end
+})
 
 -- Player & GUI
 local Players = game:GetService("Players")
