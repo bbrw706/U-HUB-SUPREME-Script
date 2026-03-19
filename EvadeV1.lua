@@ -143,7 +143,7 @@ local FarmTab     = Window:AddTab({Title="เมนูฟาร์ม", Icon="co
 local VisualsTab  = Window:AddTab({Title="มองต่างๆ", Icon="eye"})
 local ExtraTab    = Window:AddTab({Title="ของเสริม", Icon="tag"})
 local EventTab    = Window:AddTab({Title="เกี่ยวกับอีเว้น", Icon="calendar"}) -- แถบนี้แหละ!
-local SettingsTab = Window:AddTab({Title="ตั้งค่า", Icon="wrench"})
+
 
 
 -- [[ 🎫 ระบบ U-HUB Ticket Farm V.6 (ที่ยืนใหญ่ | สีขาวทึบ | วาร์ปตัวเปล่า) ]]
@@ -549,6 +549,34 @@ SettingsTab:AddInput("SpeedInput", {
     end
 })
 
+local lp = game.Players.LocalPlayer
+
+local function setJump(value)
+    local char = lp.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.JumpHeight = value
+    end
+end
+
+lp.CharacterAdded:Connect(function(char)
+    task.wait(0.5)
+    local hum = char:WaitForChild("Humanoid")
+    hum.JumpHeight = getgenv().CurrentJumpHeight or 7.2
+end)
+
+SettingsTab:AddInput("JumpInput", {
+    Title = "Jump",
+    Description = "",
+    Default = "7.2",
+    Numeric = true,
+    Finished = false,
+    Callback = function(Value)
+        getgenv().CurrentJumpHeight = tonumber(Value) or 7.2
+        setJump(getgenv().CurrentJumpHeight)
+    end
+})
+
 SettingsTab:AddInput("JumpCapInput", {
     Title = "Jump Cap",
     Default = tostring(currentSettings.JumpCap),
@@ -893,7 +921,7 @@ end)
 -------------------------------------------------------------------------
 
 -- 1. สร้าง Section ใน MainTab
-local RespawnSection = MainTab:AddSection("ระบบจัดการตัวละคร")
+local RespawnSection = MainTab:AddSection("ที่ออโต้เกิดนะจ๊ะเบบี๋😘😘")
 
 -- 2. ตัวแปรสำหรับระบบเกิดใหม่
 getgenv().AutoRespawnEnabled = false 
@@ -1691,6 +1719,70 @@ task.spawn(function()
     end
 end)
 
+-- พี่เปลี่ยนชื่อคำสั่งให้ตรงกับสคริปต์น้องแล้วนะ
+MainTab:AddToggle("AutoReviveToggle", {
+    Title = "ออโต้ชุบเพื่อน",
+    Description = "ชุบผู้เล่นที่ล้มอัตโนมัติเมื่ออยู่ใกล้ (ระยะ 15 studs)",
+    Default = false,
+    Callback = function(state)
+        autoReviveEnabled = state
+        if state then
+            startAutoRevive()
+            print("U-HUB: ระบบออโต้ชุบเปิดทำงาน")
+        else
+            stopAutoRevive()
+            print("U-HUB: ระบบออโต้ชุบปิดทำงาน")
+        end
+    end
+})
+
+-- =========================
+-- 🧠 ส่วนที่ 1: ตั้งค่าและฟังก์ชัน (Logic)
+-- =========================
+local REVIVE_RANGE = 15 -- ระยะชุบ
+local REVIVE_CHECK_DELAY = 0.1 -- ความถี่ในการเช็ค (วินาที)
+local autoReviveEnabled = false
+local reviveLoop = nil
+
+-- ฟังก์ชันเริ่มระบบชุบ (ใช้ task.spawn ตามโครงสร้างที่น้องส่งมา)
+local function startAutoRevive()
+    if reviveLoop then return end
+
+    autoReviveEnabled = true
+    reviveLoop = task.spawn(function()  
+        while autoReviveEnabled do  
+            local char = LocalPlayer.Character  
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")  
+
+            if hrp then  
+                for _, pl in ipairs(Players:GetPlayers()) do  
+                    if pl ~= LocalPlayer and isPlayerDowned(pl) then -- ใช้ฟังก์ชันเช็คที่สร้างไว้ก่อนหน้า
+                        local pChar = pl.Character  
+                        local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")  
+                        if pHrp then  
+                            local dist = (hrp.Position - pHrp.Position).Magnitude  
+                            if dist <= REVIVE_RANGE then  
+                                pcall(function()  
+                                    interactEvent:FireServer("Revive", true, pl.Name)  
+                                end)  
+                            end  
+                        end  
+                    end  
+                end  
+            end  
+
+            task.wait(REVIVE_CHECK_DELAY)  
+        end  
+        reviveLoop = nil  
+    end)
+end
+
+-- ฟังก์ชันหยุดระบบชุบ
+local function stopAutoRevive()
+    autoReviveEnabled = false
+    -- loop จะหลุดเองเพราะเงื่อนไข while autoReviveEnabled เป็น false
+end
+
 -- [[ 🧠 ส่วนที่ 1: เตรียมสมอง (โครงสร้างหลักของน้องหนึ่ง) ]]
 local Players = game:GetService("Players")
 local lp = Players.LocalPlayer
@@ -2162,7 +2254,7 @@ local BounceSection = MainTab:AddSection("ระบบออโต้เด้�
 
 -- 1. สวิตช์ เปิด/ปิด
 local BounceToggle = BounceSection:AddToggle("BounceToggle", {
-    Title = "เปิดใช้งาน Auto Bounce",
+    Title = "เปิดใช้งาน",
     Default = false,
     Callback = function(Value)
         getgenv().BounceEnabled = Value
@@ -2171,7 +2263,7 @@ local BounceToggle = BounceSection:AddToggle("BounceToggle", {
 
 -- 2. ตัวเลือกปุ่มกด
 BounceSection:AddKeybind("BounceKeybind", {
-    Title = "ตั้งค่าปุ่ม Hotkey",
+    Title = "ตั้งค่าปุ่ม",
     Mode = "Toggle",
     Default = "B", 
     Callback = function(Value)
@@ -2333,69 +2425,7 @@ end
 -- 🎨 ส่วนที่ 2: สร้างปุ่มใน Fluent UI (ฝังใน MainTab)
 -- =========================
 
--- พี่เปลี่ยนชื่อคำสั่งให้ตรงกับสคริปต์น้องแล้วนะ
-MainTab:AddToggle("AutoReviveToggle", {
-    Title = "ออโต้ชุบเพื่อน",
-    Description = "ชุบผู้เล่นที่ล้มอัตโนมัติเมื่ออยู่ใกล้ (ระยะ 15 studs)",
-    Default = false,
-    Callback = function(state)
-        autoReviveEnabled = state
-        if state then
-            startAutoRevive()
-            print("U-HUB: ระบบออโต้ชุบเปิดทำงาน")
-        else
-            stopAutoRevive()
-            print("U-HUB: ระบบออโต้ชุบปิดทำงาน")
-        end
-    end
-})
 
--- =========================
--- 🧠 ส่วนที่ 1: ตั้งค่าและฟังก์ชัน (Logic)
--- =========================
-local REVIVE_RANGE = 15 -- ระยะชุบ
-local REVIVE_CHECK_DELAY = 0.1 -- ความถี่ในการเช็ค (วินาที)
-local autoReviveEnabled = false
-local reviveLoop = nil
-
--- ฟังก์ชันเริ่มระบบชุบ (ใช้ task.spawn ตามโครงสร้างที่น้องส่งมา)
-local function startAutoRevive()
-    if reviveLoop then return end
-
-    autoReviveEnabled = true
-    reviveLoop = task.spawn(function()  
-        while autoReviveEnabled do  
-            local char = LocalPlayer.Character  
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")  
-
-            if hrp then  
-                for _, pl in ipairs(Players:GetPlayers()) do  
-                    if pl ~= LocalPlayer and isPlayerDowned(pl) then -- ใช้ฟังก์ชันเช็คที่สร้างไว้ก่อนหน้า
-                        local pChar = pl.Character  
-                        local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")  
-                        if pHrp then  
-                            local dist = (hrp.Position - pHrp.Position).Magnitude  
-                            if dist <= REVIVE_RANGE then  
-                                pcall(function()  
-                                    interactEvent:FireServer("Revive", true, pl.Name)  
-                                end)  
-                            end  
-                        end  
-                    end  
-                end  
-            end  
-
-            task.wait(REVIVE_CHECK_DELAY)  
-        end  
-        reviveLoop = nil  
-    end)
-end
-
--- ฟังก์ชันหยุดระบบชุบ
-local function stopAutoRevive()
-    autoReviveEnabled = false
-    -- loop จะหลุดเองเพราะเงื่อนไข while autoReviveEnabled เป็น false
-end
 
 
 
