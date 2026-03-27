@@ -567,13 +567,32 @@ end)
 
 SettingsTab:AddInput("JumpInput", {
     Title = "Jump",
-    Description = "",
-    Default = "7.2",
+    Description = "ใส่ตัวเลขเพื่อปรับความสูงการกระโดด",
+    Default = "3", -- เปลี่ยนค่าเริ่มต้นเป็น 3 ตามสั่งครับ
     Numeric = true,
-    Finished = false,
+    Finished = true, -- เปลี่ยนเป็น true เพื่อให้กด Enter แล้วค่อยทำงาน (ป้องกันเครื่องค้าง)
     Callback = function(Value)
-        getgenv().CurrentJumpHeight = tonumber(Value) or 7.2
-        setJump(getgenv().CurrentJumpHeight)
+        -- แปลงค่าเป็นตัวเลข ถ้าไม่ใช่ตัวเลขให้ใช้ค่า 3 เป็นพื้นฐาน
+        local jumpValue = tonumber(Value) or 3
+        getgenv().CurrentJumpHeight = jumpValue
+        
+        -- 1. ตั้งค่าพลังกระโดดให้ตัวละคร
+        if typeof(setJump) == "function" then
+            setJump(jumpValue)
+        else
+            -- ถ้าไม่มีฟังก์ชัน setJump ให้ใช้คำสั่งมาตรฐานแทน
+            local lp = game.Players.LocalPlayer
+            if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
+                lp.Character:FindFirstChildOfClass("Humanoid").JumpPower = jumpValue
+                lp.Character:FindFirstChildOfClass("Humanoid").UseJumpPower = true
+            end
+        end
+
+        -- 2. สั่งให้ตัวละคร "ลองกระโดด" ทันทีเพื่อเช็คความสูง
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.Jump = true
+        end
     end
 })
 
@@ -631,8 +650,13 @@ end
 -- =========================================
 local BhopSection = MainTab:AddSection("ระบบกระโดด (Auto Bhop)")
 local autoBhop = false
+local bhopMode = "กระโดดเหมือนคนกด" -- ค่าเริ่มต้น
 local floatingBhopButton
+local VIM = game:GetService("VirtualInputManager")
 
+
+
+-- ฟังก์ชันสร้างปุ่มลอย
 local function createBhopFloatingButton()
     if floatingBhopButton then return end
     floatingBhopButton = Instance.new("TextButton", FloatingGui)
@@ -649,28 +673,59 @@ local function createBhopFloatingButton()
     end)
 end
 
-BhopSection:AddToggle("AutoBhopToggle", {Title="ออโต้กระโดด (ปกติ)", Default=false, Callback=function(v) autoBhop = v end})
-BhopSection:AddToggle("AutoBhopFloat", {Title="ออโต้กระโดด (ปุ่มลอย)", Default=false, Callback=function(v)
+-- [ 2. ตัวเปิด-ปิด ]
+BhopSection:AddToggle("AutoBhopToggle", {Title="เปิดใช้งาน (Toggle)", Default=false, Callback=function(v) autoBhop = v end})
+BhopSection:AddToggle("AutoBhopFloat", {Title="เปิดปุ่มลอย", Default=false, Callback=function(v)
     if v then createBhopFloatingButton() else if floatingBhopButton then floatingBhopButton:Destroy() floatingBhopButton=nil end end
 end})
 BhopSection:AddKeybind("BhopKey", {Title="ตั้งค่าปุ่มคีย์บอร์ด", Mode="Toggle", Default="B", Callback=function(v) autoBhop = v end})
 
+-- [ 3. ระบบทำงานหลัก (ก๊อปปี้ Logic V10 มา 100%) ]
 task.spawn(function()
-    local RunService = game:GetService("RunService")
     while true do
-        RunService.Heartbeat:Wait()
         if autoBhop then
-            local char = player.Character
+            local char = game.Players.LocalPlayer.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
-            local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-            if humanoid and root then
-                local ray = Ray.new(root.Position, Vector3.new(0, -4, 0))
-                local hit = workspace:FindPartOnRay(ray, char)
-                if hit then humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            
+            if root and hum then
+                if bhopMode == "กระโดดเหมือนคนกด" then
+                    -- === เริ่มต้น LOGIC V10 เป๊ะๆ ===
+                    local raycastParams = RaycastParams.new()
+                    raycastParams.FilterDescendantsInstances = {char}
+                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+                    
+                    local ray = workspace:Raycast(root.Position, Vector3.new(0, -5, 0), raycastParams)
+                    
+                    if ray and hum.FloorMaterial ~= Enum.Material.Air then
+                        VIM:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                        task.wait(0.05)
+                        VIM:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                        task.wait(0.35) -- จังหวะหน่วงที่น้องชอบ
+                    end
+                    -- === จบ LOGIC V10 ===
+                else
+                    -- โหมดออโต้เด้ง (แบบประหยัดแรง)
+                    if hum.FloorMaterial ~= Enum.Material.Air then
+                        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                        task.wait(0.1)
+                    end
+                end
             end
         end
+        task.wait(0.1) -- หน่วงเวลาเช็คพื้นตามต้นฉบับ V10
     end
 end)
+
+-- [ 1. Dropdown เลือกโหมด ]
+BhopSection:AddDropdown("BhopMode", {
+    Title = "เลือกโหมดการกระโดด",
+    Values = {"ออโต้เด้ง", "กระโดดเหมือนคนกด"},
+    Default = "กระโดดเหมือนคนกด",
+    Callback = function(v)
+        bhopMode = v
+    end
+})
 
 -- =========================================
 -- [ 2. เมนูหลัก: AUTO BOUNCE ]
