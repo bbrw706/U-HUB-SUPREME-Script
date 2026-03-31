@@ -645,6 +645,119 @@ local function StyleFloatingButton(btn)
     btn.TextSize = 14
 end
 
+-- =========================================
+-- [ AUTO BHOP - ครบชุด ]
+-- =========================================
+local BhopSection = MainTab:AddSection("ระบบกระโดด (Auto Bhop)")
+local autoBhop = false
+local bhopMode = "ออโต้เด้ง"
+local floatingBhopButton
+local VIM = game:GetService("VirtualInputManager")
+
+-- ฟังก์ชันสร้างปุ่มลอย
+local function createBhopFloatingButton()
+    if floatingBhopButton then return end
+    floatingBhopButton = Instance.new("TextButton", FloatingGui)
+    floatingBhopButton.Size = UDim2.new(0,120,0,50)
+    floatingBhopButton.Position = UDim2.new(0.3,-60,0.8,0)
+    floatingBhopButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingBhopButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    floatingBhopButton.TextColor3 = Color3.fromRGB(255,255,255)
+    floatingBhopButton.Text = "Auto Bhop: OFF"
+    floatingBhopButton.Active = true
+    floatingBhopButton.Draggable = true
+    StyleFloatingButton(floatingBhopButton)
+    floatingBhopButton.MouseButton1Click:Connect(function()
+        autoBhop = not autoBhop
+        floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
+    end)
+end
+
+local function removeBhopFloatingButton()
+    if floatingBhopButton then
+        floatingBhopButton:Destroy()
+        floatingBhopButton = nil
+    end
+end
+
+-- Toggle / Keybind
+BhopSection:AddToggle("AutoBhopToggle", {
+    Title = "ออโต้กระโดด (ปกติ)",
+    Default = false,
+    Callback = function(v) autoBhop = v end
+})
+
+BhopSection:AddToggle("AutoBhopFloat", {
+    Title = "ออโต้กระโดด (ปุ่มลอย)",
+    Default = false,
+    Callback = function(v)
+        if v then createBhopFloatingButton()
+        else removeBhopFloatingButton(); autoBhop = false end
+    end
+})
+
+BhopSection:AddKeybind("BhopKey", {
+    Title = "ตั้งค่าปุ่มคีย์บอร์ด",
+    Mode = "Toggle",
+    Default = "B",
+    Callback = function(v) autoBhop = v end
+})
+
+-- Dropdown เลือกโหมด
+BhopSection:AddDropdown("BhopMode", {
+    Title = "เลือกโหมดการกระโดด",
+    Values = {"ออโต้เด้ง", "กระโดดเหมือนคนกด"},
+    Default = "ออโต้เด้ง",
+    Callback = function(v) bhopMode = v end
+})
+
+-- Loop หลัก
+task.spawn(function()
+    local RunService = game:GetService("RunService")
+    local rayDistance = 4
+    while true do
+        RunService.Heartbeat:Wait()
+        if autoBhop then
+            local char = player.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if hum and root then
+
+                    -- =========================================
+                    -- โหมด 1: ออโต้เด้ง (ความสูง 3)
+                    -- =========================================
+                    if bhopMode == "ออโต้เด้ง" then
+                        local ray = Ray.new(root.Position, Vector3.new(0, -rayDistance, 0))
+                        local hit = workspace:FindPartOnRay(ray, char)
+                        if hit then
+                            hum.JumpHeight = 3
+                            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                        end
+
+                    -- =========================================
+                    -- โหมด 2: กระโดดเหมือนคนกด (ส่งรั่วๆ ไปเซิร์ฟ)
+                    -- =========================================
+                    elseif bhopMode == "กระโดดเหมือนคนกด" then
+                        local ray = Ray.new(root.Position, Vector3.new(0, -rayDistance, 0))
+                        local hit = workspace:FindPartOnRay(ray, char)
+                        if hit and hum.FloorMaterial ~= Enum.Material.Air then
+                            for i = 1, 3 do
+                                hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+                                hum.Jump = true
+                                task.wait(0.01)
+                            end
+                            task.wait(0.3)
+                        end
+                    end
+
+                end
+            end
+        end
+    end
+end)
+
+                  
 
 -- =========================================
 -- [ 2. เมนูหลัก: AUTO BOUNCE ]
