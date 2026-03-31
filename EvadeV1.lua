@@ -645,87 +645,6 @@ local function StyleFloatingButton(btn)
     btn.TextSize = 14
 end
 
--- =========================================
--- [ 1. เมนูหลัก: AUTO BHOP ]
--- =========================================
-local BhopSection = MainTab:AddSection("ระบบกระโดด (Auto Bhop)")
-local autoBhop = false
-local bhopMode = "กระโดดเหมือนคนกด" -- ค่าเริ่มต้น
-local floatingBhopButton
-local VIM = game:GetService("VirtualInputManager")
-
-
-
--- ฟังก์ชันสร้างปุ่มลอย
-local function createBhopFloatingButton()
-    if floatingBhopButton then return end
-    floatingBhopButton = Instance.new("TextButton", FloatingGui)
-    floatingBhopButton.Size = UDim2.new(0,120,0,50)
-    floatingBhopButton.Position = UDim2.new(0.3,-60,0.8,0)
-    floatingBhopButton.AnchorPoint = Vector2.new(0.5,0)
-    floatingBhopButton.Text = "Auto Bhop: OFF"
-    floatingBhopButton.Active = true
-    floatingBhopButton.Draggable = true
-    StyleFloatingButton(floatingBhopButton)
-    floatingBhopButton.MouseButton1Click:Connect(function()
-        autoBhop = not autoBhop
-        floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
-    end)
-end
-
--- [ 2. ตัวเปิด-ปิด ]
-BhopSection:AddToggle("AutoBhopToggle", {Title="เปิดใช้งาน (Toggle)", Default=false, Callback=function(v) autoBhop = v end})
-BhopSection:AddToggle("AutoBhopFloat", {Title="เปิดปุ่มลอย", Default=false, Callback=function(v)
-    if v then createBhopFloatingButton() else if floatingBhopButton then floatingBhopButton:Destroy() floatingBhopButton=nil end end
-end})
-BhopSection:AddKeybind("BhopKey", {Title="ตั้งค่าปุ่มคีย์บอร์ด", Mode="Toggle", Default="B", Callback=function(v) autoBhop = v end})
-
--- [ 3. ระบบทำงานหลัก (ก๊อปปี้ Logic V10 มา 100%) ]
-task.spawn(function()
-    while true do
-        if autoBhop then
-            local char = game.Players.LocalPlayer.Character
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            
-            if root and hum then
-                if bhopMode == "กระโดดเหมือนคนกด" then
-                    -- === เริ่มต้น LOGIC V10 เป๊ะๆ ===
-                    local raycastParams = RaycastParams.new()
-                    raycastParams.FilterDescendantsInstances = {char}
-                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                    
-                    local ray = workspace:Raycast(root.Position, Vector3.new(0, -5, 0), raycastParams)
-                    
-                    if ray and hum.FloorMaterial ~= Enum.Material.Air then
-                        VIM:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                        task.wait(0.05)
-                        VIM:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-                        task.wait(0.35) -- จังหวะหน่วงที่น้องชอบ
-                    end
-                    -- === จบ LOGIC V10 ===
-                else
-                    -- โหมดออโต้เด้ง (แบบประหยัดแรง)
-                    if hum.FloorMaterial ~= Enum.Material.Air then
-                        hum:ChangeState(Enum.HumanoidStateType.Jumping)
-                        task.wait(0.1)
-                    end
-                end
-            end
-        end
-        task.wait(0.1) -- หน่วงเวลาเช็คพื้นตามต้นฉบับ V10
-    end
-end)
-
--- [ 1. Dropdown เลือกโหมด ]
-BhopSection:AddDropdown("BhopMode", {
-    Title = "เลือกโหมดการกระโดด",
-    Values = {"ออโต้เด้ง", "กระโดดเหมือนคนกด"},
-    Default = "กระโดดเหมือนคนกด",
-    Callback = function(v)
-        bhopMode = v
-    end
-})
 
 -- =========================================
 -- [ 2. เมนูหลัก: AUTO BOUNCE ]
@@ -1774,69 +1693,81 @@ task.spawn(function()
     end
 end)
 
--- พี่เปลี่ยนชื่อคำสั่งให้ตรงกับสคริปต์น้องแล้วนะ
+-- =========================
+-- AUTO REVIVE FRIENDS (ไม่มีลิงก์ - ตามต้นฉบับเป๊ะ)
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer
+local interactEvent = ReplicatedStorage:WaitForChild("Events")
+    :WaitForChild("Character")
+    :WaitForChild("Interact")
+
+local autoReviveEnabled = false
+local reviveRange = 15
+local reviveLoop
+
+local function isPlayerDowned(plr)
+    if not plr.Character then return false end
+    return plr.Character:GetAttribute("Downed") == true
+end
+
+local function startAutoRevive()
+    if reviveLoop then return end
+
+    reviveLoop = RunService.Heartbeat:Connect(function()
+        if not autoReviveEnabled then return end
+
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        for _, pl in ipairs(Players:GetPlayers()) do
+            if pl ~= LocalPlayer and isPlayerDowned(pl) then
+                local pChar = pl.Character
+                local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")
+                if pHrp then
+                    local dist = (hrp.Position - pHrp.Position).Magnitude
+                    if dist <= reviveRange then
+                        pcall(function()
+                            interactEvent:FireServer("Revive", true, pl.Name)
+                        end)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local function stopAutoRevive()
+    autoReviveEnabled = false
+    if reviveLoop then
+        reviveLoop:Disconnect()
+        reviveLoop = nil
+    end
+end
+
+-- =========================
+-- เพิ่มลงใน UI (หมวด ของเสริม)
+-- =========================
+
+-- หมายเหตุ: พี่ใช้ชื่อ MainTab ตามที่น้องใช้ในโค้ดชุดล่าสุดนะครับ
 MainTab:AddToggle("AutoReviveToggle", {
     Title = "ออโต้ชุบเพื่อน",
-    Description = "ชุบผู้เล่นที่ล้มอัตโนมัติเมื่ออยู่ใกล้ (ระยะ 15 studs)",
+    Description = "ชุบผู้เล่นที่ล้มอัตโนมัติเมื่ออยู่ใกล้",
     Default = false,
     Callback = function(state)
         autoReviveEnabled = state
         if state then
             startAutoRevive()
-            print("U-HUB: ระบบออโต้ชุบเปิดทำงาน")
         else
             stopAutoRevive()
-            print("U-HUB: ระบบออโต้ชุบปิดทำงาน")
         end
     end
 })
-
--- =========================
--- 🧠 ส่วนที่ 1: ตั้งค่าและฟังก์ชัน (Logic)
--- =========================
-local REVIVE_RANGE = 15 -- ระยะชุบ
-local REVIVE_CHECK_DELAY = 0.1 -- ความถี่ในการเช็ค (วินาที)
-local autoReviveEnabled = false
-local reviveLoop = nil
-
--- ฟังก์ชันเริ่มระบบชุบ (ใช้ task.spawn ตามโครงสร้างที่น้องส่งมา)
-local function startAutoRevive()
-    if reviveLoop then return end
-
-    autoReviveEnabled = true
-    reviveLoop = task.spawn(function()  
-        while autoReviveEnabled do  
-            local char = LocalPlayer.Character  
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")  
-
-            if hrp then  
-                for _, pl in ipairs(Players:GetPlayers()) do  
-                    if pl ~= LocalPlayer and isPlayerDowned(pl) then -- ใช้ฟังก์ชันเช็คที่สร้างไว้ก่อนหน้า
-                        local pChar = pl.Character  
-                        local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")  
-                        if pHrp then  
-                            local dist = (hrp.Position - pHrp.Position).Magnitude  
-                            if dist <= REVIVE_RANGE then  
-                                pcall(function()  
-                                    interactEvent:FireServer("Revive", true, pl.Name)  
-                                end)  
-                            end  
-                        end  
-                    end  
-                end  
-            end  
-
-            task.wait(REVIVE_CHECK_DELAY)  
-        end  
-        reviveLoop = nil  
-    end)
-end
-
--- ฟังก์ชันหยุดระบบชุบ
-local function stopAutoRevive()
-    autoReviveEnabled = false
-    -- loop จะหลุดเองเพราะเงื่อนไข while autoReviveEnabled เป็น false
-end
 
 -- [[ 🧠 ส่วนที่ 1: เตรียมสมอง (โครงสร้างหลักของน้องหนึ่ง) ]]
 local Players = game:GetService("Players")
