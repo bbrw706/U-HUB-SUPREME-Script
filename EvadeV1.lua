@@ -468,6 +468,7 @@ local isPC = not UserInputService.TouchEnabled -- เช็คว่าเป็
 
 local currentSettings = {
     Speed = 1500,
+    Jump = 3,
     JumpCap = 1,
     AirStrafeAcceleration = 187
 }
@@ -549,50 +550,14 @@ SettingsTab:AddInput("SpeedInput", {
     end
 })
 
-local lp = game.Players.LocalPlayer
-
-local function setJump(value)
-    local char = lp.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.JumpHeight = value
-    end
-end
-
-lp.CharacterAdded:Connect(function(char)
-    task.wait(0.5)
-    local hum = char:WaitForChild("Humanoid")
-    hum.JumpHeight = getgenv().CurrentJumpHeight or 7.2
-end)
-
 SettingsTab:AddInput("JumpInput", {
     Title = "Jump",
-    Description = "ใส่ตัวเลขเพื่อปรับความสูงการกระโดด",
-    Default = "3", -- เปลี่ยนค่าเริ่มต้นเป็น 3 ตามสั่งครับ
+    Default = tostring(currentSettings.Jump),
     Numeric = true,
-    Finished = true, -- เปลี่ยนเป็น true เพื่อให้กด Enter แล้วค่อยทำงาน (ป้องกันเครื่องค้าง)
+    Finished = false,
     Callback = function(Value)
-        -- แปลงค่าเป็นตัวเลข ถ้าไม่ใช่ตัวเลขให้ใช้ค่า 3 เป็นพื้นฐาน
-        local jumpValue = tonumber(Value) or 3
-        getgenv().CurrentJumpHeight = jumpValue
-        
-        -- 1. ตั้งค่าพลังกระโดดให้ตัวละคร
-        if typeof(setJump) == "function" then
-            setJump(jumpValue)
-        else
-            -- ถ้าไม่มีฟังก์ชัน setJump ให้ใช้คำสั่งมาตรฐานแทน
-            local lp = game.Players.LocalPlayer
-            if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
-                lp.Character:FindFirstChildOfClass("Humanoid").JumpPower = jumpValue
-                lp.Character:FindFirstChildOfClass("Humanoid").UseJumpPower = true
-            end
-        end
-
-        -- 2. สั่งให้ตัวละคร "ลองกระโดด" ทันทีเพื่อเช็คความสูง
-        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.Jump = true
-        end
+        currentSettings.Jump = tonumber(Value) or 3
+        applyToTables()
     end
 })
 
@@ -646,56 +611,50 @@ local function StyleFloatingButton(btn)
 end
 
 -- =========================================
--- [ AUTO BHOP - ครบชุด ]
+-- [ 1. เตรียม Section ]
 -- =========================================
 local BhopSection = MainTab:AddSection("ระบบกระโดด (Auto Bhop)")
 local autoBhop = false
 local bhopMode = "ออโต้เด้ง"
 local floatingBhopButton
-local VIM = game:GetService("VirtualInputManager")
 
--- ฟังก์ชันสร้างปุ่มลอย
+-- [ 2. ฟังก์ชันปุ่มลอย ]
 local function createBhopFloatingButton()
     if floatingBhopButton then return end
     floatingBhopButton = Instance.new("TextButton", FloatingGui)
     floatingBhopButton.Size = UDim2.new(0,120,0,50)
     floatingBhopButton.Position = UDim2.new(0.3,-60,0.8,0)
-    floatingBhopButton.AnchorPoint = Vector2.new(0.5,0)
+    floatingBhopButton.Text = "Auto Bhop: OFF"
     floatingBhopButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
     floatingBhopButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingBhopButton.Text = "Auto Bhop: OFF"
-    floatingBhopButton.Active = true
     floatingBhopButton.Draggable = true
-    StyleFloatingButton(floatingBhopButton)
+    floatingBhopButton.Active = true
     floatingBhopButton.MouseButton1Click:Connect(function()
         autoBhop = not autoBhop
         floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
     end)
 end
 
-local function removeBhopFloatingButton()
-    if floatingBhopButton then
-        floatingBhopButton:Destroy()
-        floatingBhopButton = nil
-    end
-end
+-- [ 3. สร้างปุ่มทั้งหมดในเมนู ]
 
--- Toggle / Keybind
+-- 🟢 ปุ่มเปิด/ปิด ปกติ
 BhopSection:AddToggle("AutoBhopToggle", {
-    Title = "ออโต้กระโดด (ปกติ)",
+    Title = "เปิดใช้งาน (Toggle)",
     Default = false,
     Callback = function(v) autoBhop = v end
 })
 
+-- 🔵 ปุ่มเปิด/ปิด แบบปุ่มลอย
 BhopSection:AddToggle("AutoBhopFloat", {
-    Title = "ออโต้กระโดด (ปุ่มลอย)",
+    Title = "เปิดปุ่มลอย",
     Default = false,
     Callback = function(v)
         if v then createBhopFloatingButton()
-        else removeBhopFloatingButton(); autoBhop = false end
+        else if floatingBhopButton then floatingBhopButton:Destroy(); floatingBhopButton = nil end end
     end
 })
 
+-- ⌨️ ช่องตั้งค่าคีย์บอร์ด (Keybind)
 BhopSection:AddKeybind("BhopKey", {
     Title = "ตั้งค่าปุ่มคีย์บอร์ด",
     Mode = "Toggle",
@@ -703,7 +662,7 @@ BhopSection:AddKeybind("BhopKey", {
     Callback = function(v) autoBhop = v end
 })
 
--- Dropdown เลือกโหมด
+-- 🔽 ปุ่มเลือกโหมด (Dropdown) - อันนี้ที่หายไปครับ!
 BhopSection:AddDropdown("BhopMode", {
     Title = "เลือกโหมดการกระโดด",
     Values = {"ออโต้เด้ง", "กระโดดเหมือนคนกด"},
@@ -711,52 +670,48 @@ BhopSection:AddDropdown("BhopMode", {
     Callback = function(v) bhopMode = v end
 })
 
--- Loop หลัก
+-- [ 4. Loop หลัก (ระบบส่งสัญญาณรัวๆ) ]
 task.spawn(function()
     local RunService = game:GetService("RunService")
+    local player = game.Players.LocalPlayer
     local rayDistance = 4
+    
     while true do
         RunService.Heartbeat:Wait()
         if autoBhop then
             local char = player.Character
-            if char then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                local root = char:FindFirstChild("HumanoidRootPart")
-                if hum and root then
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if hum and root then
+                -- เช็คพื้น
+                local ray = Ray.new(root.Position, Vector3.new(0, -rayDistance, 0))
+                local hit = workspace:FindPartOnRay(ray, char)
 
-                    -- =========================================
-                    -- โหมด 1: ออโต้เด้ง (ความสูง 3)
-                    -- =========================================
+                if hit then
                     if bhopMode == "ออโต้เด้ง" then
-                        local ray = Ray.new(root.Position, Vector3.new(0, -rayDistance, 0))
-                        local hit = workspace:FindPartOnRay(ray, char)
-                        if hit then
-                            hum.JumpHeight = 3
-                            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-                        end
+                        -- โหมด 1: ความสูง 2.5 ตามสั่ง
+                        hum.JumpHeight = 2.5
+                        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                        task.wait(0.01)
 
-                    -- =========================================
-                    -- โหมด 2: กระโดดเหมือนคนกด (ส่งรั่วๆ ไปเซิร์ฟ)
-                    -- =========================================
                     elseif bhopMode == "กระโดดเหมือนคนกด" then
-                        local ray = Ray.new(root.Position, Vector3.new(0, -rayDistance, 0))
-                        local hit = workspace:FindPartOnRay(ray, char)
-                        if hit and hum.FloorMaterial ~= Enum.Material.Air then
-                            for i = 1, 3 do
-                                hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
-                                hum.Jump = true
+                        -- โหมด 2: ส่งสัญญาณ Mobile Request (ปุ่มไม่หาย)
+                        if hum.FloorMaterial ~= Enum.Material.Air then
+                            for i = 1, 2 do
+                                -- ส่งสัญญาณกด Space สั้นๆ (0.01 วิ)
+                                game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
                                 task.wait(0.01)
+                                game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
                             end
-                            task.wait(0.3)
+                            task.wait(0.01) -- หน่วงจังหวะคนกด
                         end
                     end
-
                 end
             end
         end
     end
 end)
-
                   
 
 -- =========================================
