@@ -521,6 +521,12 @@ local function applyToTables()
             tbl.Speed = currentSettings.Speed
             tbl.JumpCap = currentSettings.JumpCap
             tbl.AirStrafeAcceleration = currentSettings.AirStrafeAcceleration
+            if tbl.Jump ~= nil then 
+                tbl.Jump = currentSettings.Jump 
+            end
+            if tbl.JumpHeight ~= nil then 
+                tbl.JumpHeight = currentSettings.Jump 
+            end
         end)
     end
 end
@@ -621,7 +627,7 @@ local floatingBhopButton
 -- [ 2. ฟังก์ชันปุ่มลอย ]
 local function createBhopFloatingButton()
     if floatingBhopButton then return end
-    floatingBhopButton = Instance.new("TextButton", FloatingGui)
+    floatingBhopButton = Instance.new("TextButton", FloatingGui) -- ต้องมั่นใจว่ามีตัวแปร FloatingGui ในโค้ดหลักนะครับ
     floatingBhopButton.Size = UDim2.new(0,120,0,50)
     floatingBhopButton.Position = UDim2.new(0.3,-60,0.8,0)
     floatingBhopButton.Text = "Auto Bhop: OFF"
@@ -649,8 +655,14 @@ BhopSection:AddToggle("AutoBhopFloat", {
     Title = "เปิดปุ่มลอย",
     Default = false,
     Callback = function(v)
-        if v then createBhopFloatingButton()
-        else if floatingBhopButton then floatingBhopButton:Destroy(); floatingBhopButton = nil end end
+        if v then 
+            createBhopFloatingButton()
+        else 
+            if floatingBhopButton then 
+                floatingBhopButton:Destroy()
+                floatingBhopButton = nil 
+            end 
+        end
     end
 })
 
@@ -662,7 +674,7 @@ BhopSection:AddKeybind("BhopKey", {
     Callback = function(v) autoBhop = v end
 })
 
--- 🔽 ปุ่มเลือกโหมด (Dropdown) - อันนี้ที่หายไปครับ!
+-- 🔽 ปุ่มเลือกโหมด (Dropdown)
 BhopSection:AddDropdown("BhopMode", {
     Title = "เลือกโหมดการกระโดด",
     Values = {"ออโต้เด้ง", "กระโดดเหมือนคนกด"},
@@ -670,11 +682,10 @@ BhopSection:AddDropdown("BhopMode", {
     Callback = function(v) bhopMode = v end
 })
 
--- [ 4. Loop หลัก (ระบบส่งสัญญาณรัวๆ) ]
+-- [ 4. Loop หลัก (แก้ไขระบบกระโดดให้ใช้ในมือถือได้) ]
 task.spawn(function()
     local RunService = game:GetService("RunService")
     local player = game.Players.LocalPlayer
-    local rayDistance = 4
     
     while true do
         RunService.Heartbeat:Wait()
@@ -684,34 +695,25 @@ task.spawn(function()
             local root = char and char:FindFirstChild("HumanoidRootPart")
             
             if hum and root then
-                -- เช็คพื้น
-                local ray = Ray.new(root.Position, Vector3.new(0, -rayDistance, 0))
-                local hit = workspace:FindPartOnRay(ray, char)
-
-                if hit then
+                -- เช็คว่าเท้าแตะพื้นหรือไม่
+                local isGrounded = hum.FloorMaterial ~= Enum.Material.Air
+                
+                if isGrounded then
                     if bhopMode == "ออโต้เด้ง" then
-                        -- โหมด 1: ความสูง 2.5 ตามสั่ง
+                        -- โหมด 1: เปลี่ยนสถานะโดยตรง (กระโดดรัวและต่อเนื่อง)
                         hum.JumpHeight = 2.5
                         hum:ChangeState(Enum.HumanoidStateType.Jumping)
-                        task.wait(0.01)
-
                     elseif bhopMode == "กระโดดเหมือนคนกด" then
-                        -- โหมด 2: ส่งสัญญาณ Mobile Request (ปุ่มไม่หาย)
-                        if hum.FloorMaterial ~= Enum.Material.Air then
-                            for i = 1, 2 do
-                                -- ส่งสัญญาณกด Space สั้นๆ (0.01 วิ)
-                                game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                                task.wait(0.01)
-                                game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-                            end
-                            task.wait(0.01) -- หน่วงจังหวะคนกด
-                        end
+                        -- โหมด 2: สั่งให้ Humanoid กระโดดเอง (เหมือนกดปุ่ม Jump บนมือถือ)
+                        -- วิธีนี้ปุ่มจะไม่หาย และใช้งานบนโทรศัพท์ได้ 100%
+                        hum.Jump = true
                     end
                 end
             end
         end
     end
 end)
+
                   
 
 -- =========================================
