@@ -618,40 +618,39 @@ end
 
 
 
+-- [[ U-HUB-SUPREME-Script: Auto Bhop (Original UI + Fixed System) ]] --
+
 -- =========================================
 -- [ 1. เตรียม Section และตัวแปร ]
 -- =========================================
-local BhopSection = MainTab:AddSection("ระบบกระโดด (Auto Bhop)") -- ต้องมั่นใจว่า MainTab ถูกประกาศไว้ก่อนหน้านี้
+local BhopSection = MainTab:AddSection("ระบบกระโดด (Auto Bhop)")
 local autoBhop = false
 local bhopMode = "ออโต้เด้ง"
 local floatingBhopButton
 
--- [ 2. ฟังก์ชันปุ่มลอย (Floating Button) ]
+-- [ 2. ฟังก์ชันปุ่มลอย (ใช้ UI เดิมของน้อง 100%) ]
 local function createBhopFloatingButton()
     if floatingBhopButton then return end
-    -- ตรวจเช็คว่ามี FloatingGui หรือยัง (ถ้าไม่มีให้สร้างใหม่เพื่อกัน Error)
-    local targetGui = Player:WaitForChild("PlayerGui"):FindFirstChild("FloatingGui") or Instance.new("ScreenGui", Player:WaitForChild("PlayerGui"))
+    
+    -- ตรวจเช็ค FloatingGui (ถ้าไม่มีให้สร้าง)
+    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local targetGui = playerGui:FindFirstChild("FloatingGui") or Instance.new("ScreenGui", playerGui)
     targetGui.Name = "FloatingGui"
     targetGui.ResetOnSpawn = false
 
+    -- สร้างปุ่มตามรูปแบบเดิมของน้องหนึ่ง
     floatingBhopButton = Instance.new("TextButton", targetGui)
     floatingBhopButton.Size = UDim2.new(0, 120, 0, 50)
-    floatingBhopButton.Position = UDim2.new(0.3, -60, 0.8, 0)
-    floatingBhopButton.Text = "Auto Bhop: OFF"
-    floatingBhopButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    floatingBhopButton.Position = UDim2.new(0.3, -60, 0.8, 0) -- ตำแหน่งเดิม
+    floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
+    floatingBhopButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- สีฟ้าเดิม
     floatingBhopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    floatingBhopButton.Font = Enum.Font.SourceSansBold
-    floatingBhopButton.TextSize = 18
-    floatingBhopButton.ZIndex = 999 -- กันปุ่มหาย
-    
-    -- ทำให้ปุ่มลากได้ (Draggable)
+    floatingBhopButton.Draggable = true -- ระบบลากเดิม
     floatingBhopButton.Active = true
-    floatingBhopButton.Draggable = true 
-
+    
     floatingBhopButton.MouseButton1Click:Connect(function()
         autoBhop = not autoBhop
         floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
-        floatingBhopButton.BackgroundColor3 = autoBhop and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(0, 170, 255)
     end)
 end
 
@@ -659,7 +658,7 @@ end
 -- [ 3. สร้างปุ่มทั้งหมดในเมนู ]
 -- =========================================
 
--- 🟢 ปุ่มเปิด/ปิด ปกติ (Toggle ในเมนูหลัก)
+-- 🟢 ปุ่มเปิด/ปิด ปกติ
 BhopSection:AddToggle("AutoBhopToggle", {
     Title = "เปิดใช้งาน (Toggle)",
     Default = false,
@@ -667,12 +666,11 @@ BhopSection:AddToggle("AutoBhopToggle", {
         autoBhop = v 
         if floatingBhopButton then
             floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
-            floatingBhopButton.BackgroundColor3 = autoBhop and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(0, 170, 255)
         end
     end
 })
 
--- 🔵 ปุ่มเปิด/ปิด แบบปุ่มลอย
+-- 🔵 ปุ่มเปิด/ปิด แบบปุ่มลอย (แก้ไขให้ Destroy ได้จริง)
 BhopSection:AddToggle("AutoBhopFloat", {
     Title = "เปิดปุ่มลอย",
     Default = false,
@@ -681,22 +679,27 @@ BhopSection:AddToggle("AutoBhopFloat", {
             createBhopFloatingButton()
         else 
             if floatingBhopButton then 
-                floatingBhopButton:Destroy()
-                floatingBhopButton = nil 
+                floatingBhopButton:Destroy() -- สั่งลบปุ่มลอยเดิมออก
+                floatingBhopButton = nil -- รีเซ็ตค่าให้เปิดใหม่ได้
             end 
         end
     end
 })
 
--- ⌨️ ช่องตั้งค่าคีย์บอร์ด (Keybind)
+-- ⌨️ ช่องตั้งค่าคีย์บอร์ด
 BhopSection:AddKeybind("BhopKey", {
     Title = "ตั้งค่าปุ่มคีย์บอร์ด",
     Mode = "Toggle",
     Default = "B",
-    Callback = function(v) autoBhop = v end
+    Callback = function(v) 
+        autoBhop = v 
+        if floatingBhopButton then
+            floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
+        end
+    end
 })
 
--- 🔽 ปุ่มเลือกโหมด (Dropdown)
+-- 🔽 ปุ่มเลือกโหมด
 BhopSection:AddDropdown("BhopMode", {
     Title = "เลือกโหมดการกระโดด",
     Values = {"ออโต้เด้ง", "กระโดดเหมือนคนกด"},
@@ -705,40 +708,34 @@ BhopSection:AddDropdown("BhopMode", {
 })
 
 -- =========================================
--- [ 4. Loop หลัก (ระบบกระโดด U-HUB-SUPREME Version) ]
+-- [ 4. Loop หลัก (ระบบ Bypass สำหรับมือถือ) ]
 -- =========================================
 task.spawn(function()
     local RunService = game:GetService("RunService")
     local player = game.Players.LocalPlayer
     
-    -- ใช้ Stepped เพื่อความแม่นยำสูงสุดในจังหวะฟิสิกส์ (แบบที่เพิ่งเทสผ่าน)
+    -- ใช้ Stepped เพื่อความแม่นยำในการกระโดด
     RunService.Stepped:Connect(function()
         if autoBhop then
             local char = player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
             
             if hum then
-                -- เช็คว่าเท้าแตะพื้น (ป้องกันการกระโดดค้างกลางอากาศ)
                 local isGrounded = hum.FloorMaterial ~= Enum.Material.Air
                 
                 if isGrounded then
                     if bhopMode == "ออโต้เด้ง" then
-                        -- โหมด 1: เปลี่ยนสถานะโดยตรง (เน้นความเร็วและต่อเนื่อง)
-                        hum.JumpHeight = 2.5
+                        -- โหมดเด้งรัว (Bhop สไตล์ Redz/Maru)
                         hum:ChangeState(Enum.HumanoidStateType.Jumping)
                     elseif bhopMode == "กระโดดเหมือนคนกด" then
-                        -- โหมด 2: ระบบ ChangeState แบบ Bypass (วิธีล่าสุดที่ใช้ได้ผลชัวร์ในมือถือ!)
-                        -- บังคับเปลี่ยนสถานะทันทีที่แตะพื้น โดยไม่ต้องผ่านปุ่มมาตรฐาน
-                        hum.Jump = true 
-                        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                        -- โหมดกระโดดปกติ
+                        hum.Jump = true
                     end
                 end
             end
         end
     end)
 end)
-
-print("U-HUB-SUPREME: Auto Bhop Module Loaded Successfully!")
 
 
                   
