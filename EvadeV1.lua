@@ -12,7 +12,7 @@ local UserInputService = game:GetService("UserInputService")
 math.randomseed(tick())
 
 local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME ",
+    Title = "U-HUB SUจะPREME ",
     SubTitle = "BY Neung",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
@@ -616,38 +616,60 @@ local function StyleFloatingButton(btn)
     btn.TextSize = 14
 end
 
+
+
 -- =========================================
--- [ 1. เตรียม Section ]
+-- [ 1. เตรียม Section และตัวแปร ]
 -- =========================================
-local BhopSection = MainTab:AddSection("ระบบกระโดด (Auto Bhop)")
+local BhopSection = MainTab:AddSection("ระบบกระโดด (Auto Bhop)") -- ต้องมั่นใจว่า MainTab ถูกประกาศไว้ก่อนหน้านี้
 local autoBhop = false
 local bhopMode = "ออโต้เด้ง"
 local floatingBhopButton
 
--- [ 2. ฟังก์ชันปุ่มลอย ]
+-- [ 2. ฟังก์ชันปุ่มลอย (Floating Button) ]
 local function createBhopFloatingButton()
     if floatingBhopButton then return end
-    floatingBhopButton = Instance.new("TextButton", FloatingGui) -- ต้องมั่นใจว่ามีตัวแปร FloatingGui ในโค้ดหลักนะครับ
-    floatingBhopButton.Size = UDim2.new(0,120,0,50)
-    floatingBhopButton.Position = UDim2.new(0.3,-60,0.8,0)
+    -- ตรวจเช็คว่ามี FloatingGui หรือยัง (ถ้าไม่มีให้สร้างใหม่เพื่อกัน Error)
+    local targetGui = Player:WaitForChild("PlayerGui"):FindFirstChild("FloatingGui") or Instance.new("ScreenGui", Player:WaitForChild("PlayerGui"))
+    targetGui.Name = "FloatingGui"
+    targetGui.ResetOnSpawn = false
+
+    floatingBhopButton = Instance.new("TextButton", targetGui)
+    floatingBhopButton.Size = UDim2.new(0, 120, 0, 50)
+    floatingBhopButton.Position = UDim2.new(0.3, -60, 0.8, 0)
     floatingBhopButton.Text = "Auto Bhop: OFF"
-    floatingBhopButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-    floatingBhopButton.TextColor3 = Color3.fromRGB(255,255,255)
-    floatingBhopButton.Draggable = true
+    floatingBhopButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    floatingBhopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    floatingBhopButton.Font = Enum.Font.SourceSansBold
+    floatingBhopButton.TextSize = 18
+    floatingBhopButton.ZIndex = 999 -- กันปุ่มหาย
+    
+    -- ทำให้ปุ่มลากได้ (Draggable)
     floatingBhopButton.Active = true
+    floatingBhopButton.Draggable = true 
+
     floatingBhopButton.MouseButton1Click:Connect(function()
         autoBhop = not autoBhop
         floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
+        floatingBhopButton.BackgroundColor3 = autoBhop and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(0, 170, 255)
     end)
 end
 
+-- =========================================
 -- [ 3. สร้างปุ่มทั้งหมดในเมนู ]
+-- =========================================
 
--- 🟢 ปุ่มเปิด/ปิด ปกติ
+-- 🟢 ปุ่มเปิด/ปิด ปกติ (Toggle ในเมนูหลัก)
 BhopSection:AddToggle("AutoBhopToggle", {
     Title = "เปิดใช้งาน (Toggle)",
     Default = false,
-    Callback = function(v) autoBhop = v end
+    Callback = function(v) 
+        autoBhop = v 
+        if floatingBhopButton then
+            floatingBhopButton.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
+            floatingBhopButton.BackgroundColor3 = autoBhop and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(0, 170, 255)
+        end
+    end
 })
 
 -- 🔵 ปุ่มเปิด/ปิด แบบปุ่มลอย
@@ -682,37 +704,42 @@ BhopSection:AddDropdown("BhopMode", {
     Callback = function(v) bhopMode = v end
 })
 
--- [ 4. Loop หลัก (แก้ไขระบบกระโดดให้ใช้ในมือถือได้) ]
+-- =========================================
+-- [ 4. Loop หลัก (ระบบกระโดด U-HUB-SUPREME Version) ]
+-- =========================================
 task.spawn(function()
     local RunService = game:GetService("RunService")
     local player = game.Players.LocalPlayer
     
-    while true do
-        RunService.Heartbeat:Wait()
+    -- ใช้ Stepped เพื่อความแม่นยำสูงสุดในจังหวะฟิสิกส์ (แบบที่เพิ่งเทสผ่าน)
+    RunService.Stepped:Connect(function()
         if autoBhop then
             local char = player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local root = char and char:FindFirstChild("HumanoidRootPart")
             
-            if hum and root then
-                -- เช็คว่าเท้าแตะพื้นหรือไม่
+            if hum then
+                -- เช็คว่าเท้าแตะพื้น (ป้องกันการกระโดดค้างกลางอากาศ)
                 local isGrounded = hum.FloorMaterial ~= Enum.Material.Air
                 
                 if isGrounded then
                     if bhopMode == "ออโต้เด้ง" then
-                        -- โหมด 1: เปลี่ยนสถานะโดยตรง (กระโดดรัวและต่อเนื่อง)
+                        -- โหมด 1: เปลี่ยนสถานะโดยตรง (เน้นความเร็วและต่อเนื่อง)
                         hum.JumpHeight = 2.5
                         hum:ChangeState(Enum.HumanoidStateType.Jumping)
                     elseif bhopMode == "กระโดดเหมือนคนกด" then
-                        -- โหมด 2: สั่งให้ Humanoid กระโดดเอง (เหมือนกดปุ่ม Jump บนมือถือ)
-                        -- วิธีนี้ปุ่มจะไม่หาย และใช้งานบนโทรศัพท์ได้ 100%
-                        hum.Jump = true
+                        -- โหมด 2: ระบบ ChangeState แบบ Bypass (วิธีล่าสุดที่ใช้ได้ผลชัวร์ในมือถือ!)
+                        -- บังคับเปลี่ยนสถานะทันทีที่แตะพื้น โดยไม่ต้องผ่านปุ่มมาตรฐาน
+                        hum.Jump = true 
+                        hum:ChangeState(Enum.HumanoidStateType.Jumping)
                     end
                 end
             end
         end
-    end
+    end)
 end)
+
+print("U-HUB-SUPREME: Auto Bhop Module Loaded Successfully!")
+
 
                   
 
