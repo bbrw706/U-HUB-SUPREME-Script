@@ -22,7 +22,15 @@ local scripts = {
         PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/EvadeV1.lua",
         FARM = ""
     } -- ปิดปีกกาให้ครบ
+},
+
+ -- [ID แมพ mm2]
+    [142823291] = { 
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/MM2",
+        FARM = ""
+    } -- ปิดปีกกาให้ครบ
 }
+
 
 -- เช็ค ID ของแมพปัจจุบัน
 local currentId = game.PlaceId
