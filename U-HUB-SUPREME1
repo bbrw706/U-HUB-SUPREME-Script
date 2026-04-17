@@ -53,7 +53,7 @@ if cfg then
     end
 else
     -- ถ้าไม่เจอ ID ในรายการ
-    local msg = "Game ID: " .. currentId .. " ยังไม่รองรับนะน้องหนึ่ง!"
+    local msg = "Game ID: " .. currentId .. "โค้ดยังไม่รองรับ"
     warn(msg)
     -- ถ้าไม่อยากให้โดนเตะออก ให้ปิดบรรทัด Kick ข้างล่างนี้ได้ครับ
     -- game:GetService("Players").LocalPlayer:Kick(msg)
