@@ -141,6 +141,7 @@ local MainTab     = Window:AddTab({Title="เมนูหลัก", Icon="star"
 local TeleportTab = Window:AddTab({Title="เทเลพอร์ต", Icon="navigation"})
 local FarmTab     = Window:AddTab({Title="เมนูฟาร์ม", Icon="component"})
 local VisualsTab  = Window:AddTab({Title="มองต่างๆ", Icon="eye"})
+local EmoteTab    = Window:AddTab({Title="อีโมท", Icon="smile"})
 local ExtraTab    = Window:AddTab({Title="ของเสริม", Icon="tag"})
 local EventTab    = Window:AddTab({Title="เกี่ยวกับอีเว้น", Icon="calendar"}) -- แถบนี้แหละ!
 
@@ -1461,120 +1462,111 @@ SettingsTab:AddButton({
     end
 })
 
-FPSSection:AddToggle("MiniSpaceFPS", {
-    Title = "🌌 หน้าต่างอวกาศ (FPS + Stars)",
-    Default = false,
-    Callback = function(state)
-        local lp = game.Players.LocalPlayer
-        
-        -- 🛠️ ฟังก์ชันสร้างหน้าต่างจิ๋ว
-        local function CreateMiniFPS()
-            if lp.PlayerGui:FindFirstChild("UHub_MiniFPS") then 
-                lp.PlayerGui.UHub_MiniFPS:Destroy() 
-            end
+-- =========================
+-- ฟังก์ชันสร้างหน้าต่างจิ๋ว (U HUB SUPREME)
+-- =========================
+local function CreateMiniFPS()
+    local lp = game.Players.LocalPlayer
+    if lp.PlayerGui:FindFirstChild("UHub_MiniFPS") then 
+        lp.PlayerGui.UHub_MiniFPS:Destroy() 
+    end
 
-            local gui = Instance.new("ScreenGui", lp.PlayerGui)
-            gui.Name = "UHub_MiniFPS"
-            gui.ResetOnSpawn = false
+    local gui = Instance.new("ScreenGui", lp.PlayerGui)
+    gui.Name = "UHub_MiniFPS"
+    gui.ResetOnSpawn = false
 
-            -- 📺 ตัวหน้าต่าง (เน้นความใสเพื่อมองทะลุข้างหลังได้)
-            local MainFrame = Instance.new("Frame", gui)
-            MainFrame.Size = UDim2.fromOffset(180, 90) -- ปรับขนาดให้กะทัดรัดขึ้น
-            MainFrame.Position = UDim2.new(0.5, -90, 0.1, 0)
-            MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-            MainFrame.BackgroundTransparency = 0.6 -- [🚀 จุดสำคัญ] ปรับความใสให้เห็นข้างหลังได้
-            MainFrame.BorderSizePixel = 0
-            MainFrame.Active = true
-            MainFrame.Draggable = true -- ลากได้เหมือนเดิม
-            MainFrame.ClipsDescendants = true 
+    -- 📺 ตัวหน้าต่าง (ตั้งพิกัดไปที่ x121, y155 ตามสั่งน้องหนึ่ง)
+    local MainFrame = Instance.new("Frame", gui)
+    MainFrame.Size = UDim2.fromOffset(180, 90)
+    MainFrame.Position = UDim2.fromOffset(121, 155) -- [🚀 จุดพิกัดใหม่]
+    MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    MainFrame.BackgroundTransparency = 0.6 
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Active = true
+    MainFrame.Draggable = true 
+    MainFrame.ClipsDescendants = true 
 
-            -- 🌈 ขอบโค้งมน
-            local Corner = Instance.new("UICorner", MainFrame)
-            Corner.CornerRadius = UDim.new(0, 15)
+    -- 🌈 ขอบโค้งมน
+    local Corner = Instance.new("UICorner", MainFrame)
+    Corner.CornerRadius = UDim.new(0, 15)
 
-            -- ✨ เส้นขอบบางๆ พอให้สวย
-            local Stroke = Instance.new("UIStroke", MainFrame)
-            Stroke.Color = Color3.fromRGB(0, 255, 150)
-            Stroke.Thickness = 1.5
-            Stroke.Transparency = 0.6
+    -- ✨ เส้นขอบบางๆ
+    local Stroke = Instance.new("UIStroke", MainFrame)
+    Stroke.Color = Color3.fromRGB(0, 255, 150)
+    Stroke.Thickness = 1.5
+    Stroke.Transparency = 0.6
 
-            -- ⭐ ระบบดาววิ่ง (ลดเหลือ 25 ดวง ตามสั่งน้องหนึ่ง)
-           -- [[ ⭐ ระบบดาววนลูป (สมองน้องหนึ่ง: ไม่โหลดใหม่ สลับพื้นที่เอา) ]]
-local stars = {}
+    -- ⭐ ระบบดาววนลูป
+    local stars = {}
+    for i = 1, 7 do
+        local Star = Instance.new("Frame", MainFrame)
+        Star.Size = UDim2.fromOffset(math.random(1, 2), math.random(1, 2))
+        Star.Position = UDim2.fromScale(math.random(), math.random())
+        Star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Star.BackgroundTransparency = 0.5
+        Star.BorderSizePixel = 0
+        Instance.new("UICorner", Star).CornerRadius = UDim.new(1, 0)
+        Star:SetAttribute("Speed", math.random(5, 15) / 10000)
+        table.insert(stars, Star)
+    end
 
--- สร้างทิ้งไว้แค่ 25 ดวงตั้งแต่เริ่มครั้งเดียวจบ
-for i = 1, 7 do
-    local Star = Instance.new("Frame", MainFrame)
-    Star.Size = UDim2.fromOffset(math.random(1, 2), math.random(1, 2))
-    -- สุ่มตำแหน่งเริ่มต้นให้กระจายทั่วหน้าต่าง
-    Star.Position = UDim2.fromScale(math.random(), math.random())
-    Star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Star.BackgroundTransparency = 0.5
-    Star.BorderSizePixel = 0
-    Instance.new("UICorner", Star).CornerRadius = UDim.new(1, 0)
-    
-    -- ตั้งค่าความเร็วสุ่มไว้ในตัวดาว
-    Star:SetAttribute("Speed", math.random(5, 15) / 10000)
-    table.insert(stars, Star)
-end
-
--- ⚡ ลูปเดียวคุมการ "วาร์ป" ดาว (ลื่น No.1)
-task.spawn(function()
-    local runConn
-    runConn = game:GetService("RunService").RenderStepped:Connect(function()
-        if not MainFrame or not MainFrame.Parent then runConn:Disconnect() return end
-        
-        for _, s in ipairs(stars) do
-            if s and s.Parent then
-                local speed = s:GetAttribute("Speed")
-                -- คำนวณตำแหน่ง X ใหม่
-                local currentX = s.Position.X.Scale + speed
-                
-                -- [🚀 จุดที่น้องหนึ่งสั่ง] ถ้าดาววิ่งเลยขอบขวา (1.1) 
-                -- ให้วาร์ปกลับไปเริ่มที่ขอบซ้าย (-0.1) โดยไม่ต้องสร้างใหม่
-                if currentX > 1.1 then 
-                    currentX = -0.1 
-                    -- แถม: สุ่มความสูง (Y) ใหม่ตอนวาร์ปกลับมา จะได้ดูไม่จำเจเหมือนดาวชุดเดิมเป๊ะ
-                    s.Position = UDim2.fromScale(currentX, math.random())
-                else
-                    s.Position = UDim2.fromScale(currentX, s.Position.Y.Scale)
+    task.spawn(function()
+        local runConn
+        runConn = game:GetService("RunService").RenderStepped:Connect(function()
+            if not MainFrame or not MainFrame.Parent then runConn:Disconnect() return end
+            for _, s in ipairs(stars) do
+                if s and s.Parent then
+                    local speed = s:GetAttribute("Speed")
+                    local currentX = s.Position.X.Scale + speed
+                    if currentX > 1.1 then 
+                        currentX = -0.1 
+                        s.Position = UDim2.fromScale(currentX, math.random())
+                    else
+                        s.Position = UDim2.fromScale(currentX, s.Position.Y.Scale)
+                    end
                 end
             end
+        end)
+    end)
+
+    -- ⏱️ ตัวเลข FPS
+    local FPSLabel = Instance.new("TextLabel", MainFrame)
+    FPSLabel.Size = UDim2.fromScale(1, 1)
+    FPSLabel.BackgroundTransparency = 1
+    FPSLabel.TextColor3 = Color3.new(1, 1, 1)
+    FPSLabel.Font = Enum.Font.GothamBold
+    FPSLabel.TextSize = 22
+    FPSLabel.Text = "FPS: ..."
+    FPSLabel.ZIndex = 2
+    
+    task.spawn(function()
+        local lastTime = tick()
+        local frames = 0
+        while gui.Parent do
+            frames = frames + 1
+            local now = tick()
+            if now - lastTime >= 0.5 then
+                FPSLabel.Text = math.floor(frames / (now - lastTime)) .. " FPS"
+                frames = 0
+                lastTime = now
+            end
+            game:GetService("RunService").RenderStepped:Wait()
         end
     end)
-end)
+    return gui
+end
 
-
-            -- ⏱️ ตัวเลข FPS
-            local FPSLabel = Instance.new("TextLabel", MainFrame)
-            FPSLabel.Size = UDim2.fromScale(1, 1)
-            FPSLabel.BackgroundTransparency = 1
-            FPSLabel.TextColor3 = Color3.new(1, 1, 1)
-            FPSLabel.Font = Enum.Font.GothamBold
-            FPSLabel.TextSize = 22
-            FPSLabel.Text = "FPS: ..."
-            FPSLabel.ZIndex = 2
-            
-            task.spawn(function()
-                local lastTime = tick()
-                local frames = 0
-                while gui.Parent do
-                    frames = frames + 1
-                    local now = tick()
-                    if now - lastTime >= 0.5 then
-                        FPSLabel.Text = math.floor(frames / (now - lastTime)) .. " FPS"
-                        frames = 0
-                        lastTime = now
-                    end
-                    game:GetService("RunService").RenderStepped:Wait()
-                end
-            end)
-            return gui
-        end
-
-        -- 🌙 ระบบเปิด/ปิด
+-- =========================
+-- ส่วนของ UI Toggle (ยังคงไว้ให้กดปิด-เปิดเองได้)
+-- =========================
+local MiniSpaceToggle = FPSSection:AddToggle("MiniSpaceFPS", {
+    Title = "🌌 หน้าต่างอวกาศ (FPS + Stars)",
+    Default = true, -- [🚀 ตั้งค่าเริ่มต้นเป็นเปิด]
+    Callback = function(state)
         if state then
-            getgenv().MiniFPSGui = CreateMiniFPS()
+            if not getgenv().MiniFPSGui then
+                getgenv().MiniFPSGui = CreateMiniFPS()
+            end
         else
             if getgenv().MiniFPSGui then
                 getgenv().MiniFPSGui:Destroy()
@@ -1584,6 +1576,131 @@ end)
     end
 })
 
+
+
+-- =========================
+-- [🔥 AUTO RUN] สั่งให้ทำงานทันทีเมื่อรันสคริปต์
+-- =========================
+if not getgenv().MiniFPSGui then
+    getgenv().MiniFPSGui = CreateMiniFPS()
+end
+
+
+
+-- =========================
+-- ตั้งค่าตัวแปรแบบ Table (เพื่อรองรับ 12 ชุด)
+-- =========================
+local autoEmoteData = {}
+for i = 1, 12 do
+    autoEmoteData[i] = {
+        inputCurrent = "",
+        inputSelect = "",
+        enabled = false
+    }
+end
+
+-- ฟังก์ชันสร้างชุด UI
+local function CreateEmoteSet(index)
+    -- ส่วน Input ท่าที่จะกด
+    autoEmoteData[index].Input1 = EmoteTab:AddInput("InputCurrent" .. index, {
+        Title = "ชื่อท่าที่จะกด (" .. index .. ")",
+        Default = "",
+        Placeholder = "เช่น Dance1",
+        Callback = function(text)
+            autoEmoteData[index].inputCurrent = text
+        end
+    })
+
+    -- ส่วน Input ท่าที่จะออก
+    autoEmoteData[index].Input2 = EmoteTab:AddInput("InputSelect" .. index, {
+        Title = "ชื่อท่าที่จะออก (" .. index .. ")",
+        Default = "",
+        Placeholder = "เช่น Dance2",
+        Callback = function(text)
+            autoEmoteData[index].inputSelect = text
+        end
+    })
+
+    -- ปุ่มล้างค่าเฉพาะชุดนี้
+    EmoteTab:AddButton({
+        Title = "ล้างค่าชุดที่ " .. index,
+        Description = "รีเซ็ตเฉพาะท่าในชุดนี้",
+        Callback = function()
+            autoEmoteData[index].inputCurrent = ""
+            autoEmoteData[index].inputSelect = ""
+            autoEmoteData[index].enabled = false
+            
+            autoEmoteData[index].Input1:SetValue("")
+            autoEmoteData[index].Input2:SetValue("")
+            autoEmoteData[index].Toggle:SetValue(false)
+
+            -- แจ้งเตือนเมื่อล้างค่า
+            Fluent:Notify({
+                Title = "U HUB SUPREME",
+                Content = "ล้างข้อมูลชุดที่ " .. index .. " เรียบร้อยแล้วครับน้องหนึ่ง",
+                Duration = 3
+            })
+        end
+    })
+
+    -- ตัวเปิด/ปิดระบบของชุดนี้
+    autoEmoteData[index].Toggle = EmoteTab:AddToggle("AutoEmote" .. index, {
+        Title = "เปิดใช้งานชุดที่ " .. index,
+        Default = false,
+        Callback = function(state)
+            autoEmoteData[index].enabled = state
+            
+            if state then
+                _G.currentEmote = autoEmoteData[index].inputCurrent:gsub("%s+", "")
+                _G.selectEmote = autoEmoteData[index].inputSelect:gsub("%s+", "")
+                
+                -- แจ้งเตือนเมื่อเปิดใช้งาน
+                Fluent:Notify({
+                    Title = "U HUB SUPREME",
+                    Content = "เปิดใช้งาน Auto Emote ชุดที่ " .. index .. " แล้ว!",
+                    SubTitle = "สถานะ: กำลังทำงาน",
+                    Duration = 3
+                })
+            else
+                _G.currentEmote = ""
+                _G.selectEmote = ""
+            end
+        end
+    })
+end
+
+-- =========================
+-- สร้าง UI ขึ้นมา 12 ชุด
+-- =========================
+for i = 1, 12 do
+    CreateEmoteSet(i)
+end
+
+-- =========================
+-- ปุ่ม RESET ใหญ่ (ล้างหมด 12 ชุด)
+-- =========================
+EmoteTab:AddButton({
+    Title = "ล้างค่าทั้งหมด (ALL 12)",
+    Description = "ล้างค่าทิ้งทุกท่า",
+    Callback = function()
+        for i = 1, 12 do
+            autoEmoteData[i].inputCurrent = ""
+            autoEmoteData[i].inputSelect = ""
+            autoEmoteData[i].enabled = false
+            autoEmoteData[i].Input1:SetValue("")
+            autoEmoteData[i].Input2:SetValue("")
+            autoEmoteData[i].Toggle:SetValue(false)
+        end
+        _G.currentEmote = ""
+        _G.selectEmote = ""
+
+        Fluent:Notify({
+            Title = "U HUB SUPREME",
+            Content = "รีเซ็ตระบบ Auto Emote ทั้งหมดแล้วครับ",
+            Duration = 5
+        })
+    end
+})
 
 -- [ EXTRA: No clip ]
 -- =========================================
