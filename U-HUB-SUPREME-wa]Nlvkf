@@ -1,1 +1,66 @@
+--[[ 
+    🚀 U-HUB AUTO RUNNER (V.IRIS FIXED) 
+    Fixed by Iris (U hub) - 2026
+]]
 
+local script_mode = "PVP" -- เลือกโหมด: "PVP" หรือ "FARM"
+
+local scripts = {
+    -- [ID แมพ 1]
+    [136801880565837] = {
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script--/refs/heads/main/U-HUB-SUPREME2-gun",
+        FARM = ""
+    },
+    -- [ID แมพ 2]
+    [131623223084840] = {
+        PVP  = "https://gist.githubusercontent.com/bbrw706/e67f05a22b960379de30fdf3dbdd0e48/raw/a71305fa09b0b96415fb4b8f484fd4d74f535b4b/gistfile1.txt",
+        FARM = "https://gist.githubusercontent.com/bbrw706/09f75480bbefbdd86afcef02b9364ad4/raw/a6d9223116e400a65e8d597449837e9e8e295057/gistfile1.txt"
+    },
+    -- [ID แมพ Evade 1]
+    [9872472334] = {
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/EvadeV1.lua",
+        FARM = ""
+    },
+    -- [ID แมพ Evade 2]
+    [11353528705] = {
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/EvadeV1.lua",
+        FARM = ""
+    },
+    -- [ID แมพ mm2] - ไอริสย้ายเข้ามาอยู่ในตารางเดียวกันให้แล้วค่ะ
+    [142823291] = {
+        PVP  = "https://raw.githubusercontent.com/bbrw706/U-HUB-SUPREME-Script/refs/heads/main/MM2",
+        FARM = ""
+    }
+}
+
+-- เช็ค ID ของแมพปัจจุบัน
+local currentId = game.PlaceId
+local cfg = scripts[currentId]
+
+if cfg then
+    -- เลือกลิงก์ตามโหมดที่ตั้งไว้
+    local targetUrl = cfg[script_mode:upper()]
+    
+    -- ถ้าโหมดที่เลือกไม่มีลิงก์ ให้ไปใช้ PVP เป็นหลัก
+    if not targetUrl or targetUrl == "" then
+        targetUrl = cfg.PVP
+    end
+
+    if targetUrl and targetUrl ~= "" then
+        print("U-HUB (Iris Fixed): กำลังโหลดสคริปต์สำหรับแมพ ID " .. currentId)
+        -- รันสคริปต์
+        local success, err = pcall(function()
+            loadstring(game:HttpGet(targetUrl))()
+        end)
+        
+        if not success then
+            warn("U-HUB Error: โหลดสคริปต์จาก URL ไม่ได้! " .. tostring(err))
+        end
+    else
+        warn("U-HUB: ลิงก์สคริปต์ในโหมดนี้มันว่างนะ!")
+    end
+else
+    -- ถ้าไม่เจอ ID ในรายการ
+    local msg = "Game ID: " .. currentId .. " ยังไม่รองรับในระบบนะ!"
+    warn(msg)
+end
