@@ -241,8 +241,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
-local interactEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("Character"):WaitForChild("Interact")
-local changeModeEvent = ReplicatedStorage:FindFirstChild("ChangePlayerMode", true)
+
 
 _G.MasterFarm = false
 local lastSavedPosition = nil
@@ -2529,29 +2528,7 @@ end)
 
 
 
--- =========================
--- 🔄 ส่วนที่ 4: ระบบสนับสนุน (Events)
--- =========================
-LocalPlayer.CharacterAdded:Connect(function(char)
-    if not afkMoneyEnabled then return end
-    task.spawn(function()  
-        local hrp = char:WaitForChild("HumanoidRootPart", 10)  
-        local hum = char:WaitForChild("Humanoid", 10)  
-        if not hrp or not hum then return end  
 
-        for i = 1, 5 do  
-            if afkPart then hrp.CFrame = afkPart.CFrame + Vector3.new(0, 3, 0) end  
-            task.wait(0.3)  
-        end  
-        
-        hum.StateChanged:Connect(function(_, new)  
-            if afkMoneyEnabled and afkPart and (new == Enum.HumanoidStateType.Running or new == Enum.HumanoidStateType.RunningNoPhysics) then  
-                task.wait(0.1)  
-                hrp.CFrame = afkPart.CFrame + Vector3.new(0, 3, 0)  
-            end  
-        end)  
-    end)
-end)
 
 -- แจ้งเตือนเมื่อโหลดเสร็จ
 Window:Notify({
@@ -2559,4 +2536,3 @@ Window:Notify({
     Content = "เมนูทั้งหมดโหลดเรียบร้อยแล้ว! พร้อมลุยครับ",
     Duration = 4
 })
-
