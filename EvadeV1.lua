@@ -7,6 +7,9 @@ game:GetService("Players").LocalPlayer.Idled:Connect(function()
 end)
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local interactEvent
+local changeModeEvent
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 math.randomseed(tick())
@@ -177,7 +180,7 @@ local function ManageWhitePlatform(state)
 end
 
 -- [[ 🎡 ปุ่ม Toggle ]]
-FarmTab:AddToggle("UHubTicketToggle", {
+FarmTab:AddToggle("UHubTicketFarmToggle", {
     Title = "ฟาร์มโทเค้นท์",
     Description = "🔥วาร์ปไปเอาโทเค้นท์นะจ๊ะ🔥",
     Default = false,
@@ -283,7 +286,7 @@ task.spawn(function()
 end)
 
 
-FarmTab:AddToggle("UHubTicketToggle", {
+FarmTab:AddToggle("UHubMoneyFarmToggle", {
     Title = "🔥 ฟาร์มเงิน",
     Description = "วาร์ปติดตัวคนล้ม + รอ 2 วิวาร์ปกลับ",
     Default = false,
@@ -373,7 +376,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
-local changeModeEvent = ReplicatedStorage:FindFirstChild("ChangePlayerMode", true)
+changeModeEvent = ReplicatedStorage:FindFirstChild("ChangePlayerMode", true)
 _G.MasterAFK = false
 local afkPart = nil
 
@@ -401,7 +404,7 @@ task.spawn(function()
     end
 end)
 
-FarmTab:AddToggle("UHubTicketToggle", {
+FarmTab:AddToggle("UHubSkyAFKToggle", {
     Title = "☁️ เปิดระบบยืน AFK บนฟ้า",
     Description = "ยืนบนฟ้าฟาร์มเวล+ฟาร์มเงิน+มีที่วิ่งเล่น",
     Default = false,
@@ -652,6 +655,56 @@ local function createBounceFloatingButton()
 end
 
 BounceSection:AddToggle("BounceToggle", {Title="ออโต้เด้ง (ปกติ)", Default=false, Callback=function(v) autoBounce = v end})
+
+-- [[ AUTO JUMP: กระโดดเมื่อแตะพื้น (robust) ]]
+local autoJumpEnabled = false
+local autoJumpWasGrounded = false
+local autoJumpLastCharacter = nil
+BounceSection:AddToggle("AutoJumpToggle", {
+    Title = "ออโต้กระโดด (Auto Jump)",
+    Description = "กระโดดอัตโนมัติเมื่อแตะพื้น ปิดได้จากสวิตช์นี้",
+    Default = false,
+    Callback = function(value)
+        autoJumpEnabled = value
+        autoJumpWasGrounded = false
+    end
+})
+
+task.spawn(function()
+    while task.wait(0.03) do
+        if not autoJumpEnabled then
+            autoJumpWasGrounded = false
+            continue
+        end
+
+        local character = player.Character
+        if character ~= autoJumpLastCharacter then
+            autoJumpLastCharacter = character
+            autoJumpWasGrounded = false
+        end
+
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if not humanoid or humanoid.Health <= 0 or humanoid.Sit then
+            autoJumpWasGrounded = false
+            continue
+        end
+
+        local state = humanoid:GetState()
+        local grounded = humanoid.FloorMaterial ~= Enum.Material.Air
+            and state ~= Enum.HumanoidStateType.Freefall
+            and state ~= Enum.HumanoidStateType.Jumping
+            and state ~= Enum.HumanoidStateType.FallingDown
+
+        -- Trigger once per landing; reset while airborne so it can jump again.
+        if grounded and not autoJumpWasGrounded then
+            autoJumpWasGrounded = true
+            humanoid.Jump = true
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        elseif not grounded then
+            autoJumpWasGrounded = false
+        end
+    end
+end)
 BounceSection:AddToggle("BounceFloat", {Title="ออโต้เด้ง (ปุ่มลอย)", Default=false, Callback=function(v)
     if v then createBounceFloatingButton() else if floatingBounceButton then floatingBounceButton:Destroy() floatingBounceButton=nil end end
 end})
@@ -704,7 +757,7 @@ local function lagSwitch(duration)
                 hrp.Velocity = Vector3.new(0, jumpPowerValue, 0)
             end
 
-            for i = 1, 1e6 do local a = math.random() end 
+            task.wait(0.03) -- ไม่ปั่น CPU จนเกมค้าง 
             task.wait()
         end
         
@@ -749,7 +802,7 @@ task.spawn(function()
                 end
             end
 
-            for i = 1, 1e6 do local a = math.random() end
+            task.wait(0.03) -- ไม่ปั่น CPU จนเกมค้าง
         else
             -- คืนค่าการชนเมื่อปล่อยปุ่ม
             local char = game.Players.LocalPlayer.Character
@@ -854,7 +907,7 @@ task.spawn(function()
             end
 
             -- ทำให้เครื่องแลค (Lag Switch) ตามโค้ดเดิมน้องหนึ่ง
-            for i = 1, 1e6 do local a = math.random() end
+            task.wait(0.03) -- ไม่ปั่น CPU จนเกมค้าง
         else
             -- [[ 🛑 คืนค่าการชนเมื่อเลิกแลค ]]
             -- ป้องกันน้องหนึ่งตกแมพเมื่อปล่อยปุ่ม
@@ -1257,7 +1310,7 @@ end
 -- [[ 🎡 3. สร้างระบบ Toggle ]]
 local TicketSection = EventTab:AddSection("ระบบตั๋ว (Ticket System)")
 
-local TicketToggleUI = TicketSection:AddToggle("UHubTicketToggle", {
+local TicketToggleUI = TicketSection:AddToggle("UHubTicketEventToggle", {
     Title = "เปิดออโต้ฟาร์มตั๋วยาวๆ",
     Description = "ฟาร์มตั๋ว + นับคะแนน + ที่ยืน [N] ปิด/เปิด",
     Default = false,
@@ -1798,7 +1851,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
-local interactEvent = ReplicatedStorage:WaitForChild("Events")
+interactEvent = ReplicatedStorage:WaitForChild("Events")
     :WaitForChild("Character")
     :WaitForChild("Interact")
 
@@ -2335,7 +2388,7 @@ end)
 local BounceSection = MainTab:AddSection("ระบบออโต้เด้ง (สูงๆ)")
 
 -- 1. สวิตช์ เปิด/ปิด
-local BounceToggle = BounceSection:AddToggle("BounceToggle", {
+local BounceToggle = BounceSection:AddToggle("BounceHighToggle", {
     Title = "เปิดใช้งาน",
     Default = false,
     Callback = function(Value)
@@ -2452,7 +2505,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
-local interactEvent = ReplicatedStorage:WaitForChild("Events")
+interactEvent = ReplicatedStorage:WaitForChild("Events")
     :WaitForChild("Character")
     :WaitForChild("Interact")
 
@@ -2531,7 +2584,7 @@ end)
 
 
 -- แจ้งเตือนเมื่อโหลดเสร็จ
-Window:Notify({
+Fluent:Notify({
     Title = "u Hub",
     Content = "เมนูทั้งหมดโหลดเรียบร้อยแล้ว! พร้อมลุยครับ",
     Duration = 4
